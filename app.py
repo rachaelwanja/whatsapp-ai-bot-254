@@ -1,33 +1,33 @@
-from flask import Flask, request
-from twilio.twiml.messaging_response import MessagingResponse
-from openai import OpenAI
-import os
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "WhatsApp AI Bot is running successfully!"
-
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
-    incoming_msg = request.values.get("Body", "").strip()
+    from flask import request
+    from twilio.twiml.messaging_response import MessagingResponse
+    from openai import OpenAI
+    import os
 
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    incoming_msg = request.form.get("Body", "").strip()
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": incoming_msg}
-        ]
-    )
+    # Prevent crash during Twilio validation
+    if not incoming_msg:
+        return str(MessagingResponse())
 
-    reply = response.choices[0].message.content
+    try:
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful WhatsApp AI assistant."},
+                {"role": "user", "content": incoming_msg}
+            ]
+        )
+
+        reply = response.choices[0].message.content
+
+    except Exception as e:
+        reply = "Sorry, something went wrong."
 
     twilio_response = MessagingResponse()
     twilio_response.message(reply)
 
     return str(twilio_response)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
