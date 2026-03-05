@@ -25,7 +25,7 @@ def whatsapp():
         reply = response.text
 
     except Exception as e:
-        reply = "Sorry, something went wrong."
+        reply = "Error occurred."
 
     # Send reply to WhatsApp
     twilio_response = MessagingResponse()
