@@ -5,34 +5,32 @@ import os
 
 app = Flask(__name__)
 
-# Configure Gemini AI
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# Load Gemini API key
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
 model = genai.GenerativeModel("gemini-pro")
 
-
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
-    return "WhatsApp AI Bot is running!"
-
+    return "Bot is running"
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
     incoming_msg = request.values.get("Body", "").strip()
 
+    resp = MessagingResponse()
+    msg = resp.message()
+
     try:
-        # Generate AI response
         response = model.generate_content(incoming_msg)
         reply = response.text
-
     except Exception as e:
-        reply = "Sorry, something went wrong."
+        print(e)
+        reply = "Sorry, AI error."
 
-    # Send reply to WhatsApp
-    twilio_response = MessagingResponse()
-    twilio_response.message(reply)
+    msg.body(reply)
 
-    return str(twilio_response)
-
+    return str(resp)
 
 if __name__ == "__main__":
     app.run()
