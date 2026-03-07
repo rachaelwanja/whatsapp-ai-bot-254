@@ -6,16 +6,16 @@ import os
 app = Flask(__name__)
 
 # Gemini client
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route("/")
 def home():
-    return "WhatsApp AI Bot Running"
+    return "Bot running"
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.values.get("Body", "")
+    incoming = request.values.get("Body", "")
 
     resp = MessagingResponse()
     msg = resp.message()
@@ -23,11 +23,9 @@ def whatsapp():
     try:
         response = client.models.generate_content(
             model="gemini-2.0-flash",
-            contents=incoming_msg
+            contents=incoming
         )
-
         reply = response.text
-
     except Exception as e:
         print("AI ERROR:", e)
         reply = "AI error occurred."
@@ -37,4 +35,5 @@ def whatsapp():
     return str(resp)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
