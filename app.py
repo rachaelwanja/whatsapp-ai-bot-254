@@ -8,8 +8,8 @@ app = Flask(__name__)
 # Configure Gemini API
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-# Use the correct model
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Correct model
+model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
 
 @app.route("/")
@@ -27,7 +27,11 @@ def whatsapp():
 
     try:
         response = model.generate_content(incoming_msg)
-        reply = response.text
+
+        if response.text:
+            reply = response.text
+        else:
+            reply = "I couldn't generate a reply."
 
     except Exception as e:
         print("AI ERROR:", e)
