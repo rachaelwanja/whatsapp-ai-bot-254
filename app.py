@@ -5,11 +5,12 @@ import os
 
 app = Flask(__name__)
 
+# Gemini client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route("/")
 def home():
-    return "AI Bot Running"
+    return "WhatsApp AI bot running"
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
@@ -21,7 +22,7 @@ def whatsapp():
 
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash",   # ✅ FIXED MODEL
+            model="gemini-2.0-flash",
             contents=incoming_msg
         )
 
@@ -34,6 +35,7 @@ def whatsapp():
     msg.body(reply)
 
     return str(resp)
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
