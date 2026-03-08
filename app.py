@@ -5,22 +5,24 @@ import os
 
 app = Flask(__name__)
 
-# Gemini client
+# Initialize Gemini client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route("/")
 def home():
     return "WhatsApp AI bot running"
 
+
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.values.get("Body", "")
+    incoming_msg = request.values.get("Body", "").strip()
 
     resp = MessagingResponse()
     msg = resp.message()
 
     try:
+        # Call Gemini AI
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=incoming_msg
@@ -28,9 +30,27 @@ def whatsapp():
 
         reply = response.text
 
+        # Safety check if Gemini returns nothing
+        if not reply:
+            reply = "I'm here! How can I help you?"
+
     except Exception as e:
+
         print("AI ERROR:", e)
-        reply = "AI temporarily unavailable."
+
+        error_text = str(e).lower()
+
+        # QUOTA LIMIT
+        if "quota" in error_text or "resource_exhausted" in error_text:
+            reply = "⚠️ AI is busy right now. Please try again in a minute."
+
+        # MODEL ERROR
+        elif "model" in error_text:
+            reply = "⚠️ AI model unavailable. Try again later."
+
+        # GENERAL ERROR
+        else:
+            reply = "🤖 I'm still learning. Ask me something else!"
 
     msg.body(reply)
 
