@@ -8,11 +8,14 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Gemini client
+# Initialize Gemini client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Memory storage
+# Memory for conversations
 memory = {}
+
+# Lead storage
+leads = {}
 
 @app.route("/")
 def home():
@@ -31,45 +34,60 @@ def whatsapp():
 
     text = incoming_msg.lower()
 
-    # ---------- LOG USER MESSAGE ----------
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # ---------- LOG USER MESSAGE ----------
     with open("chat_log.txt", "a") as log:
         log.write(f"{timestamp} | {user} | USER: {incoming_msg}\n")
 
     # ---------- RESET MEMORY ----------
     if text == "reset":
         memory[user] = []
-        reply = "🔄 Conversation memory cleared. Let's start again!"
+        leads[user] = {}
+        reply = "🔄 Conversation reset. How can I help you today?"
         msg.body(reply)
         return str(resp)
 
-    # ---------- HUMAN GREETINGS ----------
+    # ---------- GREETING ----------
     if text in ["hi", "hello", "hey"]:
 
         greetings = [
             "Hello 👋 I'm your AI assistant. How can I help you today?",
-            "Hi there! 😊 What can I help you with?",
+            "Hi there! 😊 What can I assist you with?",
             "Hey! I'm here to help. Ask me anything.",
-            "Hello! 👋 How can I assist you today?"
+            "Hello! 👋 How may I assist you today?"
         ]
 
         reply = random.choice(greetings)
 
+    # ---------- HELP MENU ----------
     elif text in ["menu", "help"]:
 
         reply = (
             "🤖 AI Assistant Menu\n\n"
             "1️⃣ Ask any question\n"
-            "2️⃣ Get explanations\n"
-            "3️⃣ Chat with AI\n\n"
+            "2️⃣ Get information\n"
+            "3️⃣ Chat with AI\n"
+            "4️⃣ Contact support\n\n"
             "Just send your message."
         )
 
+    # ---------- PRICE EXAMPLE ----------
     elif "price" in text:
+        reply = "Prices depend on the service. Please tell me what service you're interested in."
 
-        reply = "Prices depend on the service. Please ask what you need."
+    # ---------- LEAD CAPTURE ----------
+    elif "book" in text or "service" in text:
 
+        leads[user] = {"service": incoming_msg}
+        reply = "Great! May I have your name so we can assist you better?"
+
+    elif user in leads and "name" not in leads[user]:
+
+        leads[user]["name"] = incoming_msg
+        reply = "Thanks! Our team will contact you shortly."
+
+    # ---------- AI CHAT ----------
     else:
 
         try:
@@ -77,15 +95,12 @@ def whatsapp():
             if user not in memory:
                 memory[user] = []
 
-            # Save user message
             memory[user].append(incoming_msg)
 
-            # Limit memory
             memory[user] = memory[user][-6:]
 
             conversation = "\n".join(memory[user])
 
-            # AI request
             response = client.models.generate_content(
                 model="gemini-1.5-flash-8b",
                 contents=f"""
@@ -102,7 +117,6 @@ Conversation:
             if not reply:
                 reply = "I'm here 😊 Ask me something."
 
-            # Save AI reply
             memory[user].append(reply)
 
         except Exception as e:
@@ -112,7 +126,7 @@ Conversation:
             error_text = str(e).lower()
 
             if "quota" in error_text or "resource_exhausted" in error_text:
-                reply = "⚠️ AI is busy right now. Try again in a minute."
+                reply = "⚠️ AI is busy right now. Please try again in a minute."
 
             elif "model" in error_text:
                 reply = "⚠️ AI model unavailable."
