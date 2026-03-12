@@ -249,8 +249,6 @@ Conversation:
 
     # ---------- HUMAN DELAY ----------
 
-    time.sleep(2)
-
     msg.body(reply)
 
     return str(resp)
