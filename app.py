@@ -2,78 +2,108 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from google import genai
 import os
+import time
+import random
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Initialize Gemini
+# Gemini client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Memory storage for conversations
+# Memory storage
 memory = {}
 
 @app.route("/")
 def home():
     return "WhatsApp AI bot running"
 
-
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.values.get("Body", "").strip()
+    incoming_msg = request.values.get("Body", "")
+    incoming_msg = incoming_msg.strip() if incoming_msg else ""
+
     user = request.values.get("From")
 
     resp = MessagingResponse()
     msg = resp.message()
 
-    lower_msg = incoming_msg.lower()
+    text = incoming_msg.lower()
 
-    # ---------- SMART QUICK REPLIES (NO AI USED) ----------
-    if lower_msg in ["hi", "hello", "hey"]:
-        reply = "Hello 👋 I'm your AI assistant. Ask me anything!"
+    # ---------- LOG USER MESSAGE ----------
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    elif lower_msg in ["help", "menu"]:
+    with open("chat_log.txt", "a") as log:
+        log.write(f"{timestamp} | {user} | USER: {incoming_msg}\n")
+
+    # ---------- RESET MEMORY ----------
+    if text == "reset":
+        memory[user] = []
+        reply = "🔄 Conversation memory cleared. Let's start again!"
+        msg.body(reply)
+        return str(resp)
+
+    # ---------- HUMAN GREETINGS ----------
+    if text in ["hi", "hello", "hey"]:
+
+        greetings = [
+            "Hello 👋 I'm your AI assistant. How can I help you today?",
+            "Hi there! 😊 What can I help you with?",
+            "Hey! I'm here to help. Ask me anything.",
+            "Hello! 👋 How can I assist you today?"
+        ]
+
+        reply = random.choice(greetings)
+
+    elif text in ["menu", "help"]:
+
         reply = (
-            "🤖 AI Assistant Menu:\n\n"
+            "🤖 AI Assistant Menu\n\n"
             "1️⃣ Ask any question\n"
-            "2️⃣ Get information\n"
+            "2️⃣ Get explanations\n"
             "3️⃣ Chat with AI\n\n"
             "Just send your message."
         )
+
+    elif "price" in text:
+
+        reply = "Prices depend on the service. Please ask what you need."
 
     else:
 
         try:
 
-            # Initialize memory for user
             if user not in memory:
                 memory[user] = []
 
             # Save user message
-            memory[user].append({
-                "role": "user",
-                "content": incoming_msg
-            })
+            memory[user].append(incoming_msg)
 
-            # Limit memory to last 10 messages
-            memory[user] = memory[user][-10:]
+            # Limit memory
+            memory[user] = memory[user][-6:]
 
-            # Send conversation to Gemini
+            conversation = "\n".join(memory[user])
+
+            # AI request
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=str(memory[user])
+                model="gemini-1.5-flash-8b",
+                contents=f"""
+You are a helpful WhatsApp AI assistant.
+Respond clearly and briefly.
+
+Conversation:
+{conversation}
+"""
             )
 
             reply = response.text
 
-            # Safety fallback
             if not reply:
-                reply = "I'm here! Ask me something 😊"
+                reply = "I'm here 😊 Ask me something."
 
-            # Save AI response
-            memory[user].append({
-                "role": "assistant",
-                "content": reply
-            })
+            # Save AI reply
+            memory[user].append(reply)
 
         except Exception as e:
 
@@ -81,17 +111,21 @@ def whatsapp():
 
             error_text = str(e).lower()
 
-            # Quota error
             if "quota" in error_text or "resource_exhausted" in error_text:
-                reply = "⚠️ AI is busy right now. Please try again in a minute."
+                reply = "⚠️ AI is busy right now. Try again in a minute."
 
-            # Model error
             elif "model" in error_text:
-                reply = "⚠️ AI model unavailable. Try again later."
+                reply = "⚠️ AI model unavailable."
 
-            # General fallback
             else:
-                reply = "🤖 I'm still learning. Ask me something else!"
+                reply = "🤖 I'm still learning. Ask another question."
+
+    # ---------- LOG BOT REPLY ----------
+    with open("chat_log.txt", "a") as log:
+        log.write(f"{timestamp} | BOT: {reply}\n")
+
+    # ---------- HUMAN RESPONSE DELAY ----------
+    time.sleep(2)
 
     msg.body(reply)
 
