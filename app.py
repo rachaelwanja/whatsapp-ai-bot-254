@@ -11,63 +11,63 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# ---------------------------
-# Gemini AI Setup
-# ---------------------------
+# ===============================
+# Gemini AI setup
+# ===============================
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# ---------------------------
-# Memory + Leads
-# ---------------------------
+# ===============================
+# Storage
+# ===============================
 memory = {}
 leads = {}
 
-# ---------------------------
-# Home Route
-# ---------------------------
+# ===============================
+# Home
+# ===============================
 @app.route("/")
 def home():
-    return "WhatsApp AI Bot Running"
+    return "AI WhatsApp Bot Running"
 
 
-# ---------------------------
+# ===============================
 # Website Chat Page
-# ---------------------------
+# ===============================
 @app.route("/webchat")
 def webchat():
     return send_file("chat.html")
 
 
-# ---------------------------
+# ===============================
 # Admin Dashboard
-# ---------------------------
+# ===============================
 @app.route("/dashboard")
 def dashboard():
     return send_file("dashboard.html")
 
 
-# ---------------------------
+# ===============================
 # Leads API
-# ---------------------------
+# ===============================
 @app.route("/leads")
 def get_leads():
 
     lead_list = []
 
-    for user,data in leads.items():
+    for user, data in leads.items():
 
         lead_list.append({
-            "user":user,
-            "name":data.get("name",""),
-            "service":data.get("service","")
+            "user": user,
+            "name": data.get("name",""),
+            "service": data.get("service","")
         })
 
     return jsonify(lead_list)
 
 
-# ---------------------------
+# ===============================
 # Website Chat API
-# ---------------------------
+# ===============================
 @app.route("/chat", methods=["POST"])
 def chat():
 
@@ -77,7 +77,7 @@ def chat():
     try:
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash-8b",
+            model="gemini-2.0-flash",
             contents=user_message
         )
 
@@ -85,15 +85,16 @@ def chat():
 
     except Exception as e:
 
-        print("AI ERROR:",e)
-        reply = "AI temporarily unavailable."
+        print("AI ERROR:", e)
 
-    return jsonify({"reply":reply})
+        reply = "AI is temporarily unavailable."
+
+    return jsonify({"reply": reply})
 
 
-# ---------------------------
+# ===============================
 # Voice Processing
-# ---------------------------
+# ===============================
 def process_voice(media_url):
 
     try:
@@ -106,11 +107,12 @@ def process_voice(media_url):
             f.write(r.content)
 
         sound = AudioSegment.from_ogg(audio_file)
-        sound.export("voice.wav",format="wav")
+        sound.export("voice.wav", format="wav")
 
         recognizer = sr.Recognizer()
 
         with sr.AudioFile("voice.wav") as source:
+
             audio = recognizer.record(source)
 
         text = recognizer.recognize_google(audio)
@@ -119,14 +121,14 @@ def process_voice(media_url):
 
     except Exception as e:
 
-        print("VOICE ERROR:",e)
+        print("VOICE ERROR:", e)
 
         return None
 
 
-# ---------------------------
+# ===============================
 # WhatsApp Bot
-# ---------------------------
+# ===============================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
@@ -137,9 +139,9 @@ def whatsapp():
     resp = MessagingResponse()
     msg = resp.message()
 
-    # ---------------------------
-    # Voice message detection
-    # ---------------------------
+    # ------------------------------
+    # Voice detection
+    # ------------------------------
     if media_url:
 
         voice_text = process_voice(media_url)
@@ -153,16 +155,16 @@ def whatsapp():
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ---------------------------
-    # Log conversation
-    # ---------------------------
+    # ------------------------------
+    # Log messages
+    # ------------------------------
     with open("chat_log.txt","a") as log:
         log.write(f"{timestamp} | {user} | USER: {incoming_msg}\n")
 
 
-    # ---------------------------
-    # Reset
-    # ---------------------------
+    # ------------------------------
+    # Reset command
+    # ------------------------------
     if text == "reset":
 
         memory[user] = []
@@ -175,16 +177,16 @@ def whatsapp():
         return str(resp)
 
 
-    # ---------------------------
-    # Greeting
-    # ---------------------------
+    # ------------------------------
+    # Greetings
+    # ------------------------------
     if text in ["hi","hello","hey"]:
 
         greetings = [
 
             "Hello 👋 I'm your AI assistant. How can I help you today?",
             "Hi there 😊 What can I assist you with?",
-            "Hey! I'm here to help. Ask me anything.",
+            "Hey! I'm here to help.",
             "Hello! 👋 How may I assist you today?"
 
         ]
@@ -192,9 +194,9 @@ def whatsapp():
         reply = random.choice(greetings)
 
 
-    # ---------------------------
-    # Menu
-    # ---------------------------
+    # ------------------------------
+    # Help menu
+    # ------------------------------
     elif text in ["menu","help"]:
 
         reply = (
@@ -207,12 +209,12 @@ def whatsapp():
         )
 
 
-    # ---------------------------
+    # ------------------------------
     # Lead capture
-    # ---------------------------
+    # ------------------------------
     elif "book" in text or "service" in text:
 
-        leads[user] = {"service":incoming_msg}
+        leads[user] = {"service": incoming_msg}
 
         reply = "Great! May I have your name?"
 
@@ -224,9 +226,9 @@ def whatsapp():
         reply = "Thanks! Our team will contact you shortly."
 
 
-    # ---------------------------
+    # ------------------------------
     # AI conversation
-    # ---------------------------
+    # ------------------------------
     else:
 
         try:
@@ -241,7 +243,7 @@ def whatsapp():
             conversation = "\n".join(memory[user])
 
             response = client.models.generate_content(
-                model="gemini-1.5-flash-8b",
+                model="gemini-2.0-flash",
                 contents=f"""
 You are a helpful WhatsApp AI assistant.
 
@@ -261,14 +263,14 @@ Conversation:
 
         except Exception as e:
 
-            print("AI ERROR:",e)
+            print("AI ERROR:", e)
 
             reply = "AI is busy right now. Please try again later."
 
 
-    # ---------------------------
+    # ------------------------------
     # Log bot reply
-    # ---------------------------
+    # ------------------------------
     with open("chat_log.txt","a") as log:
         log.write(f"{timestamp} | BOT: {reply}\n")
 
@@ -278,11 +280,11 @@ Conversation:
     return str(resp)
 
 
-# ---------------------------
+# ===============================
 # Run server
-# ---------------------------
+# ===============================
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT",10000))
 
-    app.run(host="0.0.0.0",port=port)
+    app.run(host="0.0.0.0", port=port)
