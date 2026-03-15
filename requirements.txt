@@ -3,7 +3,7 @@ twilio
 gunicorn
 google-genai
 requests
-speechrecognition
+Speechrecognition
 pydub
 gTTS
 gspread
