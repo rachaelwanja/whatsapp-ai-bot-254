@@ -6,3 +6,5 @@ requests
 speechrecognition
 pydub
 gTTS
+gspread
+oauth2client
