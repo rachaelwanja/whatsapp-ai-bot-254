@@ -1,7 +1,7 @@
 Flask
 twilio
 gunicorn
-google-genai
+google-generativeai
 requests
 SpeechRecognition
 pydub
