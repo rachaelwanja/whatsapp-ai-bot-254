@@ -8,24 +8,22 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ Configure Gemini API
+# Configure Gemini AI
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # Memory storage
 memory = {}
-
-# Lead capture
 leads = {}
 
 @app.route("/")
 def home():
-    return "WhatsApp AI bot running 🚀"
-
+    return "WhatsApp AI bot running"
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.values.get("Body", "").strip()
+    incoming_msg = request.values.get("Body", "")
+    incoming_msg = incoming_msg.strip() if incoming_msg else ""
     user = request.values.get("From")
 
     resp = MessagingResponse()
@@ -34,7 +32,7 @@ def whatsapp():
     text = incoming_msg.lower()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ✅ LOG USER MESSAGE
+    # ---------- LOG USER MESSAGE ----------
     with open("chat_log.txt", "a") as log:
         log.write(f"{timestamp} | {user} | USER: {incoming_msg}\n")
 
@@ -46,42 +44,66 @@ def whatsapp():
 
     # ---------- GREETING ----------
     elif text in ["hi", "hello", "hey"]:
-        reply = random.choice([
+        greetings = [
             "Hello 👋 I'm your AI assistant. How can I help you today?",
             "Hi there! 😊 What can I assist you with?",
-            "Hey! I'm here to help. Ask me anything.",
-            "Hello! 👋 How may I assist you today?"
-        ])
+            "Hey! I'm here to help. Ask me anything."
+        ]
+        reply = random.choice(greetings)
 
     # ---------- MENU ----------
     elif text in ["menu", "help"]:
         reply = (
             "🤖 AI Assistant Menu\n\n"
             "1️⃣ Ask any question\n"
-            "2️⃣ Get information\n"
-            "3️⃣ Chat with AI\n"
-            "4️⃣ School Demo\n\n"
-            "Just send your message."
+            "2️⃣ School Information\n"
+            "3️⃣ Book Service\n"
+            "4️⃣ Reset\n\n"
+            "Type your option or message."
         )
 
-    # ---------- SCHOOL DEMO ----------
-    elif "school" in text:
+    # ---------- SCHOOL ----------
+    elif "school" in text or "thika primary" in text:
         reply = (
             "🏫 *Thika Primary School (Demo)*\n\n"
+            "Choose an option:\n\n"
             "1️⃣ Admissions\n"
             "2️⃣ Fees\n"
             "3️⃣ Location\n"
-            "4️⃣ Contact"
+            "4️⃣ Contact\n\n"
+            "Reply with 1, 2, 3 or 4"
         )
 
-    elif "admission" in text:
-        reply = "📚 Admissions open. Send student name, grade, and parent contact."
+    elif text == "1" or "admission" in text:
+        reply = (
+            "📚 *Admissions for 2026 are open.*\n\n"
+            "Please provide:\n"
+            "• Student Name\n"
+            "• Grade\n"
+            "• Parent phone number"
+        )
 
-    elif "fees" in text:
-        reply = "💰 Lower Primary: KSh 40,000 | Upper Primary: KSh 55,000 per term."
+    elif text == "2" or "fees" in text:
+        reply = (
+            "💰 *School Fees*\n\n"
+            "Lower Primary: KSh 400 per term\n"
+            "Upper Primary: KSh 550 per term\n\n"
+            "Contact office for details."
+        )
 
-    elif "location" in text:
-        reply = "📍 Thika Town. Open 8AM - 4PM."
+    elif text == "3" or "location" in text:
+        reply = (
+            "📍 *Location*\n"
+            "Thika Town\n"
+            "Office Hours: 8:00 AM – 4:00 PM"
+        )
+
+    elif text == "4" or "contact" in text:
+        reply = (
+            "📞 *Contact Office*\n"
+            "Phone: +254700000000\n"
+            "Email: info@thikaprimary.ac.ke"
+        )
 
     # ---------- LEAD CAPTURE ----------
     elif "book" in text or "service" in text:
@@ -90,7 +112,7 @@ def whatsapp():
 
     elif user in leads and "name" not in leads[user]:
         leads[user]["name"] = incoming_msg
-        reply = "Thanks! Our team will contact you."
+        reply = "Thank you! We will contact you shortly."
 
     # ---------- AI CHAT ----------
     else:
@@ -99,20 +121,23 @@ def whatsapp():
                 memory[user] = []
 
             memory[user].append(incoming_msg)
-
-            # Keep last 6 messages only
             memory[user] = memory[user][-6:]
 
             conversation = "\n".join(memory[user])
 
-            # ✅ Gemini model
             model = genai.GenerativeModel("gemini-1.5-flash")
 
             response = model.generate_content(
-                f"You are a helpful WhatsApp AI assistant. Reply briefly.\n\n{conversation}"
+                f"""
+You are a helpful WhatsApp AI assistant.
+Keep responses short and clear.
+
+Conversation:
+{conversation}
+"""
             )
 
-            reply = response.text if response.text else "Ask me anything 😊"
+            reply = response.text if response.text else "I'm here 😊 Ask me anything."
 
             memory[user].append(reply)
 
@@ -120,18 +145,16 @@ def whatsapp():
             print("AI ERROR:", e)
             reply = "⚠️ AI temporarily unavailable. Try again."
 
-    # ✅ LOG BOT RESPONSE
+    # ---------- LOG BOT RESPONSE ----------
     with open("chat_log.txt", "a") as log:
         log.write(f"{timestamp} | BOT: {reply}\n")
 
-    # Simulate human delay
     time.sleep(1)
 
     msg.body(reply)
     return str(resp)
 
 
-# ✅ RUN SERVER
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
