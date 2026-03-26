@@ -3,8 +3,6 @@ twilio
 gunicorn
 google-genai
 requests
-Speechrecognition
+SpeechRecognition
 pydub
 gTTS
-gspread
-oauth2client

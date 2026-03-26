@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>AI Bot Dashboard</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+padding:40px;
+}
+
+h2{
+color:#333;
+}
+
+table{
+background:white;
+border-collapse:collapse;
+width:100%;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#333;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>AI Bot Lead Dashboard</h2>
+
+<table id="table">
+
+<tr>
+<th>User</th>
+<th>Name</th>
+<th>Service</th>
+</tr>
+
+</table>
+
+<script>
+
+async function loadLeads(){
+
+let res = await fetch("/leads")
+
+let data = await res.json()
+
+let table = document.getElementById("table")
+
+data.forEach(lead=>{
+
+table.innerHTML +=
+`<tr>
+<td>${lead.user}</td>
+<td>${lead.name}</td>
+<td>${lead.service}</td>
+</tr>`
+
+})
+
+}
+
+loadLeads()
+
+</script>
+
+</body>
+
+</html>
