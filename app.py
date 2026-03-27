@@ -7,7 +7,7 @@ import datetime
 
 app = Flask(__name__)
 
-# ================= CONFIG =================
+# ================= GEMINI CONFIG =================
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # ================= CLIENT DATABASE =================
@@ -42,7 +42,6 @@ try:
 except:
     leads = []
 
-# ================= SAVE LEADS FUNCTION =================
 def save_leads():
     with open("leads.json", "w") as f:
         json.dump(leads, f, indent=4)
@@ -51,8 +50,7 @@ def save_leads():
 
 @app.route("/")
 def home():
-    return "Multi-client bot running 🚀"
-
+    return "WhatsApp AI Bot Running 🚀"
 
 # ================= DASHBOARD =================
 @app.route("/leads")
@@ -76,8 +74,7 @@ def view_leads():
 
     return html
 
-
-# ================= WHATSAPP BOT =================
+# ================= WHATSAPP =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
@@ -186,7 +183,6 @@ def whatsapp():
     msg.body(reply)
     return str(resp)
 
-
 # ================= AI FUNCTION =================
 def ai_reply(user, text, client):
 
@@ -199,7 +195,8 @@ def ai_reply(user, text, client):
 
         conversation = "\n".join(memory[user]["history"])
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # ✅ FIXED MODEL
+        model = genai.GenerativeModel("gemini-1.0-pro")
 
         response = model.generate_content(
             f"""
@@ -212,17 +209,16 @@ Conversation:
 """
         )
 
-        reply = response.text if response.text else "Ask me something 😊"
+        reply = response.text if hasattr(response, "text") else "Ask me something 😊"
 
         memory[user]["history"].append(reply)
 
         return reply
 
     except Exception as e:
-        print(e)
-        return "⚠️ AI unavailable."
-
+        print("AI ERROR:", e)
+        return "⚠️ AI temporarily unavailable."
 
 # ================= RUN =================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
