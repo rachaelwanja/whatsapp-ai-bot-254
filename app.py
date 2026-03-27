@@ -2,15 +2,17 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 import google.generativeai as genai
 import os
-import time
+import json
+import datetime
 
 app = Flask(__name__)
 
+# ================= CONFIG =================
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # ================= CLIENT DATABASE =================
 clients = {
-    "whatsapp:+14155238886": {  # Example number
+    "whatsapp:+14155238886": {
         "type": "school",
         "name": "Thika Primary School",
         "fees": "KSh 40,000 per term",
@@ -30,7 +32,20 @@ clients = {
     }
 }
 
+# ================= MEMORY =================
 memory = {}
+
+# ================= LOAD LEADS =================
+try:
+    with open("leads.json", "r") as f:
+        leads = json.load(f)
+except:
+    leads = []
+
+# ================= SAVE LEADS FUNCTION =================
+def save_leads():
+    with open("leads.json", "w") as f:
+        json.dump(leads, f, indent=4)
 
 # ================= ROUTES =================
 
@@ -39,27 +54,67 @@ def home():
     return "Multi-client bot running 🚀"
 
 
+# ================= DASHBOARD =================
+@app.route("/leads")
+def view_leads():
+
+    html = "<h2>📋 Captured Leads</h2><hr>"
+
+    if not leads:
+        html += "<p>No leads yet.</p>"
+    else:
+        for lead in leads:
+            html += f"""
+            <p>
+            <b>Client:</b> {lead['client']} <br>
+            <b>User:</b> {lead['user']} <br>
+            <b>Details:</b> {lead['details']} <br>
+            <b>Time:</b> {lead['time']}
+            </p>
+            <hr>
+            """
+
+    return html
+
+
+# ================= WHATSAPP BOT =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.values.get("Body", "").strip().lower()
+    incoming_msg = request.values.get("Body", "").strip()
+    lower_msg = incoming_msg.lower()
     user = request.values.get("From")
-    to_number = request.values.get("To")  # 🔥 KEY
+    to_number = request.values.get("To")
 
     resp = MessagingResponse()
     msg = resp.message()
 
-    # Get client data
     client = clients.get(to_number)
 
     if not client:
         msg.body("⚠️ Client not configured.")
         return str(resp)
 
+    # ================= LEAD CAPTURE =================
+    if memory.get(user, {}).get("state") == "booking":
+
+        leads.append({
+            "user": user,
+            "details": incoming_msg,
+            "client": client["name"],
+            "time": str(datetime.datetime.now())
+        })
+
+        save_leads()
+        memory[user] = {}
+
+        msg.body("✅ Your request has been received. We will contact you shortly.")
+        return str(resp)
+
     # ================= SCHOOL =================
     if client["type"] == "school":
 
-        if incoming_msg in ["hi", "hello", "menu"]:
+        if lower_msg in ["hi", "hello", "menu"]:
             reply = f"""
 🏫 {client['name']}
 
@@ -68,22 +123,22 @@ def whatsapp():
 3️⃣ Location
 """
 
-        elif incoming_msg == "1":
+        elif lower_msg == "1":
             reply = "Admissions open. Send student details."
 
-        elif incoming_msg == "2":
+        elif lower_msg == "2":
             reply = f"Fees: {client['fees']}"
 
-        elif incoming_msg == "3":
+        elif lower_msg == "3":
             reply = f"Location: {client['location']}"
 
         else:
-            reply = ai_reply(user, incoming_msg)
+            reply = ai_reply(user, incoming_msg, client)
 
     # ================= HOSPITAL =================
     elif client["type"] == "hospital":
 
-        if incoming_msg in ["hi", "hello", "menu"]:
+        if lower_msg in ["hi", "hello", "menu"]:
             reply = f"""
 🏥 {client['name']}
 
@@ -92,22 +147,23 @@ def whatsapp():
 3️⃣ Book Appointment
 """
 
-        elif incoming_msg == "1":
+        elif lower_msg == "1":
             reply = f"Services: {client['services']}"
 
-        elif incoming_msg == "2":
+        elif lower_msg == "2":
             reply = f"Location: {client['location']}"
 
-        elif incoming_msg == "3":
-            reply = "Send your name and preferred date."
+        elif lower_msg == "3":
+            memory[user] = {"state": "booking"}
+            reply = "Please send your name and preferred appointment date."
 
         else:
-            reply = ai_reply(user, incoming_msg)
+            reply = ai_reply(user, incoming_msg, client)
 
     # ================= MATATU =================
     elif client["type"] == "matatu":
 
-        if incoming_msg in ["hi", "hello", "menu"]:
+        if lower_msg in ["hi", "hello", "menu"]:
             reply = f"""
 🚐 {client['name']}
 
@@ -115,47 +171,58 @@ def whatsapp():
 2️⃣ Fare
 """
 
-        elif incoming_msg == "1":
+        elif lower_msg == "1":
             reply = f"Routes: {client['routes']}"
 
-        elif incoming_msg == "2":
+        elif lower_msg == "2":
             reply = f"Fare: {client['fare']}"
 
         else:
-            reply = ai_reply(user, incoming_msg)
+            reply = ai_reply(user, incoming_msg, client)
 
     else:
         reply = "Service not available."
 
-    time.sleep(1)
     msg.body(reply)
     return str(resp)
 
 
 # ================= AI FUNCTION =================
-
-def ai_reply(user, text):
+def ai_reply(user, text, client):
 
     try:
         if user not in memory:
-            memory[user] = []
+            memory[user] = {"history": []}
 
-        memory[user].append(text)
-        memory[user] = memory[user][-5:]
+        memory[user]["history"].append(text)
+        memory[user]["history"] = memory[user]["history"][-5:]
 
-        conversation = "\n".join(memory[user])
+        conversation = "\n".join(memory[user]["history"])
 
         model = genai.GenerativeModel("gemini-1.5-flash")
 
         response = model.generate_content(
-            f"Reply briefly:\n{conversation}"
+            f"""
+You are a helpful assistant for a {client['type']} called {client['name']} located in {client.get('location', 'Kenya')}.
+
+Reply professionally and briefly.
+
+Conversation:
+{conversation}
+"""
         )
 
         reply = response.text if response.text else "Ask me something 😊"
 
-        memory[user].append(reply)
+        memory[user]["history"].append(reply)
 
         return reply
 
-    except:
+    except Exception as e:
+        print(e)
         return "⚠️ AI unavailable."
+
+
+# ================= RUN =================
+if __name__ == "__main__":
+    app.run(debug=True)
