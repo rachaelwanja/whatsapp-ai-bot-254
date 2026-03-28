@@ -115,28 +115,26 @@ def whatsapp():
         msg.body("✅ Got it! We'll contact you shortly 👍")
         return str(resp)
 
-    # ================= SIMPLE MENUS =================
+    # ================= MENU =================
     if lower_msg in ["hi", "hello", "menu"]:
-        reply = f"""
-👋 Hi! Welcome to our service
-
-Choose:
-1️⃣ School
-2️⃣ Hospital
-3️⃣ Matatu
-"""
-        msg.body(reply)
+        msg.body(
+            "👋 Hi! What are you looking for?\n\n"
+            "1️⃣ School\n"
+            "2️⃣ Hospital\n"
+            "3️⃣ Matatu"
+        )
         return str(resp)
 
+    # ================= QUICK OPTIONS =================
     if lower_msg == "1":
         client = next(c for c in clients if c["type"] == "school")
-        msg.body(f"🏫 {client['name']}\nFees: {client['fees']}\nReply 'admission' to enroll")
+        msg.body(f"🏫 {client['name']}\nFees: {client['fees']}\nReply 'admission' to enroll 😊")
         return str(resp)
 
     if lower_msg == "2":
         client = next(c for c in clients if c["type"] == "hospital")
         memory[user] = {"state": "booking"}
-        msg.body(f"🏥 {client['name']}\nSend your name + appointment date")
+        msg.body(f"🏥 {client['name']}\nSend your name + appointment date 😊")
         return str(resp)
 
     if lower_msg == "3":
@@ -144,9 +142,41 @@ Choose:
         msg.body(f"🚐 {client['name']}\nFare: {client['fare']}\nRoutes: {client['routes']}")
         return str(resp)
 
+    # ================= SMART BUSINESS ANSWERS =================
+    if client["type"] == "school":
+        if "fee" in lower_msg:
+            msg.body(f"Fees are {client['fees']} 👍")
+            return str(resp)
+
+        if "location" in lower_msg:
+            msg.body(f"We are located at {client['location']} 📍")
+            return str(resp)
+
+        if "admission" in lower_msg or "enroll" in lower_msg:
+            memory[user] = {"state": "booking"}
+            msg.body("Send child's name + grade to enroll 😊")
+            return str(resp)
+
+    if client["type"] == "hospital":
+        if "service" in lower_msg:
+            msg.body(f"We offer: {client['services']} 🏥")
+            return str(resp)
+
+        if "location" in lower_msg:
+            msg.body(f"We are in {client['location']} 📍")
+            return str(resp)
+
+    if client["type"] == "matatu":
+        if "fare" in lower_msg:
+            msg.body(f"Fare is {client['fare']} 💰")
+            return str(resp)
+
+        if "route" in lower_msg:
+            msg.body(f"Routes: {client['routes']} 🚐")
+            return str(resp)
+
     # ================= AI RESPONSE =================
     reply = ai_reply(user, incoming_msg, client)
-
     msg.body(reply)
     return str(resp)
 
@@ -177,17 +207,20 @@ def ai_reply(user, text, client):
 You are a friendly WhatsApp assistant for {client['name']} in {client.get('location', 'Kenya')}.
 
 RULES:
-- Sound human (like chatting on WhatsApp)
-- Keep replies SHORT (1–3 sentences)
-- Be friendly and simple
-- Don't be too formal
-- Only talk about the business when needed
-- If question is general, answer normally
+- Talk like a real human chatting on WhatsApp
+- VERY SHORT replies (max 2 sentences)
+- Simple English
+- Friendly and natural
+- No long explanations
+- No formal language
+
+IMPORTANT:
+- If it's about the business → keep it relevant
+- If general question → answer normally
 
 Tone:
-- Friendly 😊
-- Kenyan vibe (simple English)
-
+- Casual 😊
+- Kenyan friendly style
 """
                     },
                     {
@@ -195,7 +228,7 @@ Tone:
                         "content": conversation
                     }
                 ],
-                "max_tokens": 150
+                "max_tokens": 120
             }
         )
 
@@ -208,7 +241,7 @@ Tone:
 
     except Exception as e:
         print("AI ERROR:", e)
-        return "⚠️ AI temporarily unavailable."
+        return "⚠️ I'm having a small issue, try again 😊"
 
 # ================= RUN =================
 if __name__ == "__main__":
