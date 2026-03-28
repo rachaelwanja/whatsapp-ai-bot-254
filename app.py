@@ -114,13 +114,14 @@ def whatsapp():
             reply = f"""
 🏫 {client['name']}
 
-1️⃣ Admissions
-2️⃣ Fees
+1️⃣ Admissions  
+2️⃣ Fees  
 3️⃣ Location
 """
 
         elif lower_msg == "1":
-            reply = "Admissions open. Send student details."
+            memory[user] = {"state": "booking"}
+            reply = "Send student details to apply."
 
         elif lower_msg == "2":
             reply = f"Fees: {client['fees']}"
@@ -138,8 +139,8 @@ def whatsapp():
             reply = f"""
 🏥 {client['name']}
 
-1️⃣ Services
-2️⃣ Location
+1️⃣ Services  
+2️⃣ Location  
 3️⃣ Book Appointment
 """
 
@@ -151,7 +152,7 @@ def whatsapp():
 
         elif lower_msg == "3":
             memory[user] = {"state": "booking"}
-            reply = "Please send your name and preferred appointment date."
+            reply = "Send your name and preferred date."
 
         else:
             reply = ai_reply(user, incoming_msg, client)
@@ -163,7 +164,7 @@ def whatsapp():
             reply = f"""
 🚐 {client['name']}
 
-1️⃣ Routes
+1️⃣ Routes  
 2️⃣ Fare
 """
 
@@ -205,7 +206,14 @@ def ai_reply(user, text, client):
                 "messages": [
                     {
                         "role": "system",
-                        "content": f"You are a helpful assistant for a {client['type']} called {client['name']} in Kenya. Reply professionally and briefly."
+                        "content": f"""
+You are a WhatsApp assistant for {client['name']} ({client['type']} in Kenya).
+
+Rules:
+- Keep replies VERY SHORT (1–2 sentences)
+- Be direct and helpful
+- Always guide user to next step (book, ask details, visit, etc.)
+"""
                     },
                     {
                         "role": "user",
