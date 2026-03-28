@@ -194,8 +194,8 @@ def ai_reply(user, text, client):
 
         conversation = "\n".join(memory[user]["history"])
 
-        # ✅ FINAL WORKING MODEL
-        model = genai.GenerativeModel("models/gemini-1.5-flash")
+        # ✅ STABLE MODEL (WORKS WITH YOUR SETUP)
+        model = genai.GenerativeModel("gemini-pro")
 
         response = model.generate_content(
             f"""
@@ -208,18 +208,11 @@ Conversation:
 """
         )
 
-        # ✅ SAFE RESPONSE HANDLING (IMPORTANT)
-        reply = None
+        reply = ""
 
-        if hasattr(response, "text") and response.text:
+        try:
             reply = response.text
-        elif hasattr(response, "candidates") and response.candidates:
-            try:
-                reply = response.candidates[0].content.parts[0].text
-            except:
-                reply = None
-
-        if not reply:
+        except:
             reply = "I'm here to help 😊"
 
         memory[user]["history"].append(reply)
@@ -227,7 +220,7 @@ Conversation:
         return reply
 
     except Exception as e:
-        print("AI ERROR:", str(e))
+        print("AI ERROR:", e)
         return "⚠️ AI temporarily unavailable."
 
 # ================= RUN =================
