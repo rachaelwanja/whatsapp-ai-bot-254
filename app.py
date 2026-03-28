@@ -46,8 +46,7 @@ def save_leads():
     with open("leads.json", "w") as f:
         json.dump(leads, f, indent=4)
 
-# ================= ROUTES =================
-
+# ================= HOME =================
 @app.route("/")
 def home():
     return "WhatsApp AI Bot Running 🚀"
@@ -195,8 +194,8 @@ def ai_reply(user, text, client):
 
         conversation = "\n".join(memory[user]["history"])
 
-        # ✅ FIXED MODEL
-        model = genai.GenerativeModel("gemini-1.0-pro")
+        # ✅ CORRECT MODEL
+        model = genai.GenerativeModel("gemini-pro")
 
         response = model.generate_content(
             f"""
