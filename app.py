@@ -195,7 +195,7 @@ def ai_reply(user, text, client):
         conversation = "\n".join(memory[user]["history"])
 
         # ✅ CORRECT MODEL
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         response = model.generate_content(
             f"""
