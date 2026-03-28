@@ -11,26 +11,26 @@ app = Flask(__name__)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # ================= CLIENT DATABASE =================
-clients = {
-    "whatsapp:+14155238886": {
+clients = [
+    {
         "type": "school",
         "name": "Thika Primary School",
         "fees": "KSh 40,000 per term",
         "location": "Thika Town"
     },
-    "whatsapp:+14155238887": {
+    {
         "type": "hospital",
         "name": "City Clinic",
         "services": "General consultation, maternity",
         "location": "Nairobi"
     },
-    "whatsapp:+14155238888": {
+    {
         "type": "matatu",
         "name": "Super Metro",
         "routes": "Nairobi ↔ Thika",
         "fare": "KSh 100"
     }
-}
+]
 
 # ================= MEMORY =================
 memory = {}
@@ -49,12 +49,11 @@ def save_leads():
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "WhatsApp AI Bot (OpenRouter) Running 🚀"
+    return "WhatsApp AI Bot Running 🚀"
 
 # ================= LEADS DASHBOARD =================
 @app.route("/leads")
 def view_leads():
-
     html = "<h2>📋 Captured Leads</h2><hr>"
 
     if not leads:
@@ -63,15 +62,29 @@ def view_leads():
         for lead in leads:
             html += f"""
             <p>
-            <b>Client:</b> {lead['client']} <br>
+            <b>Business:</b> {lead['client']} <br>
             <b>User:</b> {lead['user']} <br>
             <b>Details:</b> {lead['details']} <br>
             <b>Time:</b> {lead['time']}
-            </p>
-            <hr>
+            </p><hr>
             """
 
     return html
+
+# ================= DETECT CLIENT =================
+def detect_client(message):
+    msg = message.lower()
+
+    if "school" in msg or "admission" in msg:
+        return next(c for c in clients if c["type"] == "school")
+
+    elif "hospital" in msg or "doctor" in msg:
+        return next(c for c in clients if c["type"] == "hospital")
+
+    elif "matatu" in msg or "fare" in msg or "route" in msg:
+        return next(c for c in clients if c["type"] == "matatu")
+
+    return clients[0]  # default
 
 # ================= WHATSAPP =================
 @app.route("/whatsapp", methods=["POST"])
@@ -80,16 +93,11 @@ def whatsapp():
     incoming_msg = request.values.get("Body", "").strip()
     lower_msg = incoming_msg.lower()
     user = request.values.get("From")
-    to_number = request.values.get("To")
 
     resp = MessagingResponse()
     msg = resp.message()
 
-    client = clients.get(to_number)
-
-    if not client:
-        msg.body("⚠️ Client not configured.")
-        return str(resp)
+    client = detect_client(incoming_msg)
 
     # ================= LEAD CAPTURE =================
     if memory.get(user, {}).get("state") == "booking":
@@ -104,81 +112,40 @@ def whatsapp():
         save_leads()
         memory[user] = {}
 
-        msg.body("✅ Request received. We will contact you shortly.")
+        msg.body("✅ Got it! We'll contact you shortly 👍")
         return str(resp)
 
-    # ================= SCHOOL =================
-    if client["type"] == "school":
+    # ================= SIMPLE MENUS =================
+    if lower_msg in ["hi", "hello", "menu"]:
+        reply = f"""
+👋 Hi! Welcome to our service
 
-        if lower_msg in ["hi", "hello", "menu"]:
-            reply = f"""
-🏫 {client['name']}
-
-1️⃣ Admissions  
-2️⃣ Fees  
-3️⃣ Location
+Choose:
+1️⃣ School
+2️⃣ Hospital
+3️⃣ Matatu
 """
+        msg.body(reply)
+        return str(resp)
 
-        elif lower_msg == "1":
-            memory[user] = {"state": "booking"}
-            reply = "Send student details to apply."
+    if lower_msg == "1":
+        client = next(c for c in clients if c["type"] == "school")
+        msg.body(f"🏫 {client['name']}\nFees: {client['fees']}\nReply 'admission' to enroll")
+        return str(resp)
 
-        elif lower_msg == "2":
-            reply = f"Fees: {client['fees']}"
+    if lower_msg == "2":
+        client = next(c for c in clients if c["type"] == "hospital")
+        memory[user] = {"state": "booking"}
+        msg.body(f"🏥 {client['name']}\nSend your name + appointment date")
+        return str(resp)
 
-        elif lower_msg == "3":
-            reply = f"Location: {client['location']}"
+    if lower_msg == "3":
+        client = next(c for c in clients if c["type"] == "matatu")
+        msg.body(f"🚐 {client['name']}\nFare: {client['fare']}\nRoutes: {client['routes']}")
+        return str(resp)
 
-        else:
-            reply = ai_reply(user, incoming_msg, client)
-
-    # ================= HOSPITAL =================
-    elif client["type"] == "hospital":
-
-        if lower_msg in ["hi", "hello", "menu"]:
-            reply = f"""
-🏥 {client['name']}
-
-1️⃣ Services  
-2️⃣ Location  
-3️⃣ Book Appointment
-"""
-
-        elif lower_msg == "1":
-            reply = f"Services: {client['services']}"
-
-        elif lower_msg == "2":
-            reply = f"Location: {client['location']}"
-
-        elif lower_msg == "3":
-            memory[user] = {"state": "booking"}
-            reply = "Send your name and preferred date."
-
-        else:
-            reply = ai_reply(user, incoming_msg, client)
-
-    # ================= MATATU =================
-    elif client["type"] == "matatu":
-
-        if lower_msg in ["hi", "hello", "menu"]:
-            reply = f"""
-🚐 {client['name']}
-
-1️⃣ Routes  
-2️⃣ Fare
-"""
-
-        elif lower_msg == "1":
-            reply = f"Routes: {client['routes']}"
-
-        elif lower_msg == "2":
-            reply = f"Fare: {client['fare']}"
-
-        else:
-            reply = ai_reply(user, incoming_msg, client)
-
-    else:
-        reply = "Service not available."
+    # ================= AI RESPONSE =================
+    reply = ai_reply(user, incoming_msg, client)
 
     msg.body(reply)
     return str(resp)
@@ -202,30 +169,38 @@ def ai_reply(user, text, client):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "mistralai/mixtral-8x7b-instruct",
+                "model": "openai/gpt-3.5-turbo",
                 "messages": [
                     {
                         "role": "system",
                         "content": f"""
-You are a WhatsApp assistant for {client['name']} ({client['type']} in Kenya).
+You are a friendly WhatsApp assistant for {client['name']} in {client.get('location', 'Kenya')}.
 
-Rules:
-- Keep replies VERY SHORT (1–2 sentences)
-- Be direct and helpful
-- Always guide user to next step (book, ask details, visit, etc.)
+RULES:
+- Sound human (like chatting on WhatsApp)
+- Keep replies SHORT (1–3 sentences)
+- Be friendly and simple
+- Don't be too formal
+- Only talk about the business when needed
+- If question is general, answer normally
+
+Tone:
+- Friendly 😊
+- Kenyan vibe (simple English)
+
 """
                     },
                     {
                         "role": "user",
                         "content": conversation
                     }
-                ]
+                ],
+                "max_tokens": 150
             }
         )
 
-        result = response.json()
-
-        reply = result["choices"][0]["message"]["content"]
+        data = response.json()
+        reply = data["choices"][0]["message"]["content"]
 
         memory[user]["history"].append(reply)
 
