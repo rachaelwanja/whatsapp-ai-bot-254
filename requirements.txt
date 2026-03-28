@@ -1,8 +1,4 @@
 Flask
 twilio
 gunicorn
-google-genai
 requests
-SpeechRecognition
-pydub
-gTTS
