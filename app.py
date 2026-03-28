@@ -1,14 +1,14 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-from google import genai
+import requests
 import os
 import json
 import datetime
 
 app = Flask(__name__)
 
-# ================= GEMINI CLIENT =================
-client_ai = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+# ================= OPENROUTER CONFIG =================
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # ================= CLIENT DATABASE =================
 clients = {
@@ -49,7 +49,7 @@ def save_leads():
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "WhatsApp AI Bot Running 🚀"
+    return "WhatsApp AI Bot (OpenRouter) Running 🚀"
 
 # ================= LEADS DASHBOARD =================
 @app.route("/leads")
@@ -104,7 +104,7 @@ def whatsapp():
         save_leads()
         memory[user] = {}
 
-        msg.body("✅ Your request has been received. We will contact you shortly.")
+        msg.body("✅ Request received. We will contact you shortly.")
         return str(resp)
 
     # ================= SCHOOL =================
@@ -194,19 +194,30 @@ def ai_reply(user, text, client):
 
         conversation = "\n".join(memory[user]["history"])
 
-        response = client_ai.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=f"""
-You are a helpful assistant for a {client['type']} called {client['name']} located in {client.get('location', 'Kenya')}.
-
-Reply professionally and briefly.
-
-Conversation:
-{conversation}
-"""
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "mistralai/mixtral-8x7b-instruct",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": f"You are a helpful assistant for a {client['type']} called {client['name']} in Kenya. Reply professionally and briefly."
+                    },
+                    {
+                        "role": "user",
+                        "content": conversation
+                    }
+                ]
+            }
         )
 
-        reply = response.text if response.text else "I'm here to help 😊"
+        result = response.json()
+
+        reply = result["choices"][0]["message"]["content"]
 
         memory[user]["history"].append(reply)
 
