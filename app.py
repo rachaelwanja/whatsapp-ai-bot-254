@@ -1,14 +1,14 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-import google.generativeai as genai
+from google import genai
 import os
 import json
 import datetime
 
 app = Flask(__name__)
 
-# ================= GEMINI CONFIG =================
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+# ================= GEMINI CLIENT =================
+client_ai = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # ================= CLIENT DATABASE =================
 clients = {
@@ -51,7 +51,7 @@ def save_leads():
 def home():
     return "WhatsApp AI Bot Running 🚀"
 
-# ================= DASHBOARD =================
+# ================= LEADS DASHBOARD =================
 @app.route("/leads")
 def view_leads():
 
@@ -194,11 +194,9 @@ def ai_reply(user, text, client):
 
         conversation = "\n".join(memory[user]["history"])
 
-        # ✅ STABLE MODEL (WORKS WITH YOUR SETUP)
-        model = genai.GenerativeModel("gemini-pro")
-
-        response = model.generate_content(
-            f"""
+        response = client_ai.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=f"""
 You are a helpful assistant for a {client['type']} called {client['name']} located in {client.get('location', 'Kenya')}.
 
 Reply professionally and briefly.
@@ -208,12 +206,7 @@ Conversation:
 """
         )
 
-        reply = ""
-
-        try:
-            reply = response.text
-        except:
-            reply = "I'm here to help 😊"
+        reply = response.text if response.text else "I'm here to help 😊"
 
         memory[user]["history"].append(reply)
 
