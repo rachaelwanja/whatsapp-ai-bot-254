@@ -31,9 +31,8 @@ def save_leads():
     with open("leads.json", "w") as f:
         json.dump(leads, f, indent=4)
 
-# ================= OPENROUTER AI =================
+# ================= AI (OPENROUTER) =================
 def ai_reply(user, text, client):
-
     try:
         if user not in memory:
             memory[user] = {"history": []}
@@ -44,16 +43,16 @@ def ai_reply(user, text, client):
         conversation = "\n".join(memory[user]["history"])
 
         prompt = f"""
-You are a smart WhatsApp assistant for a {client['type']} business.
+You are a friendly WhatsApp receptionist for {client['name']}.
 
-Business Name: {client['name']}
+Rules:
+- Be natural and human
+- Keep replies short
+- Use emojis sometimes 😊
+- Guide the user helpfully
+
+Business Type: {client['type']}
 Location: {client.get('location', 'Kenya')}
-
-Your job:
-- Be friendly and human
-- Keep replies SHORT (WhatsApp style)
-- Answer based on the business
-- If it's not related, answer generally but naturally
 
 Conversation:
 {conversation}
@@ -75,7 +74,6 @@ Conversation:
         )
 
         data = response.json()
-
         reply = data["choices"][0]["message"]["content"]
 
         memory[user]["history"].append(reply)
@@ -94,7 +92,6 @@ def home():
 # ================= DASHBOARD =================
 @app.route("/leads")
 def view_leads():
-
     html = "<h2>📋 Captured Leads</h2><hr>"
 
     if not leads:
@@ -105,7 +102,7 @@ def view_leads():
             <p>
             <b>Client:</b> {lead['client']} <br>
             <b>User:</b> {lead['user']} <br>
-            <b>Details:</b> {lead['details']} <br>
+            <b>Details:</b> {lead.get('details', '')} <br>
             <b>Time:</b> {lead['time']}
             </p>
             <hr>
@@ -118,7 +115,7 @@ def view_leads():
 def whatsapp():
 
     global clients
-    clients = load_clients()  # 🔥 reload every request
+    clients = load_clients()
 
     incoming_msg = request.values.get("Body", "").strip()
     lower_msg = incoming_msg.lower()
@@ -134,86 +131,89 @@ def whatsapp():
         msg.body("⚠️ This business is not configured yet.")
         return str(resp)
 
-    # ================= LEAD CAPTURE =================
-    if memory.get(user, {}).get("state") == "booking":
+    # ================= BOOKING FLOW =================
+    if memory.get(user, {}).get("state") == "booking_name":
+        memory[user] = {"state": "booking_date", "name": incoming_msg}
+        msg.body("📅 Enter preferred appointment date")
+        return str(resp)
+
+    elif memory.get(user, {}).get("state") == "booking_date":
+        memory[user]["date"] = incoming_msg
+        memory[user]["state"] = "booking_service"
+        msg.body("🩺 What service do you need?")
+        return str(resp)
+
+    elif memory.get(user, {}).get("state") == "booking_service":
+        booking = memory[user]
 
         leads.append({
             "user": user,
-            "details": incoming_msg,
             "client": client["name"],
+            "name": booking["name"],
+            "date": booking["date"],
+            "service": incoming_msg,
             "time": str(datetime.datetime.now())
         })
 
         save_leads()
         memory[user] = {}
 
-        msg.body("✅ Thanks! We’ll contact you shortly.")
+        msg.body("✅ Appointment request received! We'll confirm shortly.")
         return str(resp)
 
-    # ================= SMART MENU =================
+    # ================= MAIN MENU =================
     if lower_msg in ["hi", "hello", "hey", "menu"]:
+        reply = f"👋 Welcome to {client['name']}!\n"
 
-        if client["type"] == "school":
-            reply = f"""
-🏫 {client['name']}
-
-1️⃣ Admissions
-2️⃣ Fees
-3️⃣ Location
-"""
-
-        elif client["type"] == "hospital":
-            reply = f"""
-🏥 {client['name']}
-
+        if client["type"] == "hospital":
+            reply += """
 1️⃣ Services
-2️⃣ Location
+2️⃣ Doctors
 3️⃣ Book Appointment
+4️⃣ Location
+5️⃣ Emergency
 """
-
-        elif client["type"] == "matatu":
-            reply = f"""
-🚐 {client['name']}
-
-1️⃣ Routes
-2️⃣ Fare
-"""
-
         else:
-            reply = f"Welcome to {client['name']} 😊"
+            reply += "How can we help you today?"
 
-    # ================= SCHOOL =================
-    elif client["type"] == "school":
-
-        if lower_msg == "1":
-            reply = "Admissions open 👍 Send student details."
-        elif lower_msg == "2":
-            reply = f"Fees: {client.get('fees', 'Contact school')}"
-        elif lower_msg == "3":
-            reply = f"Location: {client.get('location')}"
-        else:
-            reply = ai_reply(user, incoming_msg, client)
+        msg.body(reply)
+        return str(resp)
 
     # ================= HOSPITAL =================
-    elif client["type"] == "hospital":
+    if client["type"] == "hospital":
 
-        if lower_msg == "1":
-            reply = f"Services: {client.get('services')}"
-        elif lower_msg == "2":
-            reply = f"Location: {client.get('location')}"
-        elif lower_msg == "3":
-            memory[user] = {"state": "booking"}
-            reply = "Send your name + preferred date 📅"
-        else:
-            reply = ai_reply(user, incoming_msg, client)
+        if lower_msg in ["1", "services"]:
+            services = "\n".join([f"✔️ {s}" for s in client.get("services", [])])
+            reply = f"🩺 Services:\n{services}"
 
-    # ================= MATATU =================
-    elif client["type"] == "matatu":
+        elif lower_msg in ["2", "doctors"]:
+            doctors = ""
+            for d in client.get("doctors", []):
+                doctors += f"\n👨‍⚕️ {d['name']} ({d['specialty']})\n🕒 {d['availability']}\n"
+            reply = f"👩‍⚕️ Doctors:\n{doctors}"
 
-        if lower_msg == "1":
-            reply = f"Routes: {client.get('routes')}"
-        elif lower_msg == "2":
-            reply = f"Fare: {client.get('fare')}"
+        elif lower_msg in ["3", "book", "appointment"]:
+            memory[user] = {"state": "booking_name"}
+            reply = "📝 Please enter your full name"
+
+        elif lower_msg in ["4", "location"]:
+            reply = f"📍 {client.get('location')}"
+
+        elif lower_msg in ["5", "emergency"]:
+            reply = client.get("emergency")
+
+        elif "fee" in lower_msg:
+            reply = f"💰 Consultation fee: {client.get('consultation_fee')}"
+
+        elif "insurance" in lower_msg:
+            reply = client.get("faq", {}).get("insurance", "")
+
+        elif "lab" in lower_msg:
+            reply = client.get("faq", {}).get("lab_time", "")
+
+        elif "payment" in lower_msg:
+            reply = client.get("faq", {}).get("payment", "")
+
         else:
             reply = ai_reply(user, incoming_msg, client)
 
