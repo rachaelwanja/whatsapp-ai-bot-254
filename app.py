@@ -7,12 +7,16 @@ import requests
 
 app = Flask(__name__)
 
+# ================= CONFIG =================
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+
 # ================= LOAD CLIENTS =================
 def load_clients():
     try:
         with open("clients.json", "r") as f:
             return json.load(f)
-    except:
+    except Exception as e:
+        print("CLIENT LOAD ERROR:", e)
         return {}
 
 clients = load_clients()
@@ -20,7 +24,7 @@ clients = load_clients()
 # ================= MEMORY =================
 memory = {}
 
-# ================= LOAD LEADS =================
+# ================= LEADS =================
 try:
     with open("leads.json", "r") as f:
         leads = json.load(f)
@@ -31,63 +35,10 @@ def save_leads():
     with open("leads.json", "w") as f:
         json.dump(leads, f, indent=4)
 
-# ================= AI (OPENROUTER) =================
-def ai_reply(user, text, client):
-    try:
-        if user not in memory:
-            memory[user] = {"history": []}
-
-        memory[user]["history"].append(text)
-        memory[user]["history"] = memory[user]["history"][-5:]
-
-        conversation = "\n".join(memory[user]["history"])
-
-        prompt = f"""
-You are a friendly WhatsApp receptionist for {client['name']}.
-
-Rules:
-- Be natural and human
-- Keep replies short
-- Use emojis sometimes 😊
-- Guide the user helpfully
-
-Business Type: {client['type']}
-Location: {client.get('location', 'Kenya')}
-
-Conversation:
-{conversation}
-"""
-
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "openai/gpt-3.5-turbo",
-                "messages": [
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": text}
-                ]
-            }
-        )
-
-        data = response.json()
-        reply = data["choices"][0]["message"]["content"]
-
-        memory[user]["history"].append(reply)
-
-        return reply
-
-    except Exception as e:
-        print("AI ERROR:", e)
-        return "⚠️ AI temporarily unavailable."
-
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "WhatsApp AI Bot Running 🚀"
+    return "🚀 WhatsApp Multi-Business AI Bot Running"
 
 # ================= DASHBOARD =================
 @app.route("/leads")
@@ -102,7 +53,7 @@ def view_leads():
             <p>
             <b>Client:</b> {lead['client']} <br>
             <b>User:</b> {lead['user']} <br>
-            <b>Details:</b> {lead.get('details', '')} <br>
+            <b>Details:</b> {lead['details']} <br>
             <b>Time:</b> {lead['time']}
             </p>
             <hr>
@@ -114,13 +65,12 @@ def view_leads():
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    global clients
-    clients = load_clients()
-
     incoming_msg = request.values.get("Body", "").strip()
     lower_msg = incoming_msg.lower()
     user = request.values.get("From")
     to_number = request.values.get("To")
+
+    print("TO NUMBER:", to_number)
 
     resp = MessagingResponse()
     msg = resp.message()
@@ -131,97 +81,122 @@ def whatsapp():
         msg.body("⚠️ This business is not configured yet.")
         return str(resp)
 
-    # ================= BOOKING FLOW =================
-    if memory.get(user, {}).get("state") == "booking_name":
-        memory[user] = {"state": "booking_date", "name": incoming_msg}
-        msg.body("📅 Enter preferred appointment date")
-        return str(resp)
-
-    elif memory.get(user, {}).get("state") == "booking_date":
-        memory[user]["date"] = incoming_msg
-        memory[user]["state"] = "booking_service"
-        msg.body("🩺 What service do you need?")
-        return str(resp)
-
-    elif memory.get(user, {}).get("state") == "booking_service":
-        booking = memory[user]
+    # ================= BOOKING MODE =================
+    if memory.get(user, {}).get("state") == "booking":
 
         leads.append({
             "user": user,
+            "details": incoming_msg,
             "client": client["name"],
-            "name": booking["name"],
-            "date": booking["date"],
-            "service": incoming_msg,
             "time": str(datetime.datetime.now())
         })
 
         save_leads()
         memory[user] = {}
 
-        msg.body("✅ Appointment request received! We'll confirm shortly.")
+        msg.body("✅ Thank you! Your request has been received. We’ll contact you shortly.")
         return str(resp)
 
-    # ================= MAIN MENU =================
-    if lower_msg in ["hi", "hello", "hey", "menu"]:
-        reply = f"👋 Welcome to {client['name']}!\n"
+    # ================= GREETING =================
+    if lower_msg in ["hi", "hello", "hey"]:
 
-        if client["type"] == "hospital":
-            reply += """
+        reply = f"""
+👋 Welcome to {client['name']}
+
+How can we assist you today?
+
 1️⃣ Services
 2️⃣ Doctors
-3️⃣ Book Appointment
+3️⃣ Consultation Fee
 4️⃣ Location
-5️⃣ Emergency
+5️⃣ Book Appointment
 """
-        else:
-            reply += "How can we help you today?"
 
         msg.body(reply)
         return str(resp)
 
-    # ================= HOSPITAL =================
-    if client["type"] == "hospital":
+    # ================= MENU =================
+    if lower_msg == "1":
+        reply = "🩺 Our Services:\n" + "\n".join([f"- {s}" for s in client.get("services", [])])
 
-        if lower_msg in ["1", "services"]:
-            services = "\n".join([f"✔️ {s}" for s in client.get("services", [])])
-            reply = f"🩺 Services:\n{services}"
-
-        elif lower_msg in ["2", "doctors"]:
-            doctors = ""
-            for d in client.get("doctors", []):
-                doctors += f"\n👨‍⚕️ {d['name']} ({d['specialty']})\n🕒 {d['availability']}\n"
-            reply = f"👩‍⚕️ Doctors:\n{doctors}"
-
-        elif lower_msg in ["3", "book", "appointment"]:
-            memory[user] = {"state": "booking_name"}
-            reply = "📝 Please enter your full name"
-
-        elif lower_msg in ["4", "location"]:
-            reply = f"📍 {client.get('location')}"
-
-        elif lower_msg in ["5", "emergency"]:
-            reply = client.get("emergency")
-
-        elif "fee" in lower_msg:
-            reply = f"💰 Consultation fee: {client.get('consultation_fee')}"
-
-        elif "insurance" in lower_msg:
-            reply = client.get("faq", {}).get("insurance", "")
-
-        elif "lab" in lower_msg:
-            reply = client.get("faq", {}).get("lab_time", "")
-
-        elif "payment" in lower_msg:
-            reply = client.get("faq", {}).get("payment", "")
-
+    elif lower_msg == "2":
+        doctors = client.get("doctors", [])
+        if doctors:
+            reply = "👨‍⚕️ Available Doctors:\n"
+            for d in doctors:
+                reply += f"\n- {d['name']} ({d['specialty']})\n  🕒 {d['availability']}"
         else:
-            reply = ai_reply(user, incoming_msg, client)
+            reply = "No doctors listed."
+
+    elif lower_msg == "3":
+        reply = f"💰 Consultation Fee: {client.get('consultation_fee', 'Not specified')}"
+
+    elif lower_msg == "4":
+        reply = f"📍 Location: {client.get('location', 'Not available')}"
+
+    elif lower_msg == "5":
+        memory[user] = {"state": "booking"}
+        reply = "📅 Please send your name and preferred appointment date."
 
     else:
         reply = ai_reply(user, incoming_msg, client)
 
     msg.body(reply)
     return str(resp)
+
+# ================= AI FUNCTION =================
+def ai_reply(user, text, client):
+
+    try:
+        if user not in memory:
+            memory[user] = {"history": []}
+
+        memory[user]["history"].append(text)
+        memory[user]["history"] = memory[user]["history"][-5:]
+
+        conversation = "\n".join(memory[user]["history"])
+
+        prompt = f"""
+You are a friendly and professional assistant for {client['name']}.
+
+Talk naturally like a human (WhatsApp style).
+Keep answers short, clear, and helpful.
+
+Business info:
+- Location: {client.get('location')}
+- Services: {", ".join(client.get("services", []))}
+- Consultation Fee: {client.get("consultation_fee")}
+
+Conversation:
+{conversation}
+"""
+
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": text}
+                ]
+            }
+        )
+
+        data = response.json()
+
+        reply = data["choices"][0]["message"]["content"]
+
+        memory[user]["history"].append(reply)
+
+        return reply
+
+    except Exception as e:
+        print("AI ERROR:", e)
+        return "⚠️ AI temporarily unavailable."
 
 # ================= RUN =================
 if __name__ == "__main__":
