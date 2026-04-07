@@ -1,0 +1,40 @@
+{
+  "whatsapp:+14155238887": {
+    "type": "hospital",
+    "name": "Bliss Medical Centre",
+    "location": "Nairobi, Moi Avenue",
+    "phone": "+254712345678",
+    "hours": "Open 24/7",
+    "services": [
+      "General Consultation",
+      "Maternity Services",
+      "Laboratory Tests",
+      "Pediatrics",
+      "Pharmacy"
+    ],
+    "consultation_fee": "KSh 1,500",
+    "emergency": "🚑 Emergency services available 24/7",
+    "doctors": [
+      {
+        "name": "Dr. Mwangi",
+        "specialty": "General Doctor",
+        "availability": "Mon–Sat (8am–6pm)"
+      },
+      {
+        "name": "Dr. Achieng",
+        "specialty": "Pediatrician",
+        "availability": "Mon–Fri (9am–5pm)"
+      },
+      {
+        "name": "Dr. Hassan",
+        "specialty": "Maternity Specialist",
+        "availability": "24/7"
+      }
+    ],
+    "faq": {
+      "insurance": "We accept NHIF and major private insurance providers.",
+      "lab_time": "Lab results are ready within 24 hours.",
+      "payment": "We accept M-Pesa, cash, and insurance."
+    }
+  }
+}
