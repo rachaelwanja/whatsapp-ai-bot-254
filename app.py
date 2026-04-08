@@ -1,14 +1,13 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-import os
-import json
-import datetime
 import requests
+import json
+import os
+import datetime
 
 app = Flask(__name__)
 
-# ================= CONFIG =================
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # ================= LOAD CLIENTS =================
 def load_clients():
@@ -22,9 +21,10 @@ def load_clients():
 clients = load_clients()
 
 # ================= MEMORY =================
-memory = {}
+memory = {}   # for AI conversation
+state = {}    # for booking flow
 
-# ================= LEADS =================
+# ================= LOAD LEADS =================
 try:
     with open("leads.json", "r") as f:
         leads = json.load(f)
@@ -35,142 +35,37 @@ def save_leads():
     with open("leads.json", "w") as f:
         json.dump(leads, f, indent=4)
 
-# ================= HOME =================
-@app.route("/")
-def home():
-    return "🚀 WhatsApp Multi-Business AI Bot Running"
-
-# ================= DASHBOARD =================
-@app.route("/leads")
-def view_leads():
-    html = "<h2>📋 Captured Leads</h2><hr>"
-
-    if not leads:
-        html += "<p>No leads yet.</p>"
-    else:
-        for lead in leads:
-            html += f"""
-            <p>
-            <b>Client:</b> {lead['client']} <br>
-            <b>User:</b> {lead['user']} <br>
-            <b>Details:</b> {lead['details']} <br>
-            <b>Time:</b> {lead['time']}
-            </p>
-            <hr>
-            """
-
-    return html
-
-# ================= WHATSAPP =================
-@app.route("/whatsapp", methods=["POST"])
-def whatsapp():
-
-    incoming_msg = request.values.get("Body", "").strip()
-    lower_msg = incoming_msg.lower()
-    user = request.values.get("From")
-    to_number = request.values.get("To")
-
-    print("TO NUMBER:", to_number)
-
-    resp = MessagingResponse()
-    msg = resp.message()
-
-    client = clients.get(to_number)
-
-    if not client:
-        msg.body("⚠️ This business is not configured yet.")
-        return str(resp)
-
-    # ================= BOOKING MODE =================
-    if memory.get(user, {}).get("state") == "booking":
-
-        leads.append({
-            "user": user,
-            "details": incoming_msg,
-            "client": client["name"],
-            "time": str(datetime.datetime.now())
-        })
-
-        save_leads()
-        memory[user] = {}
-
-        msg.body("✅ Thank you! Your request has been received. We’ll contact you shortly.")
-        return str(resp)
-
-    # ================= GREETING =================
-    if lower_msg in ["hi", "hello", "hey"]:
-
-        reply = f"""
-👋 Welcome to {client['name']}
-
-How can we assist you today?
-
-1️⃣ Services
-2️⃣ Doctors
-3️⃣ Consultation Fee
-4️⃣ Location
-5️⃣ Book Appointment
-"""
-
-        msg.body(reply)
-        return str(resp)
-
-    # ================= MENU =================
-    if lower_msg == "1":
-        reply = "🩺 Our Services:\n" + "\n".join([f"- {s}" for s in client.get("services", [])])
-
-    elif lower_msg == "2":
-        doctors = client.get("doctors", [])
-        if doctors:
-            reply = "👨‍⚕️ Available Doctors:\n"
-            for d in doctors:
-                reply += f"\n- {d['name']} ({d['specialty']})\n  🕒 {d['availability']}"
-        else:
-            reply = "No doctors listed."
-
-    elif lower_msg == "3":
-        reply = f"💰 Consultation Fee: {client.get('consultation_fee', 'Not specified')}"
-
-    elif lower_msg == "4":
-        reply = f"📍 Location: {client.get('location', 'Not available')}"
-
-    elif lower_msg == "5":
-        memory[user] = {"state": "booking"}
-        reply = "📅 Please send your name and preferred appointment date."
-
-    else:
-        reply = ai_reply(user, incoming_msg, client)
-
-    msg.body(reply)
-    return str(resp)
-
 # ================= AI FUNCTION =================
-def ai_reply(user, text, client):
+def ask_ai(user, message, client):
 
-    try:
-        if user not in memory:
-            memory[user] = {"history": []}
+    if user not in memory:
+        memory[user] = []
 
-        memory[user]["history"].append(text)
-        memory[user]["history"] = memory[user]["history"][-5:]
+    memory[user].append(message)
+    memory[user] = memory[user][-5:]
 
-        conversation = "\n".join(memory[user]["history"])
+    conversation = "\n".join(memory[user])
 
-        prompt = f"""
-You are a friendly and professional assistant for {client['name']}.
+    system_prompt = f"""
+You are a friendly WhatsApp assistant for {client['name']}.
 
-Talk naturally like a human (WhatsApp style).
-Keep answers short, clear, and helpful.
-
-Business info:
+Business Info:
 - Location: {client.get('location')}
+- Phone: {client.get('phone')}
 - Services: {", ".join(client.get("services", []))}
 - Consultation Fee: {client.get("consultation_fee")}
 
-Conversation:
-{conversation}
+Doctors:
+{chr(10).join([f"- {d['name']} ({d['specialty']})" for d in client.get("doctors", [])])}
+
+Rules:
+- Be human and friendly
+- Keep replies SHORT (max 2 sentences)
+- Use simple English
+- Guide users to book appointments
 """
 
+    try:
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
@@ -180,24 +75,95 @@ Conversation:
             json={
                 "model": "openai/gpt-4o-mini",
                 "messages": [
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": text}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": conversation}
                 ]
             }
         )
 
         data = response.json()
-
         reply = data["choices"][0]["message"]["content"]
 
-        memory[user]["history"].append(reply)
+        memory[user].append(reply)
 
         return reply
 
     except Exception as e:
         print("AI ERROR:", e)
-        return "⚠️ AI temporarily unavailable."
+        return "⚠️ Sorry, I'm having a small issue. Try again 😊"
+
+# ================= WHATSAPP ROUTE =================
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
+
+    incoming_msg = request.values.get("Body", "").strip()
+    lower_msg = incoming_msg.lower()
+    user = request.values.get("From")
+    to_number = request.values.get("To")
+
+    resp = MessagingResponse()
+    msg = resp.message()
+
+    client = clients.get(to_number)
+
+    if not client:
+        msg.body("⚠️ Business not configured.")
+        return str(resp)
+
+    # ================= BOOKING FLOW =================
+
+    if state.get(user, {}).get("step") == "name":
+        state[user] = {"step": "date", "name": incoming_msg}
+        msg.body("📅 Enter preferred appointment date")
+        return str(resp)
+
+    elif state.get(user, {}).get("step") == "date":
+        state[user]["date"] = incoming_msg
+        state[user]["step"] = "service"
+        msg.body("🩺 What service do you need?")
+        return str(resp)
+
+    elif state.get(user, {}).get("step") == "service":
+
+        booking = state[user]
+
+        leads.append({
+            "user": user,
+            "client": client["name"],
+            "name": booking["name"],
+            "date": booking["date"],
+            "service": incoming_msg,
+            "time": str(datetime.datetime.now())
+        })
+
+        save_leads()
+        state[user] = {}
+
+        msg.body("✅ Appointment booked! We’ll confirm shortly.")
+        return str(resp)
+
+    # ================= TRIGGERS =================
+
+    if "book" in lower_msg or "appointment" in lower_msg:
+        state[user] = {"step": "name"}
+        msg.body("📝 Please enter your full name")
+        return str(resp)
+
+    if any(word in lower_msg for word in ["hi", "hello", "hey"]):
+        msg.body(client.get("welcome_message", f"Welcome to {client['name']} 😊"))
+        return str(resp)
+
+    # ================= AI RESPONSE =================
+    reply = ask_ai(user, incoming_msg, client)
+    msg.body(reply)
+
+    return str(resp)
+
+# ================= HOME =================
+@app.route("/")
+def home():
+    return "AI Bot (Memory + Booking + OpenRouter) 🚀"
 
 # ================= RUN =================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=5000)
