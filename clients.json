@@ -2,22 +2,12 @@
   "whatsapp:+14155238886": {
     "type": "hospital",
     "name": "Bliss Medical Centre",
-    "tagline": "Premium Healthcare You Can Trust",
-    "location": "Nairobi, Moi Avenue",
+    "location": "Moi Avenue, Nairobi",
     "phone": "+254712345678",
     "hours": "Open 24/7",
+    "consultation_fee": "KSh 1,500",
 
-    "welcome_message": "👋 Welcome to Bliss Medical Centre. How can we assist you today?",
-
-    "menu": [
-      "1️⃣ Services",
-      "2️⃣ Doctors",
-      "3️⃣ Consultation Fee",
-      "4️⃣ Book Appointment",
-      "5️⃣ Emergency",
-      "6️⃣ Insurance & Payments",
-      "7️⃣ Location"
-    ],
+    "emergency": "🚑 Emergency services available 24/7. Call +254712345678 immediately if urgent.",
 
     "services": [
       "General Consultation",
@@ -25,23 +15,21 @@
       "Laboratory Tests",
       "Pediatrics",
       "Pharmacy",
-      "Emergency Care"
+      "Ultrasound & Imaging",
+      "Vaccination Services",
+      "Minor Surgery"
     ],
-
-    "consultation_fee": "KSh 1,500",
-
-    "emergency": "🚑 Our emergency unit operates 24/7. Call +254712345678 immediately for urgent assistance.",
 
     "doctors": [
       {
         "name": "Dr. Mwangi",
         "specialty": "General Doctor",
-        "availability": "Mon–Sat (8:00 AM – 6:00 PM)"
+        "availability": "Mon–Sat (8am–5pm)"
       },
       {
         "name": "Dr. Achieng",
         "specialty": "Pediatrician",
-        "availability": "Mon–Fri (9:00 AM – 5:00 PM)"
+        "availability": "Mon–Fri (9am–4pm)"
       },
       {
         "name": "Dr. Hassan",
@@ -51,13 +39,14 @@
     ],
 
     "faq": {
-      "insurance": "We accept NHIF and major private insurance providers.",
-      "lab_time": "Lab results are ready within 24 hours.",
-      "payment": "We accept M-Pesa, cash, and insurance."
+      "shaa": "Yes, we accept SHAA (Social Health Authority) coverage.",
+      "insurance": "We accept SHAA and most private insurance providers.",
+      "lab": "Lab results are ready within 24 hours.",
+      "payment": "We accept M-Pesa, cash, and card payments.",
+      "hours": "We are open 24/7 including weekends and holidays.",
+      "booking": "You can book an appointment by calling us or replying here with your name and preferred date."
     },
 
-    "booking_message": "Please send your full name and preferred appointment date.",
-
-    "closing_message": "🙏 Thank you for choosing Bliss Medical Centre. We are here for you!"
+    "welcome_message": "👋 Welcome to Bliss Medical Centre! We are here to provide you with quality healthcare. How can we assist you today? 😊"
   }
 }
