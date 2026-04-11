@@ -4,6 +4,7 @@ import requests
 import base64
 import datetime
 import os
+import threading
 
 app = Flask(__name__)
 
@@ -30,39 +31,44 @@ def get_access_token():
 # SEND STK PUSH
 # =========================
 def send_mpesa_payment(phone):
-    access_token = get_access_token()
+    try:
+        access_token = get_access_token()
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    password = base64.b64encode(
-        (MPESA_SHORTCODE + MPESA_PASSKEY + timestamp).encode()
-    ).decode()
+        # FIX: Clean phone format
+        phone = phone.replace("+", "")
 
-    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        password = base64.b64encode(
+            (MPESA_SHORTCODE + MPESA_PASSKEY + timestamp).encode()
+        ).decode()
 
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
+        url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
 
-    payload = {
-        "BusinessShortCode": MPESA_SHORTCODE,
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": 1,
-        "PartyA": phone,
-        "PartyB": MPESA_SHORTCODE,
-        "PhoneNumber": phone,
-        "CallBackURL": CALLBACK_URL,
-        "AccountReference": "FlowAI",
-        "TransactionDesc": "Payment"
-    }
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
 
-    response = requests.post(url, json=payload, headers=headers)
+        payload = {
+            "BusinessShortCode": MPESA_SHORTCODE,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": 1,
+            "PartyA": phone,
+            "PartyB": MPESA_SHORTCODE,
+            "PhoneNumber": phone,
+            "CallBackURL": CALLBACK_URL,
+            "AccountReference": "FlowAI",
+            "TransactionDesc": "Payment"
+        }
 
-    print("MPESA RESPONSE:", response.text)
+        response = requests.post(url, json=payload, headers=headers)
 
-    return "💳 Payment request sent! Check your phone."
+        print("MPESA RESPONSE:", response.text)
+
+    except Exception as e:
+        print("MPESA ERROR:", e)
 
 
 # =========================
@@ -71,13 +77,18 @@ def send_mpesa_payment(phone):
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
     incoming_msg = request.values.get('Body', '').strip().lower()
-    from_number = request.values.get('From', '').replace("whatsapp:", "")
+    from_number = request.values.get('From', '').replace("whatsapp:", "").replace("+", "")
 
     resp = MessagingResponse()
     msg = resp.message()
 
     if "buy" in incoming_msg:
-        reply = send_mpesa_payment(from_number)
+        # ✅ Instant reply (no delay)
+        reply = "📲 Processing payment... check your phone."
+
+        # ✅ Run MPESA in background
+        threading.Thread(target=send_mpesa_payment, args=(from_number,)).start()
+
     else:
         reply = "👋 Welcome! Type *buy* to make payment."
 
@@ -96,7 +107,7 @@ def callback():
 
 
 # =========================
-# HOME (TEST)
+# HOME
 # =========================
 @app.route("/")
 def home():
@@ -104,7 +115,7 @@ def home():
 
 
 # =========================
-# RUN APP
+# RUN
 # =========================
 if __name__ == "__main__":
     app.run(debug=True)
