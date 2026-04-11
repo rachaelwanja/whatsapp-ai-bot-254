@@ -2,18 +2,8 @@
   "bliss": {
     "name": "Bliss Medical Centre",
     "phone": "254700000000",
-    "location": "Nairobi CBD",
-    "services": [
-      "General Consultation",
-      "Dental Care",
-      "Laboratory Tests",
-      "Maternity Services"
-    ],
-    "faq": {
-      "hours": "We are open Monday to Saturday, 8am to 8pm.",
-      "insurance": "We accept SHAA and private insurance.",
-      "payment": "We accept M-Pesa, cash and card."
-    },
+    "keyword": "bliss",
+    "services": ["Consultation", "Dental", "Lab"],
     "account": {
       "username": "bliss",
       "password": "1234"
@@ -25,42 +15,10 @@
   "salon_demo": {
     "name": "Glow Beauty Salon",
     "phone": "254711111111",
-    "location": "Westlands, Nairobi",
-    "services": [
-      "Hair Styling",
-      "Nail Services",
-      "Facials",
-      "Makeup"
-    ],
-    "faq": {
-      "hours": "Open daily from 9am to 7pm.",
-      "booking": "Walk-ins and appointments available.",
-      "payment": "M-Pesa and cash accepted."
-    },
+    "keyword": "salon",
+    "services": ["Hair", "Nails"],
     "account": {
       "username": "salon",
-      "password": "1234"
-    },
-    "plan": "trial",
-    "expiry": "2026-05-01T12:00:00"
-  },
-
-  "school_demo": {
-    "name": "Greenfield Academy",
-    "phone": "254722222222",
-    "location": "Thika",
-    "services": [
-      "Admissions",
-      "Primary Education",
-      "Junior Secondary"
-    ],
-    "faq": {
-      "admissions": "Admissions are ongoing.",
-      "fees": "Contact school for fee structure.",
-      "transport": "Transport available."
-    },
-    "account": {
-      "username": "school",
       "password": "1234"
     },
     "plan": "trial",
