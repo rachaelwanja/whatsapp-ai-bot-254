@@ -1,0 +1,10 @@
+<h1>Admin Dashboard</h1>
+
+<p>Total Clients: {{ total_clients }}</p>
+<p>Total Leads: {{ total_leads }}</p>
+<p>Total Revenue: KSh {{ total_revenue }}</p>
+
+<h3>Clients</h3>
+{% for k, c in clients.items() %}
+<p>{{ c.name }} - {{ c.plan }}</p>
+{% endfor %}
