@@ -1,140 +1,156 @@
 from flask import Flask, request, jsonify, render_template
 import json
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# =========================
-# FILE HELPERS
-# =========================
+# ---------------------------
+# FILES
+# ---------------------------
+CLIENTS_FILE = "clients.json"
+LEADS_FILE = "leads.json"
+
+# ---------------------------
+# HELPERS
+# ---------------------------
 def load_json(file):
     if not os.path.exists(file):
         return {}
     with open(file, "r") as f:
-        return json.load(f)
+        try:
+            return json.load(f)
+        except:
+            return {}
 
 def save_json(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=4)
 
-# =========================
+# ---------------------------
 # LOAD DATA
-# =========================
-CLIENTS_FILE = "clients.json"
-LEADS_FILE = "leads.json"
-
+# ---------------------------
 clients = load_json(CLIENTS_FILE)
 leads = load_json(LEADS_FILE)
 
-# =========================
-# CHATBOT LOGIC
-# =========================
-def get_reply(message):
-    message = message.lower()
+# ---------------------------
+# CHAT ENDPOINT (for widget)
+# ---------------------------
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    message = data.get("message", "").lower()
 
-    if "hi" in message or "hello" in message:
-        return "Hello 👋 Welcome! How can I help you?"
+    if "price" in message:
+        return jsonify({"reply": "Our pricing starts at KES 500 😊"})
+    
+    return jsonify({"reply": "Hello! How can I help you today?"})
 
-    if "price" in message or "cost" in message:
-        return "Our bot costs KSh 1000/month 💰"
 
-    if "buy" in message or "start" in message:
-        return "Great! Send your name to get started 🚀"
-
-    return "Sorry, I didn’t understand. Try asking about pricing 😊"
-
-# =========================
+# ---------------------------
 # WHATSAPP WEBHOOK
-# =========================
+# ---------------------------
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
-    data = request.form
+    global leads, clients
 
-    phone = data.get("From")
-    message = data.get("Body")
+    incoming_msg = request.values.get("Body", "").lower()
+    phone = request.values.get("From", "")
 
-    # Save lead
+    DEFAULT_BUSINESS = "bliss"
+
+    parts = incoming_msg.split()
+
+    # ---------------------------
+    # FIXED MESSAGE PARSING
+    # ---------------------------
+    if len(parts) < 2:
+        business = DEFAULT_BUSINESS
+        user_msg = incoming_msg
+    else:
+        business = parts[0]
+        user_msg = " ".join(parts[1:])
+
+    # ---------------------------
+    # CREATE CLIENT IF NOT EXISTS
+    # ---------------------------
+    if business not in clients:
+        clients[business] = {
+            "name": business,
+            "revenue": 0,
+            "customers": []
+        }
+
+    # ---------------------------
+    # SAVE LEAD
+    # ---------------------------
     leads[phone] = {
-        "message": message
+        "phone": phone,
+        "business": business,
+        "last_message": user_msg,
+        "time": str(datetime.now())
     }
+
     save_json(LEADS_FILE, leads)
 
-    reply = get_reply(message)
+    # ---------------------------
+    # SIMPLE BOT LOGIC
+    # ---------------------------
+    reply = ""
 
-    return f"""
-    <Response>
-        <Message>{reply}</Message>
-    </Response>
-    """
+    if "hi" in user_msg or "hello" in user_msg:
+        reply = f"Hello 👋 Welcome to {business.capitalize()}! How can I help you?"
 
-# =========================
-# WEB CHAT API
-# =========================
-@app.route("/chat_api", methods=["POST"])
-def chat_api():
-    data = request.json
-    message = data.get("message")
-    client_id = data.get("client", "demo")
+    elif "price" in user_msg or "pricing" in user_msg:
+        reply = "Our pricing starts from KES 500 💰"
 
-    reply = get_reply(message)
+    elif "buy" in user_msg or "pay" in user_msg:
+        reply = "To proceed with payment, we will send you an M-Pesa prompt shortly 📲"
 
-    return jsonify({"reply": reply})
+        # simulate revenue
+        clients[business]["revenue"] += 500
+        clients[business]["customers"].append(phone)
+        save_json(CLIENTS_FILE, clients)
 
-# =========================
+    else:
+        reply = "Sorry, I didn’t understand. Try asking about pricing 😊"
+
+    return reply
+
+
+# ---------------------------
 # DASHBOARD
-# =========================
+# ---------------------------
 @app.route("/dashboard")
 def dashboard():
-    total_leads = len(leads)
+    return render_template("dashboard.html", clients=clients)
 
-    total_revenue = 0
-    for c in clients.values():
-        if c.get("plan") == "pro":
-            total_revenue += 1000
 
-    return render_template(
-        "dashboard.html",
-        total_leads=total_leads,
-        total_revenue=total_revenue
-    )
-
-# =========================
-# ADMIN PANEL
-# =========================
+# ---------------------------
+# ADMIN DASHBOARD
+# ---------------------------
 @app.route("/admin")
 def admin():
-    total_clients = len(clients)
-    total_leads = len(leads)
-
-    total_revenue = 0
-    for c in clients.values():
-        if c.get("plan") == "pro":
-            total_revenue += 1000
+    total_revenue = sum(c["revenue"] for c in clients.values())
 
     return render_template(
         "admin.html",
         clients=clients,
-        total_clients=total_clients,
-        total_leads=total_leads,
+        leads=leads,
         total_revenue=total_revenue
     )
 
-# =========================
-# CHAT PAGE
-# =========================
-@app.route("/chat")
-def chat():
-    return render_template("chat.html")
 
-# =========================
+# ---------------------------
 # HOME
-# =========================
+# ---------------------------
 @app.route("/")
 def home():
     return "Bot is running 🚀"
 
-# =========================
+
+# ---------------------------
 # RUN
-# =========================
+# ---------------------------
 if __name__ == "__main__":
     app.run(debug=True)
