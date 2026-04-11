@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>FlowAI Admin</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f5f7fb;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin: 20px;
+    border-radius: 10px;
+}
+
+.metric {
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1 style="padding:20px;">🚀 FlowAI Admin Dashboard</h1>
+
+<div class="card">
+<p>Total Clients: <span class="metric">{{ total_clients }}</span></p>
+<p>Total Leads: <span class="metric">{{ total_leads }}</span></p>
+<p>Total Revenue: <span class="metric">KSh {{ total_revenue }}</span></p>
+</div>
+
+<div class="card">
+<h3>🏢 Clients</h3>
+
+{% for key, c in clients.items() %}
+<p>
+<b>{{ c.name }}</b><br>
+Phone: {{ c.phone }}<br>
+Plan: {{ c.plan }}<br>
+Expiry: {{ c.expiry }}
+</p>
+<hr>
+{% endfor %}
+
+</div>
+
+</body>
+</html>
