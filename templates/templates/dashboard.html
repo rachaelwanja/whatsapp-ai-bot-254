@@ -1,0 +1,26 @@
+<h2>{{ client.name }}</h2>
+
+<p>Plan: {{ client.plan }}</p>
+<p>Expiry: {{ client.expiry }}</p>
+
+<h3>💰 Revenue: KSh {{ revenue }}</h3>
+
+<h3>📊 Analytics</h3>
+<p>Leads: {{ analytics.leads }}</p>
+<p>Bookings: {{ analytics.bookings }}</p>
+<p>Payments: {{ analytics.payments }}</p>
+<p>Conversion: {{ analytics.conversion }}%</p>
+
+<h3>📋 Leads</h3>
+<div id="leads"></div>
+
+<script>
+fetch("/leads")
+.then(res => res.json())
+.then(data => {
+    let div = document.getElementById("leads")
+    data.forEach(l => {
+        div.innerHTML += `<p>${l.phone} - ${l.message}</p>`
+    })
+})
+</script>
