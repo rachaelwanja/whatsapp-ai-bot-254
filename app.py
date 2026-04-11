@@ -1,156 +1,98 @@
-from flask import Flask, request, jsonify, render_template
-import json
+from flask import Flask, request
+import requests
+import base64
+import datetime
 import os
-from datetime import datetime
+from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-# ---------------------------
-# FILES
-# ---------------------------
-CLIENTS_FILE = "clients.json"
-LEADS_FILE = "leads.json"
+# ==============================
+# LOAD ENV VARIABLES
+# ==============================
+CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
+CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET")
+SHORTCODE = os.getenv("MPESA_SHORTCODE")
+PASSKEY = os.getenv("MPESA_PASSKEY")
+CALLBACK_URL = os.getenv("CALLBACK_URL")
 
-# ---------------------------
-# HELPERS
-# ---------------------------
-def load_json(file):
-    if not os.path.exists(file):
-        return {}
-    with open(file, "r") as f:
-        try:
-            return json.load(f)
-        except:
-            return {}
+# ==============================
+# GET ACCESS TOKEN
+# ==============================
+def get_access_token():
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    response = requests.get(url, auth=(CONSUMER_KEY, CONSUMER_SECRET))
+    return response.json().get("access_token")
 
-def save_json(file, data):
-    with open(file, "w") as f:
-        json.dump(data, f, indent=4)
+# ==============================
+# STK PUSH FUNCTION
+# ==============================
+def stk_push(phone, amount):
+    access_token = get_access_token()
+    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
 
-# ---------------------------
-# LOAD DATA
-# ---------------------------
-clients = load_json(CLIENTS_FILE)
-leads = load_json(LEADS_FILE)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode((SHORTCODE + PASSKEY + timestamp).encode()).decode()
 
-# ---------------------------
-# CHAT ENDPOINT (for widget)
-# ---------------------------
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.json
-    message = data.get("message", "").lower()
-
-    if "price" in message:
-        return jsonify({"reply": "Our pricing starts at KES 500 😊"})
-    
-    return jsonify({"reply": "Hello! How can I help you today?"})
-
-
-# ---------------------------
-# WHATSAPP WEBHOOK
-# ---------------------------
-@app.route("/whatsapp", methods=["POST"])
-def whatsapp():
-    global leads, clients
-
-    incoming_msg = request.values.get("Body", "").lower()
-    phone = request.values.get("From", "")
-
-    DEFAULT_BUSINESS = "bliss"
-
-    parts = incoming_msg.split()
-
-    # ---------------------------
-    # FIXED MESSAGE PARSING
-    # ---------------------------
-    if len(parts) < 2:
-        business = DEFAULT_BUSINESS
-        user_msg = incoming_msg
-    else:
-        business = parts[0]
-        user_msg = " ".join(parts[1:])
-
-    # ---------------------------
-    # CREATE CLIENT IF NOT EXISTS
-    # ---------------------------
-    if business not in clients:
-        clients[business] = {
-            "name": business,
-            "revenue": 0,
-            "customers": []
-        }
-
-    # ---------------------------
-    # SAVE LEAD
-    # ---------------------------
-    leads[phone] = {
-        "phone": phone,
-        "business": business,
-        "last_message": user_msg,
-        "time": str(datetime.now())
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
     }
 
-    save_json(LEADS_FILE, leads)
+    payload = {
+        "BusinessShortCode": SHORTCODE,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": 1,  # change amount if needed
+        "PartyA": phone,
+        "PartyB": SHORTCODE,
+        "PhoneNumber": phone,
+        "CallBackURL": CALLBACK_URL,
+        "AccountReference": "FlowAI",
+        "TransactionDesc": "Payment"
+    }
 
-    # ---------------------------
-    # SIMPLE BOT LOGIC
-    # ---------------------------
-    reply = ""
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
 
-    if "hi" in user_msg or "hello" in user_msg:
-        reply = f"Hello 👋 Welcome to {business.capitalize()}! How can I help you?"
+# ==============================
+# WHATSAPP WEBHOOK
+# ==============================
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
+    incoming_msg = request.values.get("Body", "").lower()
+    phone = request.values.get("From", "").replace("whatsapp:", "")
 
-    elif "price" in user_msg or "pricing" in user_msg:
-        reply = "Our pricing starts from KES 500 💰"
+    resp = MessagingResponse()
+    msg = resp.message()
 
-    elif "buy" in user_msg or "pay" in user_msg:
-        reply = "To proceed with payment, we will send you an M-Pesa prompt shortly 📲"
-
-        # simulate revenue
-        clients[business]["revenue"] += 500
-        clients[business]["customers"].append(phone)
-        save_json(CLIENTS_FILE, clients)
-
+    if "buy" in incoming_msg:
+        stk_push(phone, 1)
+        msg.body("💳 Payment request sent! Check your phone 📲")
     else:
-        reply = "Sorry, I didn’t understand. Try asking about pricing 😊"
+        msg.body("👋 Welcome! Type *buy* to make payment.")
 
-    return reply
+    return str(resp)
 
+# ==============================
+# CALLBACK (MPESA RESPONSE)
+# ==============================
+@app.route("/callback", methods=["POST"])
+def callback():
+    data = request.json
+    print("MPESA CALLBACK:", data)
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
-# ---------------------------
-# DASHBOARD
-# ---------------------------
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html", clients=clients)
-
-
-# ---------------------------
-# ADMIN DASHBOARD
-# ---------------------------
-@app.route("/admin")
-def admin():
-    total_revenue = sum(c["revenue"] for c in clients.values())
-
-    return render_template(
-        "admin.html",
-        clients=clients,
-        leads=leads,
-        total_revenue=total_revenue
-    )
-
-
-# ---------------------------
-# HOME
-# ---------------------------
+# ==============================
+# ROOT
+# ==============================
 @app.route("/")
 def home():
     return "Bot is running 🚀"
 
-
-# ---------------------------
+# ==============================
 # RUN
-# ---------------------------
+# ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
