@@ -28,9 +28,6 @@ def save_json(file, data):
         json.dump(data, f, indent=4)
 
 clients = load_json("clients.json")
-leads = load_json("leads.json") or []
-payments = load_json("payments.json") or []
-
 memory = {}
 
 # ================= AI =================
@@ -48,19 +45,23 @@ Be friendly, short and helpful.
 Help users book services.
 """
 
-    res = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
-        json={
-            "model": "openai/gpt-4o-mini",
-            "messages": [
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": "\n".join(memory[user])}
-            ]
-        }
-    )
+    try:
+        res = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
+            json={
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": "\n".join(memory[user])}
+                ]
+            }
+        )
 
-    return res.json()["choices"][0]["message"]["content"]
+        return res.json()["choices"][0]["message"]["content"]
+
+    except:
+        return "⚠️ AI temporarily unavailable."
 
 # ================= PLAN CHECK =================
 def is_active(client):
@@ -69,6 +70,24 @@ def is_active(client):
 
     expiry = datetime.datetime.fromisoformat(client.get("expiry"))
     return datetime.datetime.now() < expiry
+
+# ================= LEADS =================
+def save_lead(phone, message, client_id):
+
+    lead = {
+        "phone": phone,
+        "message": message,
+        "client": client_id,
+        "time": str(datetime.datetime.now())
+    }
+
+    leads = load_json("leads.json")
+
+    if not isinstance(leads, list):
+        leads = []
+
+    leads.append(lead)
+    save_json("leads.json", leads)
 
 # ================= MPESA =================
 def get_token():
@@ -107,7 +126,7 @@ def stk_push(phone, amount):
         headers=headers
     )
 
-# ================= MPESA CALLBACK =================
+# ================= CALLBACK =================
 @app.route("/mpesa/callback", methods=["POST"])
 def mpesa_callback():
 
@@ -153,6 +172,7 @@ def signup():
             "name": name,
             "phone": phone,
             "services": ["Customer Support"],
+            "keyword": username,
             "account": {
                 "username": username,
                 "password": password
@@ -194,6 +214,24 @@ def dashboard():
 
     return render_template("dashboard.html", client=client)
 
+# ================= LEADS API =================
+@app.route("/leads")
+def view_leads():
+
+    if "client" not in session:
+        return redirect("/login")
+
+    client_id = session["client"]
+
+    all_leads = load_json("leads.json")
+
+    if not isinstance(all_leads, list):
+        all_leads = []
+
+    client_leads = [l for l in all_leads if l["client"] == client_id]
+
+    return jsonify(client_leads)
+
 # ================= CHAT PAGE =================
 @app.route("/chat")
 def chat_page():
@@ -221,26 +259,40 @@ def chat_api():
 
     return {"reply": reply}
 
-# ================= WHATSAPP (FIXED) =================
+# ================= WHATSAPP (MULTI-CLIENT + LEADS) =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming = request.form.get("Body")
+    incoming = request.form.get("Body").lower()
     phone = request.form.get("From")
 
-    # For now → demo client
-    client_id = "bliss"
-    client = clients.get(client_id)
+    words = incoming.split()
+
+    client = None
+    client_id = None
+
+    for key, c in clients.items():
+        if c.get("keyword") in words:
+            client = c
+            client_id = key
+            break
 
     if not client:
-        reply = "Client not found"
-    else:
+        return Response(
+            "<Response><Message>⚠️ Start message with business name (e.g. 'bliss hi')</Message></Response>",
+            mimetype="text/xml"
+        )
 
-        if not is_active(client):
-            stk_push(client["phone"], 1000)
-            reply = "⚠️ Subscription expired. Payment prompt sent."
-        else:
-            reply = ask_ai(phone, incoming, client)
+    # ✅ SAVE LEAD
+    save_lead(phone, incoming, client_id)
+
+    message = " ".join([w for w in words if w != client["keyword"]])
+
+    if not is_active(client):
+        stk_push(client["phone"], 1000)
+        reply = "⚠️ Subscription expired. Payment request sent."
+    else:
+        reply = ask_ai(phone, message, client)
 
     return Response(
         f"<Response><Message>{reply}</Message></Response>",
@@ -250,7 +302,7 @@ def whatsapp():
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "FlowAI is live 🚀"
+    return "🚀 FlowAI SaaS Running"
 
 # ================= RUN =================
 if __name__ == "__main__":
