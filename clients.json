@@ -1,52 +1,69 @@
 {
-  "whatsapp:+14155238886": {
-    "type": "hospital",
+  "bliss": {
     "name": "Bliss Medical Centre",
-    "location": "Moi Avenue, Nairobi",
-    "phone": "+254712345678",
-    "hours": "Open 24/7",
-    "consultation_fee": "KSh 1,500",
-
-    "emergency": "🚑 Emergency services available 24/7. Call +254712345678 immediately if urgent.",
-
+    "phone": "254700000000",
+    "location": "Nairobi CBD",
     "services": [
       "General Consultation",
-      "Maternity Services",
+      "Dental Care",
       "Laboratory Tests",
-      "Pediatrics",
-      "Pharmacy",
-      "Ultrasound & Imaging",
-      "Vaccination Services",
-      "Minor Surgery"
+      "Maternity Services"
     ],
-
-    "doctors": [
-      {
-        "name": "Dr. Mwangi",
-        "specialty": "General Doctor",
-        "availability": "Mon–Sat (8am–5pm)"
-      },
-      {
-        "name": "Dr. Achieng",
-        "specialty": "Pediatrician",
-        "availability": "Mon–Fri (9am–4pm)"
-      },
-      {
-        "name": "Dr. Hassan",
-        "specialty": "Maternity Specialist",
-        "availability": "24/7"
-      }
-    ],
-
     "faq": {
-      "shaa": "Yes, we accept SHAA (Social Health Authority) coverage.",
-      "insurance": "We accept SHAA and most private insurance providers.",
-      "lab": "Lab results are ready within 24 hours.",
-      "payment": "We accept M-Pesa, cash, and card payments.",
-      "hours": "We are open 24/7 including weekends and holidays.",
-      "booking": "You can book an appointment by calling us or replying here with your name and preferred date."
+      "hours": "We are open Monday to Saturday, 8am to 8pm.",
+      "insurance": "We accept SHAA and private insurance.",
+      "payment": "We accept M-Pesa, cash and card."
     },
+    "account": {
+      "username": "bliss",
+      "password": "1234"
+    },
+    "plan": "trial",
+    "expiry": "2026-05-01T12:00:00"
+  },
 
-    "welcome_message": "👋 Welcome to Bliss Medical Centre! We are here to provide you with quality healthcare. How can we assist you today? 😊"
+  "salon_demo": {
+    "name": "Glow Beauty Salon",
+    "phone": "254711111111",
+    "location": "Westlands, Nairobi",
+    "services": [
+      "Hair Styling",
+      "Nail Services",
+      "Facials",
+      "Makeup"
+    ],
+    "faq": {
+      "hours": "Open daily from 9am to 7pm.",
+      "booking": "Walk-ins and appointments available.",
+      "payment": "M-Pesa and cash accepted."
+    },
+    "account": {
+      "username": "salon",
+      "password": "1234"
+    },
+    "plan": "trial",
+    "expiry": "2026-05-01T12:00:00"
+  },
+
+  "school_demo": {
+    "name": "Greenfield Academy",
+    "phone": "254722222222",
+    "location": "Thika",
+    "services": [
+      "Admissions",
+      "Primary Education",
+      "Junior Secondary"
+    ],
+    "faq": {
+      "admissions": "Admissions are ongoing.",
+      "fees": "Contact school for fee structure.",
+      "transport": "Transport available."
+    },
+    "account": {
+      "username": "school",
+      "password": "1234"
+    },
+    "plan": "trial",
+    "expiry": "2026-05-01T12:00:00"
   }
 }
