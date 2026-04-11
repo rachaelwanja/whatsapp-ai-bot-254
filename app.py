@@ -4,7 +4,6 @@ import requests
 import base64
 import datetime
 import os
-import threading
 
 app = Flask(__name__)
 
@@ -17,14 +16,21 @@ MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
 MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
 CALLBACK_URL = os.getenv("CALLBACK_URL")
 
-
 # =========================
 # GET MPESA ACCESS TOKEN
 # =========================
 def get_access_token():
-    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    response = requests.get(url, auth=(MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET))
-    return response.json().get("access_token")
+    try:
+        url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(url, auth=(MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET))
+        data = response.json()
+
+        print("ACCESS TOKEN RESPONSE:", data)
+
+        return data.get("access_token")
+    except Exception as e:
+        print("ACCESS TOKEN ERROR:", e)
+        return None
 
 
 # =========================
@@ -34,10 +40,12 @@ def send_mpesa_payment(phone):
     try:
         access_token = get_access_token()
 
-        # FIX: Clean phone format
-        phone = phone.replace("+", "")
+        if not access_token:
+            print("❌ No access token")
+            return
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
         password = base64.b64encode(
             (MPESA_SHORTCODE + MPESA_PASSKEY + timestamp).encode()
         ).decode()
@@ -63,12 +71,14 @@ def send_mpesa_payment(phone):
             "TransactionDesc": "Payment"
         }
 
+        print("📤 SENDING TO MPESA:", payload)
+
         response = requests.post(url, json=payload, headers=headers)
 
-        print("MPESA RESPONSE:", response.text)
+        print("📩 MPESA RESPONSE:", response.text)
 
     except Exception as e:
-        print("MPESA ERROR:", e)
+        print("❌ MPESA ERROR:", e)
 
 
 # =========================
@@ -77,22 +87,21 @@ def send_mpesa_payment(phone):
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
     incoming_msg = request.values.get('Body', '').strip().lower()
-    from_number = request.values.get('From', '').replace("whatsapp:", "").replace("+", "")
+    from_number = request.values.get('From', '').replace("whatsapp:", "")
 
     resp = MessagingResponse()
     msg = resp.message()
 
     if "buy" in incoming_msg:
-        # ✅ Instant reply (no delay)
-        reply = "📲 Processing payment... check your phone."
+        # ✅ FAST RESPONSE (fix delay)
+        msg.body("📲 Processing payment... check your phone.")
 
-        # ✅ Run MPESA in background
-        threading.Thread(target=send_mpesa_payment, args=(from_number,)).start()
+        # ✅ RUN PAYMENT AFTER RESPONSE (non-blocking style)
+        send_mpesa_payment(from_number)
 
     else:
-        reply = "👋 Welcome! Type *buy* to make payment."
+        msg.body("👋 Welcome! Type *buy* to make payment.")
 
-    msg.body(reply)
     return str(resp)
 
 
@@ -101,8 +110,12 @@ def whatsapp():
 # =========================
 @app.route("/callback", methods=["POST"])
 def callback():
-    data = request.json
-    print("MPESA CALLBACK:", data)
+    try:
+        data = request.json
+        print("📥 MPESA CALLBACK:", data)
+    except Exception as e:
+        print("❌ CALLBACK ERROR:", e)
+
     return "OK", 200
 
 
