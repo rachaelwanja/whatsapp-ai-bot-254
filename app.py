@@ -1,47 +1,54 @@
+from flask import Flask, request, jsonify
 import requests
 import base64
 from datetime import datetime
 
-# 🔐 Your credentials (from Safaricom portal)
-CONSUMER_KEY = "YOUR_CONSUMER_KEY"
-CONSUMER_SECRET = "YOUR_CONSUMER_SECRET"
+app = Flask(__name__)
+
+# 🔐 YOUR APP CREDENTIALS (from AI flow app)
+CONSUMER_KEY = "PUT_YOUR_KEY_HERE"
+CONSUMER_SECRET = "PUT_YOUR_SECRET_HERE"
 
 # 🏦 Sandbox details
 SHORTCODE = "174379"
-PASSKEY = "bfb279f9aa9bdbc...YOUR_FULL_PASSKEY..."
+PASSKEY = "bfb279f9aa9bdbc...FULL_PASSKEY_HERE..."
 
-# 📱 Sandbox test number
-PHONE = "254708374149"
+# 🌐 Callback URL
+CALLBACK_URL = "https://whatsapp-ai-bot-254-1.onrender.com/callback"
 
-# 🌐 Your callback URL (must be live https)
-CALLBACK_URL = "https://your-domain.com/callback"
 
 # ===============================
-# 1. GENERATE ACCESS TOKEN
+# ACCESS TOKEN
 # ===============================
 def get_access_token():
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    
+
     response = requests.get(url, auth=(CONSUMER_KEY, CONSUMER_SECRET))
-    data = response.json()
     
-    return data['access_token']
+    print("TOKEN RESPONSE:", response.text)  # 👈 debug
+
+    return response.json().get("access_token")
+
 
 # ===============================
-# 2. GENERATE PASSWORD + TIMESTAMP
+# PASSWORD GENERATION
 # ===============================
 def generate_password():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    
-    data_to_encode = SHORTCODE + PASSKEY + timestamp
-    password = base64.b64encode(data_to_encode.encode()).decode()
-    
+
+    data = SHORTCODE + PASSKEY + timestamp
+    password = base64.b64encode(data.encode()).decode()
+
     return password, timestamp
 
+
 # ===============================
-# 3. STK PUSH REQUEST
+# STK PUSH ROUTE
 # ===============================
+@app.route("/stk", methods=["POST"])
 def stk_push():
+    phone = request.json.get("phone")
+
     access_token = get_access_token()
     password, timestamp = generate_password()
 
@@ -58,19 +65,35 @@ def stk_push():
         "Timestamp": timestamp,
         "TransactionType": "CustomerPayBillOnline",
         "Amount": 1,
-        "PartyA": PHONE,
+        "PartyA": phone,
         "PartyB": SHORTCODE,
-        "PhoneNumber": PHONE,
+        "PhoneNumber": phone,
         "CallBackURL": CALLBACK_URL,
         "AccountReference": "FlowAI",
-        "TransactionDesc": "Test Payment"
+        "TransactionDesc": "Payment"
     }
 
+    print("REQUEST:", payload)  # 👈 debug
+
     response = requests.post(url, json=payload, headers=headers)
-    print("RESPONSE:", response.json())
+
+    print("MPESA RESPONSE:", response.text)  # 👈 debug
+
+    return jsonify(response.json())
+
+
+# ===============================
+# CALLBACK (VERY IMPORTANT)
+# ===============================
+@app.route("/callback", methods=["POST"])
+def callback():
+    data = request.json
+    print("CALLBACK RECEIVED:", data)
+    return jsonify({"status": "ok"})
+
 
 # ===============================
 # RUN
 # ===============================
 if __name__ == "__main__":
-    stk_push()
+    app.run(debug=True)
