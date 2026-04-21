@@ -17,16 +17,14 @@ MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
 CALLBACK_URL = os.getenv("CALLBACK_URL")
 
 # =========================
-# GET MPESA ACCESS TOKEN
+# GET ACCESS TOKEN
 # =========================
 def get_access_token():
     try:
         url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(url, auth=(MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET))
-        data = response.json()
-
-        print("ACCESS TOKEN RESPONSE:", data)
-
+        res = requests.get(url, auth=(MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET))
+        data = res.json()
+        print("ACCESS TOKEN:", data)
         return data.get("access_token")
     except Exception as e:
         print("ACCESS TOKEN ERROR:", e)
@@ -34,7 +32,7 @@ def get_access_token():
 
 
 # =========================
-# SEND STK PUSH
+# STK PUSH FUNCTION
 # =========================
 def send_mpesa_payment(phone):
     try:
@@ -42,6 +40,24 @@ def send_mpesa_payment(phone):
 
         if not access_token:
             print("❌ No access token")
+            return
+
+        # 🔥 FIX PHONE FORMAT
+        phone = phone.replace("whatsapp:", "")
+        if phone.startswith("0"):
+            phone = "254" + phone[1:]
+        elif phone.startswith("+"):
+            phone = phone.replace("+", "")
+
+        print("📱 FORMATTED PHONE:", phone)
+
+        # 🔍 DEBUG ENV VARIABLES
+        print("SHORTCODE:", MPESA_SHORTCODE)
+        print("PASSKEY:", MPESA_PASSKEY)
+
+        # ❌ STOP if missing
+        if not MPESA_SHORTCODE or not MPESA_PASSKEY:
+            print("❌ ERROR: Missing MPESA credentials")
             return
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -87,16 +103,16 @@ def send_mpesa_payment(phone):
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
     incoming_msg = request.values.get('Body', '').strip().lower()
-    from_number = request.values.get('From', '').replace("whatsapp:", "")
+    from_number = request.values.get('From', '')
 
     resp = MessagingResponse()
     msg = resp.message()
 
     if "buy" in incoming_msg:
-        # ✅ FAST RESPONSE (fix delay)
+        # ✅ Instant reply (fix delay)
         msg.body("📲 Processing payment... check your phone.")
 
-        # ✅ RUN PAYMENT AFTER RESPONSE (non-blocking style)
+        # 🔥 Trigger payment AFTER reply
         send_mpesa_payment(from_number)
 
     else:
@@ -106,13 +122,13 @@ def whatsapp():
 
 
 # =========================
-# MPESA CALLBACK
+# CALLBACK
 # =========================
 @app.route("/callback", methods=["POST"])
 def callback():
     try:
         data = request.json
-        print("📥 MPESA CALLBACK:", data)
+        print("📥 CALLBACK:", data)
     except Exception as e:
         print("❌ CALLBACK ERROR:", e)
 
@@ -124,7 +140,7 @@ def callback():
 # =========================
 @app.route("/")
 def home():
-    return "WhatsApp Bot Running ✅"
+    return "Bot is running 🚀"
 
 
 # =========================
