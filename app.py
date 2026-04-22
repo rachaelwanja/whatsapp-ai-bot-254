@@ -2,42 +2,44 @@ from flask import Flask, request, jsonify
 import requests
 import base64
 from datetime import datetime
-from requests.auth import HTTPBasicAuth
 
 app = Flask(__name__)
 
 # ===============================
-# 🔐 CONFIG
+# 🔐 CONFIG (YOUR REAL VALUES)
 # ===============================
 CONSUMER_KEY = "YGIS9ihXR2PppZlQ8xMZgxwceAyBTnPUXKKmYyEBkELvaQCc"
 CONSUMER_SECRET = "iNbAKgSOh5MmKwEDd7ZelDy5H4lLjRBCKGkayfEVdtLCI8t8Z1hN6pNj6mL6P5qD"
 
 SHORTCODE = "174379"
-PASSKEY = "bfb279f9aa9bdbcf158e97ddfce3c8b9"
+
+PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
 
 CALLBACK_URL = "https://whatsapp-ai-bot-254-1.onrender.com/callback"
 
 
 # ===============================
-# 🔑 GET ACCESS TOKEN
+# 🔑 GET ACCESS TOKEN (FIXED)
 # ===============================
 def get_access_token():
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
 
     try:
-        response = requests.get(
-            url,
-            auth=HTTPBasicAuth(CONSUMER_KEY, CONSUMER_SECRET),
-            timeout=10
-        )
+        response = requests.get(url, auth=(CONSUMER_KEY, CONSUMER_SECRET))
 
-        print("\n🔑 TOKEN STATUS:", response.status_code)
-        print("🔑 TOKEN RESPONSE:", response.text)
+        print("\n🔑 ===== TOKEN REQUEST =====")
+        print("STATUS:", response.status_code)
+        print("RAW:", response.text)
 
         if response.status_code != 200:
             return None
 
-        return response.json().get("access_token")
+        try:
+            data = response.json()
+            return data.get("access_token")
+        except:
+            print("❌ JSON PARSE ERROR")
+            return None
 
     except Exception as e:
         print("❌ TOKEN ERROR:", str(e))
@@ -58,13 +60,12 @@ def generate_password():
 # 💳 STK PUSH
 # ===============================
 def stk_push(phone):
-
-    print("\n🚀 STARTING STK PUSH")
+    print("\n🚀 ===== STARTING STK PUSH =====")
 
     access_token = get_access_token()
 
     if not access_token:
-        print("❌ FAILED TO GET TOKEN")
+        print("❌ FAILED TO GET ACCESS TOKEN")
         return {"error": "Access token failed"}
 
     password, timestamp = generate_password()
@@ -90,18 +91,18 @@ def stk_push(phone):
         "TransactionDesc": "Payment"
     }
 
-    print("📤 STK PAYLOAD:", payload)
+    print("\n📤 STK PAYLOAD:", payload)
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        response = requests.post(url, json=payload, headers=headers)
 
-        print("📥 MPESA STATUS:", response.status_code)
+        print("\n📥 MPESA STATUS:", response.status_code)
         print("📥 MPESA RESPONSE:", response.text)
 
         try:
             return response.json()
         except:
-            return {"error": "Invalid response", "raw": response.text}
+            return {"error": "Invalid MPESA response", "raw": response.text}
 
     except Exception as e:
         print("❌ STK ERROR:", str(e))
@@ -117,22 +118,29 @@ def whatsapp():
         incoming_msg = request.form.get("Body")
         sender = request.form.get("From")
 
-        print("\n📩 MESSAGE:", incoming_msg)
-        print("📲 FROM:", sender)
+        print("\n📩 ===== WHATSAPP INCOMING =====")
+        print("MESSAGE:", incoming_msg)
+        print("FROM:", sender)
 
         if not sender:
             return "No sender", 400
 
+        # Clean phone
         phone = sender.replace("whatsapp:", "").replace("+", "")
+
+        # ✅ FORCE WORKING SANDBOX NUMBER
+        phone = "254708374149"
+
+        print("📞 USING PHONE:", phone)
 
         result = stk_push(phone)
 
-        print("✅ RESULT:", result)
+        print("\n✅ STK RESULT:", result)
 
-        return "OK", 200
+        return "STK Triggered", 200
 
     except Exception as e:
-        print("❌ ERROR:", str(e))
+        print("❌ WHATSAPP ERROR:", str(e))
         return "Error", 500
 
 
@@ -141,12 +149,16 @@ def whatsapp():
 # ===============================
 @app.route("/stk", methods=["POST"])
 def manual_stk():
-    data = request.get_json()
-    phone = data.get("phone")
+    try:
+        data = request.get_json()
+        phone = data.get("phone")
 
-    result = stk_push(phone)
+        result = stk_push(phone)
 
-    return jsonify(result)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 # ===============================
@@ -154,9 +166,17 @@ def manual_stk():
 # ===============================
 @app.route("/callback", methods=["POST"])
 def callback():
-    data = request.json
-    print("\n📥 CALLBACK:", data)
-    return jsonify({"status": "received"})
+    try:
+        data = request.json
+
+        print("\n📥 ===== CALLBACK RECEIVED =====")
+        print(data)
+
+        return jsonify({"status": "received"})
+
+    except Exception as e:
+        print("❌ CALLBACK ERROR:", str(e))
+        return jsonify({"error": str(e)})
 
 
 # ===============================
