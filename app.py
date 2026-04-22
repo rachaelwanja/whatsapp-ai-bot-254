@@ -7,19 +7,19 @@ from requests.auth import HTTPBasicAuth
 app = Flask(__name__)
 
 # ===============================
-# 🔐 CONFIG (PUT YOUR REAL VALUES)
+# 🔐 CONFIG
 # ===============================
-CONSUMER_KEY = "qj4VjbXA8aEbDHhcseYNZVQN2MUHAqEu0tcnBuLQoz25kpl6"
+CONSUMER_KEY = "YGIS9ihXR2PppZlQ8xMZgxwceAyBTnPUXKKmYyEBkELvaQCc"
 CONSUMER_SECRET = "iNbAKgSOh5MmKwEDd7ZelDy5H4lLjRBCKGkayfEVdtLCI8t8Z1hN6pNj6mL6P5qD"
 
 SHORTCODE = "174379"
-PASSKEY = "bfb279f9aa9bdbcf158e97ddfce3c8b9"  # Sandbox default
+PASSKEY = "bfb279f9aa9bdbcf158e97ddfce3c8b9"
 
 CALLBACK_URL = "https://whatsapp-ai-bot-254-1.onrender.com/callback"
 
 
 # ===============================
-# 🔑 GET ACCESS TOKEN (ROBUST)
+# 🔑 GET ACCESS TOKEN
 # ===============================
 def get_access_token():
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
@@ -31,15 +31,13 @@ def get_access_token():
             timeout=10
         )
 
-        print("\n🔑 ===== TOKEN REQUEST =====")
-        print("STATUS:", response.status_code)
-        print("RAW:", response.text)
+        print("\n🔑 TOKEN STATUS:", response.status_code)
+        print("🔑 TOKEN RESPONSE:", response.text)
 
         if response.status_code != 200:
             return None
 
-        data = response.json()
-        return data.get("access_token")
+        return response.json().get("access_token")
 
     except Exception as e:
         print("❌ TOKEN ERROR:", str(e))
@@ -51,12 +49,8 @@ def get_access_token():
 # ===============================
 def generate_password():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    raw = SHORTCODE + PASSKEY + timestamp
-    password = base64.b64encode(raw.encode()).decode()
-
-    print("\n🔐 PASSWORD GENERATED")
-    print("Timestamp:", timestamp)
-
+    data = SHORTCODE + PASSKEY + timestamp
+    password = base64.b64encode(data.encode()).decode()
     return password, timestamp
 
 
@@ -65,12 +59,12 @@ def generate_password():
 # ===============================
 def stk_push(phone):
 
-    print("\n🚀 ===== STK PUSH START =====")
+    print("\n🚀 STARTING STK PUSH")
 
     access_token = get_access_token()
 
     if not access_token:
-        print("❌ FAILED TO GET ACCESS TOKEN")
+        print("❌ FAILED TO GET TOKEN")
         return {"error": "Access token failed"}
 
     password, timestamp = generate_password()
@@ -96,20 +90,18 @@ def stk_push(phone):
         "TransactionDesc": "Payment"
     }
 
-    print("\n📤 STK REQUEST PAYLOAD:")
-    print(payload)
+    print("📤 STK PAYLOAD:", payload)
 
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=15)
 
-        print("\n📥 ===== MPESA RESPONSE =====")
-        print("STATUS:", response.status_code)
-        print("RAW:", response.text)
+        print("📥 MPESA STATUS:", response.status_code)
+        print("📥 MPESA RESPONSE:", response.text)
 
         try:
             return response.json()
         except:
-            return {"error": "Invalid MPESA response", "raw": response.text}
+            return {"error": "Invalid response", "raw": response.text}
 
     except Exception as e:
         print("❌ STK ERROR:", str(e))
@@ -125,66 +117,46 @@ def whatsapp():
         incoming_msg = request.form.get("Body")
         sender = request.form.get("From")
 
-        print("\n📩 ===== WHATSAPP INCOMING =====")
-        print("Message:", incoming_msg)
-        print("From:", sender)
+        print("\n📩 MESSAGE:", incoming_msg)
+        print("📲 FROM:", sender)
 
         if not sender:
             return "No sender", 400
 
-        # Convert phone to format: 2547XXXXXXXX
         phone = sender.replace("whatsapp:", "").replace("+", "")
 
         result = stk_push(phone)
 
-        print("\n✅ STK RESULT:", result)
+        print("✅ RESULT:", result)
 
         return "OK", 200
 
     except Exception as e:
-        print("❌ WHATSAPP ERROR:", str(e))
+        print("❌ ERROR:", str(e))
         return "Error", 500
 
 
 # ===============================
-# 🧪 MANUAL TEST ENDPOINT
+# 🧪 MANUAL TEST
 # ===============================
 @app.route("/stk", methods=["POST"])
 def manual_stk():
-    try:
-        data = request.get_json()
+    data = request.get_json()
+    phone = data.get("phone")
 
-        if not data or "phone" not in data:
-            return jsonify({"error": "Missing phone"}), 400
+    result = stk_push(phone)
 
-        phone = data.get("phone")
-
-        print("\n🧪 MANUAL STK TEST:", phone)
-
-        result = stk_push(phone)
-
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify(result)
 
 
 # ===============================
-# 🔁 CALLBACK (MPESA RESPONSE)
+# 🔁 CALLBACK
 # ===============================
 @app.route("/callback", methods=["POST"])
 def callback():
-    try:
-        data = request.json
-
-        print("\n📥 ===== MPESA CALLBACK =====")
-        print(data)
-
-        return jsonify({"status": "received"})
-
-    except Exception as e:
-        print("❌ CALLBACK ERROR:", str(e))
-        return jsonify({"error": str(e)})
+    data = request.json
+    print("\n📥 CALLBACK:", data)
+    return jsonify({"status": "received"})
 
 
 # ===============================
@@ -192,7 +164,7 @@ def callback():
 # ===============================
 @app.route("/", methods=["GET"])
 def home():
-    return "🚀 Backend is live and ready"
+    return "🚀 Backend is live"
 
 
 # ===============================
