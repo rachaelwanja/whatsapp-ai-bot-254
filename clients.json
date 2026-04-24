@@ -1,27 +1,13 @@
 {
-  "bliss": {
-    "name": "Bliss Medical Centre",
-    "phone": "254700000000",
-    "keyword": "bliss",
-    "services": ["Consultation", "Dental", "Lab"],
+  "flowai": {
+    "name": "FlowAI",
+    "phones": ["14155238886"],
     "account": {
-      "username": "bliss",
-      "password": "1234"
+      "username": "flowai",
+      "password": "123"
     },
+    "tier": "pro",
     "plan": "trial",
-    "expiry": "2026-05-01T12:00:00"
-  },
-
-  "salon_demo": {
-    "name": "Glow Beauty Salon",
-    "phone": "254711111111",
-    "keyword": "salon",
-    "services": ["Hair", "Nails"],
-    "account": {
-      "username": "salon",
-      "password": "1234"
-    },
-    "plan": "trial",
-    "expiry": "2026-05-01T12:00:00"
+    "expiry": "2026-04-30T00:00:00"
   }
 }
