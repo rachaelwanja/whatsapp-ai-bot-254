@@ -12,12 +12,8 @@
     <!-- HEADER -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-3xl font-bold">
-                Appointment Calendar
-            </h1>
-            <p class="text-gray-500">
-                {{ client.name }}
-            </p>
+            <h1 class="text-3xl font-bold">Appointment Calendar</h1>
+            <p class="text-gray-500">{{ client.name }}</p>
         </div>
 
         <a href="/appointments"
@@ -33,13 +29,8 @@
 
     <!-- WEEKDAYS -->
     <div class="grid grid-cols-7 gap-2 mb-2 text-center font-semibold text-gray-600">
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
-        <div>Sun</div>
+        <div>Mon</div><div>Tue</div><div>Wed</div>
+        <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
     </div>
 
     <!-- CALENDAR -->
@@ -54,13 +45,12 @@ const appointments = {{ appointments | tojson }};
 const calendar = document.getElementById("calendar");
 const monthTitle = document.getElementById("monthTitle");
 
-// current date
+// DATE
 const today = new Date();
 const currentDay = today.getDate();
 const year = today.getFullYear();
 const month = today.getMonth();
 
-// month names
 const monthNames = [
     "January","February","March","April","May","June",
     "July","August","September","October","November","December"
@@ -68,20 +58,19 @@ const monthNames = [
 
 monthTitle.innerText = `${monthNames[month]} ${year}`;
 
-// first day (Mon start)
+// START DAY (Mon)
 let firstDay = new Date(year, month, 1).getDay();
 firstDay = firstDay === 0 ? 6 : firstDay - 1;
 
-// days in month
 const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-// empty slots
+// EMPTY CELLS
 for(let i = 0; i < firstDay; i++){
     const empty = document.createElement("div");
     calendar.appendChild(empty);
 }
 
-// render days
+// RENDER DAYS
 for(let d = 1; d <= daysInMonth; d++){
 
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -90,18 +79,23 @@ for(let d = 1; d <= daysInMonth; d++){
 
     const dayBox = document.createElement("div");
 
-    // highlight today
     let highlight = d === currentDay ? "ring-2 ring-blue-500" : "";
 
     dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[130px] flex flex-col hover:shadow-lg transition cursor-pointer ${highlight}`;
 
+    // DROP ZONE
+    dayBox.ondragover = (e) => e.preventDefault();
+
+    dayBox.ondrop = (e) => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData("id");
+        updateAppointmentDate(id, dateStr);
+    };
+
     let html = `
         <div class="flex justify-between items-center mb-1">
-            <span class="font-bold text-sm text-gray-700">${d}</span>
-            ${dayAppointments.length > 0 ? `
-                <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">
-                    ${dayAppointments.length}
-                </span>` : ""}
+            <span class="font-bold text-sm">${d}</span>
+            ${dayAppointments.length ? `<span class="text-xs bg-gray-200 px-2 rounded">${dayAppointments.length}</span>` : ""}
         </div>
     `;
 
@@ -112,7 +106,9 @@ for(let d = 1; d <= daysInMonth; d++){
         if(a.status === "reject") color = "bg-red-100 text-red-700";
 
         html += `
-            <div class="${color} text-xs p-1 rounded mb-1">
+            <div draggable="true"
+                 ondragstart="dragStart(event, '${a.id}')"
+                 class="${color} text-xs p-1 rounded mb-1 cursor-move">
                 <div class="font-medium">${a.name}</div>
                 <div>${a.slot} • ${a.doctor}</div>
             </div>
@@ -121,41 +117,74 @@ for(let d = 1; d <= daysInMonth; d++){
 
     dayBox.innerHTML = html;
 
-    // 🔥 CLICK → MODAL (NO ALERT)
-    dayBox.onclick = () => {
-
-        const modal = document.getElementById("modal");
-        const content = document.getElementById("modalContent");
-
-        if(dayAppointments.length === 0){
-            content.innerHTML = `<p>No appointments for this day.</p>`;
-        } else {
-
-            let html = "";
-
-            dayAppointments.forEach(a => {
-
-                let statusColor = "text-yellow-600";
-                if(a.status === "approve") statusColor = "text-green-600";
-                if(a.status === "reject") statusColor = "text-red-600";
-
-                html += `
-                    <div class="border-b pb-2">
-                        <div class="font-semibold">${a.name}</div>
-                        <div>${a.slot} • ${a.doctor}</div>
-                        <div class="${statusColor} text-xs capitalize">${a.status}</div>
-                    </div>
-                `;
-            });
-
-            content.innerHTML = html;
-        }
-
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
-    };
+    // CLICK → MODAL
+    dayBox.onclick = () => openModal(dayAppointments, dateStr);
 
     calendar.appendChild(dayBox);
+}
+
+// DRAG START
+function dragStart(e, id){
+    e.dataTransfer.setData("id", id);
+}
+
+// UPDATE DATE
+function updateAppointmentDate(id, newDate){
+    fetch("/reschedule_drag", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({id, date: newDate})
+    })
+    .then(res => res.json())
+    .then(() => location.reload());
+}
+
+// MODAL
+function openModal(dayAppointments, dateStr){
+
+    const modal = document.getElementById("modal");
+    const content = document.getElementById("modalContent");
+
+    if(dayAppointments.length === 0){
+        content.innerHTML = `<p>No appointments for ${dateStr}</p>`;
+    } else {
+
+        let html = "";
+
+        dayAppointments.forEach(a => {
+
+            let statusColor = "text-yellow-600";
+            if(a.status === "approve") statusColor = "text-green-600";
+            if(a.status === "reject") statusColor = "text-red-600";
+
+            html += `
+                <div class="border-b pb-2">
+                    <div class="font-semibold">${a.name}</div>
+                    <div>${a.slot} • ${a.doctor}</div>
+                    <div class="${statusColor} text-xs mb-1">${a.status}</div>
+
+                    ${a.status === "pending" ? `
+                        <div class="flex gap-2">
+                            <button onclick="updateStatus('${a.id}','approve')"
+                                class="bg-green-600 text-white px-2 py-1 rounded text-xs">
+                                Approve
+                            </button>
+
+                            <button onclick="updateStatus('${a.id}','reject')"
+                                class="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                                Reject
+                            </button>
+                        </div>
+                    ` : ""}
+                </div>
+            `;
+        });
+
+        content.innerHTML = html;
+    }
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
 }
 
 // CLOSE MODAL
@@ -165,19 +194,28 @@ function closeModal(){
     modal.classList.remove("flex");
 }
 
+// APPROVE / REJECT
+function updateStatus(id, action){
+
+    fetch("/appointment_action", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({id, action})
+    })
+    .then(res => res.json())
+    .then(() => location.reload());
+}
+
 </script>
 
-<!-- 🔥 MODAL -->
+<!-- MODAL -->
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
 
     <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
 
-        <h2 class="text-xl font-bold mb-4">
-            Appointments
-        </h2>
+        <h2 class="text-xl font-bold mb-4">Appointments</h2>
 
-        <div id="modalContent" class="text-sm text-gray-700 space-y-2">
-        </div>
+        <div id="modalContent" class="space-y-2 text-sm"></div>
 
         <button onclick="closeModal()"
             class="mt-4 bg-gray-800 text-white px-4 py-2 rounded w-full">
