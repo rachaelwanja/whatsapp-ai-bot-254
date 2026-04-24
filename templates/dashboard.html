@@ -1,66 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-100">
 
 <div class="max-w-6xl mx-auto mt-8">
 
-<h2 class="text-2xl font-bold mb-4">Welcome, {{ client.name }}</h2>
+<h2 class="text-2xl font-bold mb-6">
+    Welcome, {{ client.name }}
+</h2>
 
-<div class="bg-white p-4 rounded shadow mb-6">
-    <p>Status: {{ status }}</p>
-    <p>Expires: {{ expiry }}</p>
+<!-- STATUS -->
+<div class="bg-white p-5 rounded-xl shadow mb-6 flex justify-between">
+    <div>
+        <p>Status: {{ status }}</p>
+        <p>Days left: {{ days_left }}</p>
+    </div>
 
-    {% if status != "EXPIRED ❌" %}
-    <p class="text-green-600">⏳ {{ days_left }} days left</p>
-    {% else %}
-    <p class="text-red-600">🔒 Locked</p>
-    <button onclick="payNow()" class="bg-green-600 text-white px-4 py-2 mt-2">Pay</button>
+    {% if status == "EXPIRED ❌" %}
+    <button onclick="pay()" class="bg-green-600 text-white px-4 py-2 rounded">
+        Pay Now
+    </button>
     {% endif %}
 </div>
 
-<div class="grid grid-cols-4 gap-4 mb-6">
+<!-- STATS -->
+<div class="grid grid-cols-3 gap-4 mb-6">
 
-<div class="bg-white p-4 rounded shadow">
-Leads: {% if analytics.leads == 0 and client.tier == "basic" %}🔒{% else %}{{ analytics.leads }}{% endif %}
+<div class="bg-white p-4 rounded shadow text-center">
+<h3 class="text-gray-500">Leads</h3>
+<p class="text-2xl font-bold">{{ analytics.leads }}</p>
 </div>
 
-<div class="bg-white p-4 rounded shadow">
-Bookings: {% if analytics.bookings == 0 and client.tier == "basic" %}🔒{% else %}{{ analytics.bookings }}{% endif %}
+<div class="bg-white p-4 rounded shadow text-center">
+<h3 class="text-gray-500">Payments</h3>
+<p class="text-2xl font-bold">{{ analytics.payments }}</p>
 </div>
 
-<div class="bg-white p-4 rounded shadow">
-Payments: {{ analytics.payments }}
-</div>
-
-<div class="bg-white p-4 rounded shadow">
-Conversion: {{ analytics.conversion }}%
+<div class="bg-white p-4 rounded shadow text-center">
+<h3 class="text-gray-500">Conversion</h3>
+<p class="text-2xl font-bold">{{ analytics.conversion }}%</p>
 </div>
 
 </div>
 
+<!-- CHART -->
+<div class="bg-white p-6 rounded shadow mb-6">
 <canvas id="chart"></canvas>
+</div>
+
+<!-- ACTIONS -->
+<div class="flex gap-4">
+<a href="/pricing" class="bg-blue-600 text-white px-4 py-2 rounded">
+Upgrade Plan
+</a>
+</div>
 
 </div>
 
 <script>
-function payNow(){
+function pay(){
  fetch("/pay",{method:"POST"})
+ .then(r=>r.json())
+ .then(d=>alert(d.message))
 }
 
+// Chart
 new Chart(document.getElementById("chart"),{
  type:"bar",
  data:{
-  labels:["Leads","Bookings","Payments"],
+  labels:["Leads","Payments"],
   datasets:[{
    data:[
     {{ analytics.leads }},
-    {{ analytics.bookings }},
     {{ analytics.payments }}
    ]
   }]
