@@ -1,14 +1,58 @@
 {
-  "clinic": {
+  "careplus": {
     "name": "CarePlus Clinic",
     "type": "clinic",
     "phones": ["14155238886"],
     "account": {
-      "username": "clinic",
+      "username": "careplus",
+      "password": "123"
+    },
+    "tier": "premium",
+    "plan": "paid",
+    "expiry": "2026-05-30T00:00:00",
+    "services": [
+      "General Consultation",
+      "Lab Testing",
+      "Outpatient Services"
+    ],
+    "created_at": "2026-04-24T10:00:00"
+  },
+
+  "greenfield": {
+    "name": "Greenfield School",
+    "type": "school",
+    "phones": ["14155238886"],
+    "account": {
+      "username": "greenfield",
       "password": "123"
     },
     "tier": "pro",
     "plan": "paid",
-    "expiry": "2026-05-30T00:00:00"
+    "expiry": "2026-05-20T00:00:00",
+    "services": [
+      "Admissions",
+      "Fee Structure",
+      "Academic Programs"
+    ],
+    "created_at": "2026-04-24T10:00:00"
+  },
+
+  "cityride": {
+    "name": "CityRide Transport",
+    "type": "transport",
+    "phones": ["14155238886"],
+    "account": {
+      "username": "cityride",
+      "password": "123"
+    },
+    "tier": "basic",
+    "plan": "trial",
+    "expiry": "2026-04-27T00:00:00",
+    "services": [
+      "Town Routes",
+      "Fare Information",
+      "Daily Transport"
+    ],
+    "created_at": "2026-04-24T10:00:00"
   }
 }
