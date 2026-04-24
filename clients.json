@@ -1,15 +1,14 @@
 {
-  "flowai": {
-    "name": "FlowAI",
+  "clinic": {
+    "name": "CarePlus Clinic",
+    "type": "clinic",
     "phones": ["14155238886"],
     "account": {
-      "username": "flowai",
+      "username": "clinic",
       "password": "123"
     },
     "tier": "pro",
-    "plan": "trial",
-    "expiry": "2026-04-30T00:00:00",
-    "services": ["Customer Support"],
-    "created_at": "2026-04-24T00:00:00"
+    "plan": "paid",
+    "expiry": "2026-05-30T00:00:00"
   }
 }
