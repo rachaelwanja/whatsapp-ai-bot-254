@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pricing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+<div class="max-w-5xl mx-auto mt-10 px-4">
+
+    <h1 class="text-3xl font-bold text-center mb-6">
+        💳 Choose Your Plan
+    </h1>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+        <!-- BASIC -->
+        <div class="bg-white p-6 rounded-2xl shadow text-center">
+            <h2 class="text-xl font-bold mb-2">Basic</h2>
+            <p class="text-gray-500 mb-4">For small businesses</p>
+
+            <h3 class="text-3xl font-bold mb-4">KES 500</h3>
+
+            <ul class="text-sm text-gray-600 mb-6">
+                <li>✔ AI replies</li>
+                <li>✔ WhatsApp bot</li>
+                <li>❌ Limited analytics</li>
+            </ul>
+
+            <button onclick="pay('basic')"
+                class="bg-gray-800 text-white px-4 py-2 rounded-lg w-full">
+                Choose Basic
+            </button>
+        </div>
+
+        <!-- PRO -->
+        <div class="bg-white p-6 rounded-2xl shadow text-center border-2 border-blue-500">
+            <h2 class="text-xl font-bold mb-2">Pro</h2>
+            <p class="text-gray-500 mb-4">Most popular</p>
+
+            <h3 class="text-3xl font-bold mb-4">KES 1000</h3>
+
+            <ul class="text-sm text-gray-600 mb-6">
+                <li>✔ Everything in Basic</li>
+                <li>✔ Full analytics</li>
+                <li>✔ Booking detection</li>
+            </ul>
+
+            <button onclick="pay('pro')"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg w-full">
+                Choose Pro
+            </button>
+        </div>
+
+        <!-- PREMIUM -->
+        <div class="bg-white p-6 rounded-2xl shadow text-center">
+            <h2 class="text-xl font-bold mb-2">Premium</h2>
+            <p class="text-gray-500 mb-4">Advanced businesses</p>
+
+            <h3 class="text-3xl font-bold mb-4">KES 2000</h3>
+
+            <ul class="text-sm text-gray-600 mb-6">
+                <li>✔ Everything in Pro</li>
+                <li>✔ Priority AI</li>
+                <li>✔ Custom automation</li>
+            </ul>
+
+            <button onclick="pay('premium')"
+                class="bg-purple-600 text-white px-4 py-2 rounded-lg w-full">
+                Choose Premium
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function pay(plan) {
+
+    fetch("/set_plan", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({plan: plan})
+    })
+    .then(() => {
+        return fetch("/pay", { method: "POST" })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message)
+    });
+
+}
+</script>
+
+</body>
+</html>
