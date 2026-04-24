@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+
+        <h2 class="text-2xl font-bold mb-6 text-center">
+            🚀 Create Your WhatsApp Bot
+        </h2>
+
+        <form method="POST" class="space-y-4">
+
+            <input name="name" placeholder="Business Name"
+                class="w-full p-3 border rounded-lg" required>
+
+            <input name="phone" placeholder="Business Phone (254...)"
+                class="w-full p-3 border rounded-lg" required>
+
+            <input name="username" placeholder="Username"
+                class="w-full p-3 border rounded-lg" required>
+
+            <input type="password" name="password" placeholder="Password"
+                class="w-full p-3 border rounded-lg" required>
+
+            <button class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700">
+                Create My Bot 🚀
+            </button>
+
+        </form>
+
+        <p class="text-center mt-4 text-sm">
+            Already have an account?
+            <a href="/login" class="text-green-600">Login</a>
+        </p>
+
+    </div>
+
+</body>
+</html>
