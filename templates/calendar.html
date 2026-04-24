@@ -1,0 +1,92 @@
+<script>
+
+const appointments = {{ appointments | tojson }};
+
+const calendar = document.getElementById("calendar");
+const monthTitle = document.getElementById("monthTitle");
+
+// current date
+const today = new Date();
+const currentDay = today.getDate();
+const year = today.getFullYear();
+const month = today.getMonth();
+
+// month name
+const monthNames = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+];
+
+monthTitle.innerText = `${monthNames[month]} ${year}`;
+
+// first day (Mon start)
+let firstDay = new Date(year, month, 1).getDay();
+firstDay = firstDay === 0 ? 6 : firstDay - 1;
+
+// days in month
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+// empty slots
+for(let i = 0; i < firstDay; i++){
+    const empty = document.createElement("div");
+    calendar.appendChild(empty);
+}
+
+// render days
+for(let d = 1; d <= daysInMonth; d++){
+
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    const dayAppointments = appointments.filter(a => a.date === dateStr);
+
+    const dayBox = document.createElement("div");
+
+    // highlight today
+    let highlight = d === currentDay ? "ring-2 ring-blue-500" : "";
+
+    dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[130px] flex flex-col hover:shadow-lg transition ${highlight}`;
+
+    let html = `
+        <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-sm text-gray-700">${d}</span>
+            ${dayAppointments.length > 0 ? `
+                <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">
+                    ${dayAppointments.length}
+                </span>` : ""}
+        </div>
+    `;
+
+    dayAppointments.forEach(a => {
+
+        let color = "bg-yellow-100 text-yellow-700";
+
+        if(a.status === "approve") color = "bg-green-100 text-green-700";
+        if(a.status === "reject") color = "bg-red-100 text-red-700";
+
+        html += `
+            <div class="${color} text-xs p-1 rounded mb-1 cursor-pointer">
+                <div class="font-medium">${a.name}</div>
+                <div>${a.slot} • ${a.doctor}</div>
+            </div>
+        `;
+    });
+
+    dayBox.innerHTML = html;
+
+    // 👇 CLICK DAY (simple interaction)
+    dayBox.onclick = () => {
+        if(dayAppointments.length === 0){
+            alert(`No appointments on ${dateStr}`);
+        } else {
+            let details = dayAppointments.map(a =>
+                `${a.name} (${a.slot}) - ${a.doctor}`
+            ).join("\n");
+
+            alert(`Appointments on ${dateStr}:\n\n${details}`);
+        }
+    };
+
+    calendar.appendChild(dayBox);
+}
+
+</script>
