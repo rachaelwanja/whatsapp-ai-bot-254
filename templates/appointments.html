@@ -5,42 +5,134 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans">
 
-<div class="max-w-5xl mx-auto mt-10">
+<div class="max-w-7xl mx-auto mt-10">
 
-    <h2 class="text-2xl font-bold mb-6">
-        Appointments — {{ client.name }}
-    </h2>
+    <!-- HEADER -->
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold">
+            Appointments — {{ client.name }}
+        </h2>
+        <p class="text-gray-500">
+            Manage bookings, approvals and patient flow
+        </p>
+    </div>
 
+    <!-- ACTION BAR -->
+    <div class="flex justify-between items-center mb-6">
+
+        <!-- SEARCH -->
+        <form method="GET" class="flex gap-3">
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Search patient..."
+                class="p-2 border rounded w-60"
+            >
+
+            <input
+                type="date"
+                name="date"
+                class="p-2 border rounded"
+            >
+
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">
+                Search
+            </button>
+
+        </form>
+
+        <!-- EXPORT -->
+        <a href="/export_appointments"
+           class="bg-green-600 text-white px-4 py-2 rounded">
+           📥 Export CSV
+        </a>
+
+    </div>
+
+    <!-- TABLE -->
     <div class="bg-white rounded-xl shadow overflow-hidden">
 
-        <table class="w-full">
+        <table class="w-full text-left">
 
-            <thead class="bg-gray-200">
+            <thead class="bg-gray-100">
                 <tr>
-                    <th class="p-3 text-left">Patient</th>
-                    <th class="p-3 text-left">Phone</th>
-                    <th class="p-3 text-left">Date</th>
-                    <th class="p-3 text-left">Booked At</th>
+                    <th class="p-4">Patient</th>
+                    <th class="p-4">Phone</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Slot</th>
+                    <th class="p-4">Doctor</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4">Action</th>
                 </tr>
             </thead>
 
             <tbody>
 
                 {% for a in appointments %}
-                <tr class="border-t">
-                    <td class="p-3">{{ a.name }}</td>
-                    <td class="p-3">{{ a.phone }}</td>
-                    <td class="p-3">{{ a.date }}</td>
-                    <td class="p-3">{{ a.time }}</td>
+                <tr class="border-t hover:bg-gray-50">
+
+                    <td class="p-4 font-medium">{{ a.name }}</td>
+
+                    <td class="p-4 text-gray-600">
+                        {{ a.phone }}
+                    </td>
+
+                    <td class="p-4">{{ a.date }}</td>
+
+                    <td class="p-4 capitalize">{{ a.slot }}</td>
+
+                    <td class="p-4">{{ a.doctor }}</td>
+
+                    <!-- STATUS -->
+                    <td class="p-4">
+                        {% if a.status == "pending" %}
+                            <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm">
+                                Pending
+                            </span>
+                        {% elif a.status == "approve" %}
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm">
+                                Approved
+                            </span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm">
+                                Rejected
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ACTION -->
+                    <td class="p-4">
+
+                        {% if a.status == "pending" %}
+                        <div class="flex gap-2">
+
+                            <button onclick="action('{{ a.id }}','approve')"
+                                class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                Approve
+                            </button>
+
+                            <button onclick="action('{{ a.id }}','reject')"
+                                class="bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                Reject
+                            </button>
+
+                        </div>
+                        {% else %}
+                            <span class="text-gray-400 text-sm">—</span>
+                        {% endif %}
+
+                    </td>
+
                 </tr>
                 {% endfor %}
 
                 {% if appointments|length == 0 %}
                 <tr>
-                    <td colspan="4" class="p-4 text-center text-gray-500">
-                        No appointments yet
+                    <td colspan="7" class="p-6 text-center text-gray-500">
+                        No appointments found
                     </td>
                 </tr>
                 {% endif %}
@@ -51,12 +143,32 @@
 
     </div>
 
+    <!-- BACK -->
     <a href="/dashboard"
-       class="inline-block mt-6 bg-blue-600 text-white px-4 py-2 rounded">
+       class="inline-block mt-6 bg-gray-800 text-white px-4 py-2 rounded">
        ← Back to Dashboard
     </a>
 
 </div>
+
+<!-- SCRIPT -->
+<script>
+function action(id, act){
+
+    fetch("/appointment_action", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id: id,
+            action: act
+        })
+    })
+    .then(res => res.json())
+    .then(() => location.reload());
+}
+</script>
 
 </body>
 </html>
