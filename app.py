@@ -7,18 +7,9 @@ app.secret_key = "flowai-secret"
 
 # ================= CONFIG =================
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-# 👉 Your external MPESA API
 MPESA_API_URL = "https://whatsapp-ai-bot-254-1.onrender.com/stk"
 
-# ================= PRICING =================
-PRICES = {
-    "basic": 500,
-    "pro": 1000,
-    "premium": 2000
-}
-
-# ================= FILE HANDLING =================
+# ================= FILE =================
 def load_json(file):
     try:
         with open(file, "r") as f:
@@ -31,7 +22,20 @@ def save_json(file, data):
         json.dump(data, f, indent=4)
 
 clients = load_json("clients.json")
+users = load_json("users.json")
 memory = {}
+
+# ================= FEATURES =================
+def has_feature(client, feature):
+    tier = client.get("tier", "basic")
+
+    features = {
+        "basic": ["ai"],
+        "pro": ["ai", "analytics", "booking"],
+        "premium": ["ai", "analytics", "booking", "priority"]
+    }
+
+    return feature in features.get(tier, [])
 
 # ================= AI =================
 def ask_ai(user, message, client):
@@ -42,7 +46,6 @@ def ask_ai(user, message, client):
 
     prompt = f"""
 You are assistant for {client['name']}.
-Services: {", ".join(client.get("services", []))}
 Be friendly and helpful.
 """
 
@@ -61,8 +64,7 @@ Be friendly and helpful.
 
         return res.json()["choices"][0]["message"]["content"]
 
-    except Exception as e:
-        print("AI ERROR:", str(e))
+    except:
         return "⚠️ AI error"
 
 # ================= PLAN =================
@@ -71,6 +73,7 @@ def is_active(client):
         return True
 
     expiry = client.get("expiry")
+
     if not expiry:
         return False
 
@@ -80,15 +83,34 @@ def is_active(client):
     except:
         return False
 
+def get_days_left(client):
+    expiry = client.get("expiry")
+
+    if not expiry:
+        return 0
+
+    try:
+        expiry_date = datetime.datetime.fromisoformat(expiry)
+        remaining = expiry_date - datetime.datetime.now()
+        return max(0, remaining.days)
+    except:
+        return 0
+
 # ================= LEADS =================
 def save_lead(phone, message, client_id):
+
+    client = clients.get(client_id)
+
+    is_booking = False
+    if client and has_feature(client, "booking"):
+        is_booking = "book" in message.lower()
 
     lead = {
         "phone": phone,
         "message": message,
         "client": client_id,
         "time": str(datetime.datetime.now()),
-        "booked": "book" in message.lower()
+        "booked": is_booking
     }
 
     leads = load_json("leads.json")
@@ -98,40 +120,36 @@ def save_lead(phone, message, client_id):
     leads.append(lead)
     save_json("leads.json", leads)
 
-# ================= MPESA =================
-def stk_push(phone, amount):
+# ================= ANALYTICS =================
+def get_analytics(client_id):
 
-    payload = {
-        "phone": phone,
-        "amount": amount
+    leads = load_json("leads.json")
+    payments = load_json("payments.json")
+
+    leads = leads if isinstance(leads, list) else []
+    payments = payments if isinstance(payments, list) else []
+
+    total_leads = len([l for l in leads if l["client"] == client_id])
+    total_bookings = len([l for l in leads if l["client"] == client_id and l["booked"]])
+    total_payments = len([p for p in payments if p["status"] == "SUCCESS"])
+
+    conversion = (total_payments / total_leads * 100) if total_leads else 0
+
+    return {
+        "leads": total_leads,
+        "bookings": total_bookings,
+        "payments": total_payments,
+        "conversion": round(conversion, 2)
     }
 
+# ================= MPESA =================
+def stk_push(phone, amount):
     try:
-        res = requests.post(MPESA_API_URL, json=payload)
-        print("💰 STK RESPONSE:", res.text)
-    except Exception as e:
-        print("❌ STK ERROR:", str(e))
+        requests.post(MPESA_API_URL, json={"phone": phone, "amount": amount})
+    except:
+        pass
 
 # ================= AUTH =================
-@app.route("/login", methods=["GET", "POST"])
-def login():
-
-    if request.method == "POST":
-
-        u = request.form.get("username")
-        p = request.form.get("password")
-
-        if u == "admin" and p == "admin123":
-            session["admin"] = True
-            return redirect("/admin")
-
-        for k, c in clients.items():
-            if c["account"]["username"] == u and c["account"]["password"] == p:
-                session["client"] = k
-                return redirect("/dashboard")
-
-    return render_template("login.html")
-
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
 
@@ -145,11 +163,10 @@ def signup():
         clients[u] = {
             "name": name,
             "phone": phone,
-            "services": ["Customer Support"],
             "keyword": u,
             "account": {"username": u, "password": p},
-            "plan": "trial",
             "tier": "basic",
+            "plan": "trial",
             "expiry": str(datetime.datetime.now() + timedelta(days=3))
         }
 
@@ -157,6 +174,20 @@ def signup():
         return redirect("/login")
 
     return render_template("signup.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+        u = request.form.get("username")
+        p = request.form.get("password")
+
+        for k, c in clients.items():
+            if c["account"]["username"] == u and c["account"]["password"] == p:
+                session["client"] = k
+                return redirect("/dashboard")
+
+    return render_template("login.html")
 
 # ================= DASHBOARD =================
 @app.route("/dashboard")
@@ -169,107 +200,76 @@ def dashboard():
     client = clients[client_id]
 
     status = "ACTIVE ✅" if is_active(client) else "EXPIRED ❌"
-    expiry = client.get("expiry", "N/A")
+    days_left = get_days_left(client)
+
+    if has_feature(client, "analytics"):
+        analytics = get_analytics(client_id)
+    else:
+        analytics = {"leads": 0, "bookings": 0, "payments": 0, "conversion": 0}
 
     return render_template(
         "dashboard.html",
         client=client,
         status=status,
-        expiry=expiry
+        expiry=client.get("expiry"),
+        days_left=days_left,
+        analytics=analytics
     )
-
-# ================= SET PLAN =================
-@app.route("/set_plan", methods=["POST"])
-def set_plan():
-
-    if "client" not in session:
-        return jsonify({"message": "Not logged in"})
-
-    data = request.json
-    plan = data.get("plan")
-
-    client_id = session["client"]
-    clients[client_id]["tier"] = plan
-
-    save_json("clients.json", clients)
-
-    return jsonify({
-        "message": f"✅ Plan set to {plan.upper()}"
-    })
 
 # ================= PAY =================
 @app.route("/pay", methods=["POST"])
 def pay():
 
-    if "client" not in session:
-        return jsonify({"message": "Not logged in"})
+    client = clients[session["client"]]
+    stk_push(client["phone"], 1000)
 
-    client_id = session["client"]
-    client = clients[client_id]
+    return jsonify({"message": "📲 Payment sent"})
 
-    tier = client.get("tier", "basic")
-    amount = PRICES.get(tier, 1000)
+# ================= ACTIVATE =================
+@app.route("/activate", methods=["POST"])
+def activate():
 
-    phone = client["phone"]
+    phone = request.json.get("phone")
 
-    stk_push(phone, amount)
+    for k, c in clients.items():
+        if c["phone"] == phone:
+            c["plan"] = "paid"
+            c["expiry"] = str(datetime.datetime.now() + timedelta(days=30))
 
-    return jsonify({
-        "message": f"📲 STK sent for KES {amount}"
-    })
-
-# ================= CHAT =================
-@app.route("/chat_api", methods=["POST"])
-def chat_api():
-
-    data = request.json
-    msg = data.get("message")
-    client_id = data.get("client")
-
-    client = clients.get(client_id)
-
-    if not client:
-        return {"reply": "Client not found"}
-
-    if not is_active(client):
-        stk_push(client["phone"], 1000)
-        return {"reply": "⚠️ Subscription expired"}
-
-    return {"reply": ask_ai(client_id, msg, client)}
+    save_json("clients.json", clients)
+    return {"status": "ok"}
 
 # ================= WHATSAPP =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming = request.form.get("Body", "").lower()
-    phone = request.form.get("From", "")
+    incoming = request.form.get("Body").lower()
+    phone = request.form.get("From").replace("whatsapp:", "").replace("+", "")
 
-    words = incoming.split()
+    # SWITCH
+    if incoming.startswith("switch"):
+        key = incoming.split()[1]
+        if key in clients:
+            users[phone] = key
+            save_json("users.json", users)
+            return Response(f"<Response><Message>Switched to {key}</Message></Response>", mimetype="text/xml")
 
-    client = None
-    client_id = None
+    client_id = users.get(phone)
 
-    for key, c in clients.items():
-        if c.get("keyword") in words:
-            client = c
-            client_id = key
-            break
+    if not client_id:
+        client_id = list(clients.keys())[0]
+        users[phone] = client_id
+        save_json("users.json", users)
 
-    if not client:
-        return Response(
-            "<Response><Message>Start with business name</Message></Response>",
-            mimetype="text/xml"
-        )
+    client = clients[client_id]
 
     save_lead(phone, incoming, client_id)
-
-    message = " ".join([w for w in words if w != client["keyword"]])
 
     if not is_active(client):
         stk_push(client["phone"], 1000)
         reply = "⚠️ Subscription expired"
     else:
-        reply = ask_ai(phone, message, client)
+        reply = ask_ai(phone, incoming, client)
 
     return Response(f"<Response><Message>{reply}</Message></Response>", mimetype="text/xml")
 
@@ -278,6 +278,5 @@ def whatsapp():
 def home():
     return "🚀 FlowAI LIVE"
 
-# ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
