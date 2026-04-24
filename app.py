@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, redirect, session, Response, jsonify
-import json, datetime, os
+import json, datetime
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
@@ -20,6 +20,7 @@ clients = load_json("clients.json")
 
 # ================= APPOINTMENTS =================
 def save_appointment(name, phone, date, slot, doctor, client_name):
+
     appointments = load_json("appointments.json")
 
     appointments.append({
@@ -36,9 +37,10 @@ def save_appointment(name, phone, date, slot, doctor, client_name):
 
     save_json("appointments.json", appointments)
 
-# ================= AUTH =================
+# ================= LOGIN =================
 @app.route("/login", methods=["GET","POST"])
 def login():
+
     if request.method == "POST":
         for key, client in clients.items():
             if client["account"]["username"] == request.form["username"]:
@@ -75,9 +77,7 @@ def dashboard():
     if "client" not in session:
         return redirect("/login")
 
-    client = clients[session["client"]]
-
-    return render_template("dashboard.html", client=client)
+    return render_template("dashboard.html", client=clients[session["client"]])
 
 # ================= DOCTOR DASHBOARD =================
 @app.route("/doctor/dashboard")
@@ -86,20 +86,20 @@ def doctor_dashboard():
     if "doctor" not in session:
         return redirect("/doctor")
 
-    doctor_name = session["doctor"]
+    doctor = session["doctor"]
     client = clients[session["client"]]
 
     appointments = load_json("appointments.json")
 
     data = [
         a for a in appointments
-        if a["doctor"] == doctor_name and a["client"] == client["name"]
+        if a["doctor"] == doctor and a["client"] == client["name"]
     ]
 
     return render_template(
         "doctor_dashboard.html",
         appointments=data,
-        doctor=doctor_name,
+        doctor=doctor,
         client=client
     )
 
@@ -111,7 +111,6 @@ def calendar():
         return redirect("/login")
 
     client = clients[session["client"]]
-
     doctor_filter = request.args.get("doctor")
 
     appointments = load_json("appointments.json")
@@ -194,7 +193,7 @@ def whatsapp():
     incoming = request.form.get("Body", "")
     from_number = request.form.get("From")
 
-    # prompt
+    # prompt user
     if "appointment" in incoming.lower():
         return Response("""
 <Response>
@@ -210,23 +209,32 @@ John Doe 2026-05-01 morning Dr. Smith
     try:
         parts = incoming.split()
 
-        name = " ".join(parts[:-3])
-        date = parts[-3]
-        slot = parts[-2]
-        doctor = parts[-1]
+        # ✅ FIXED PARSING
+        name = " ".join(parts[:-4])
+        date = parts[-4]
+        slot = parts[-3]
+        doctor = " ".join(parts[-2:])
 
         save_appointment(name, from_number, date, slot, doctor, "CarePlus Clinic")
 
         return Response(f"""
 <Response>
 <Message>
-Appointment booked for {date} ({slot}) with {doctor}.
+Appointment confirmed for {date} in the {slot} with {doctor}.
 </Message>
 </Response>
 """, mimetype="text/xml")
 
     except:
-        return Response("<Response><Message>OK</Message></Response>")
+        return Response("""
+<Response>
+<Message>
+Invalid format. Please follow:
+
+John Doe 2026-05-01 morning Dr. Smith
+</Message>
+</Response>
+""", mimetype="text/xml")
 
 # ================= HOME =================
 @app.route("/")
