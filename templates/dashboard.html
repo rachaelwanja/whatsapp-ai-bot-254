@@ -6,164 +6,67 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100">
 
-    <!-- NAVBAR -->
-    <div class="bg-white shadow p-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold text-green-600">🚀 FlowAI</h1>
-        <a href="/logout" class="text-red-500">Logout</a>
-    </div>
+<div class="max-w-6xl mx-auto mt-8">
 
-    <!-- MAIN -->
-    <div class="max-w-6xl mx-auto mt-8 px-4">
+<h2 class="text-2xl font-bold mb-4">Welcome, {{ client.name }}</h2>
 
-        <!-- HEADER -->
-        <div class="mb-6">
-            <h2 class="text-2xl font-bold">
-                Welcome, {{ client.name }}
-            </h2>
-            <p class="text-gray-500">Manage your AI WhatsApp bot</p>
-        </div>
+<div class="bg-white p-4 rounded shadow mb-6">
+    <p>Status: {{ status }}</p>
+    <p>Expires: {{ expiry }}</p>
 
-        <!-- STATUS -->
-        <div class="bg-white p-6 rounded-2xl shadow mb-6 flex justify-between items-center">
+    {% if status != "EXPIRED ❌" %}
+    <p class="text-green-600">⏳ {{ days_left }} days left</p>
+    {% else %}
+    <p class="text-red-600">🔒 Locked</p>
+    <button onclick="payNow()" class="bg-green-600 text-white px-4 py-2 mt-2">Pay</button>
+    {% endif %}
+</div>
 
-            <div>
-                <p class="text-gray-500">Subscription</p>
-                <h3 class="text-xl font-bold">{{ status }}</h3>
-                <p class="text-sm text-gray-400">Expires: {{ expiry }}</p>
-            </div>
+<div class="grid grid-cols-4 gap-4 mb-6">
 
-            {% if status == "EXPIRED ❌" %}
-            <button onclick="payNow()"
-                class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                Pay Now 💳
-            </button>
-            {% else %}
-            <span class="text-green-600 font-semibold">Active ✔</span>
-            {% endif %}
+<div class="bg-white p-4 rounded shadow">
+Leads: {% if analytics.leads == 0 and client.tier == "basic" %}🔒{% else %}{{ analytics.leads }}{% endif %}
+</div>
 
-        </div>
+<div class="bg-white p-4 rounded shadow">
+Bookings: {% if analytics.bookings == 0 and client.tier == "basic" %}🔒{% else %}{{ analytics.bookings }}{% endif %}
+</div>
 
-        <!-- STATS -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<div class="bg-white p-4 rounded shadow">
+Payments: {{ analytics.payments }}
+</div>
 
-            <div class="bg-white p-5 rounded-2xl shadow">
-                <p class="text-gray-500">Leads</p>
-                <h2 class="text-2xl font-bold">{{ analytics.leads }}</h2>
-            </div>
+<div class="bg-white p-4 rounded shadow">
+Conversion: {{ analytics.conversion }}%
+</div>
 
-            <div class="bg-white p-5 rounded-2xl shadow">
-                <p class="text-gray-500">Bookings</p>
-                <h2 class="text-2xl font-bold">{{ analytics.bookings }}</h2>
-            </div>
+</div>
 
-            <div class="bg-white p-5 rounded-2xl shadow">
-                <p class="text-gray-500">Payments</p>
-                <h2 class="text-2xl font-bold">{{ analytics.payments }}</h2>
-            </div>
+<canvas id="chart"></canvas>
 
-            <div class="bg-white p-5 rounded-2xl shadow">
-                <p class="text-gray-500">Conversion</p>
-                <h2 class="text-2xl font-bold">{{ analytics.conversion }}%</h2>
-            </div>
+</div>
 
-        </div>
+<script>
+function payNow(){
+ fetch("/pay",{method:"POST"})
+}
 
-        <!-- CHARTS -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
-            <div class="bg-white p-6 rounded-2xl shadow">
-                <h3 class="font-bold mb-4">📊 Performance</h3>
-                <canvas id="leadsChart"></canvas>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow">
-                <h3 class="font-bold mb-4">💰 Conversion</h3>
-                <canvas id="conversionChart"></canvas>
-            </div>
-
-        </div>
-
-        <!-- BOT INFO -->
-        <div class="bg-white p-6 rounded-2xl shadow mb-6">
-
-            <h3 class="text-lg font-bold mb-3">🤖 Your Bot</h3>
-
-            <p><strong>Keyword:</strong> {{ client.keyword }}</p>
-
-            <div class="bg-gray-100 p-3 rounded mt-3">
-                Example:<br>
-                <b>{{ client.keyword }} hi</b>
-            </div>
-
-            <div class="mt-4">
-                <p class="text-sm text-gray-500">Share this link:</p>
-
-                <div class="bg-gray-200 p-2 rounded mt-1">
-                    https://wa.me/{{ client.phone }}
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="flex gap-4">
-            <a href="/leads"
-                class="bg-blue-600 text-white px-5 py-2 rounded-lg">
-                View Leads 📊
-            </a>
-
-            <a href="/chat?client={{ client.keyword }}"
-                class="bg-purple-600 text-white px-5 py-2 rounded-lg">
-                Test Bot 🤖
-            </a>
-        </div>
-
-    </div>
-
-    <!-- JS -->
-    <script>
-
-        function payNow() {
-            fetch("/pay", { method: "POST" })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message)
-            })
-        }
-
-        // CHART 1
-        new Chart(document.getElementById('leadsChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Leads', 'Bookings', 'Payments'],
-                datasets: [{
-                    label: 'Performance',
-                    data: [
-                        {{ analytics.leads }},
-                        {{ analytics.bookings }},
-                        {{ analytics.payments }}
-                    ]
-                }]
-            }
-        });
-
-        // CHART 2
-        new Chart(document.getElementById('conversionChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Converted', 'Not Converted'],
-                datasets: [{
-                    data: [
-                        {{ analytics.conversion }},
-                        {{ 100 - analytics.conversion }}
-                    ]
-                }]
-            }
-        });
-
-    </script>
+new Chart(document.getElementById("chart"),{
+ type:"bar",
+ data:{
+  labels:["Leads","Bookings","Payments"],
+  datasets:[{
+   data:[
+    {{ analytics.leads }},
+    {{ analytics.bookings }},
+    {{ analytics.payments }}
+   ]
+  }]
+ }
+})
+</script>
 
 </body>
 </html>
