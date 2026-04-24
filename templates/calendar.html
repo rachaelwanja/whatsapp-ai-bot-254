@@ -1,3 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar - FlowAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+<div class="max-w-7xl mx-auto mt-10">
+
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">
+                Appointment Calendar
+            </h1>
+            <p class="text-gray-500">
+                {{ client.name }}
+            </p>
+        </div>
+
+        <a href="/appointments"
+           class="bg-gray-800 text-white px-4 py-2 rounded">
+           ← Back
+        </a>
+    </div>
+
+    <!-- MONTH -->
+    <div class="bg-white p-4 rounded-xl shadow mb-4 text-center">
+        <h2 id="monthTitle" class="text-xl font-bold"></h2>
+    </div>
+
+    <!-- WEEKDAYS -->
+    <div class="grid grid-cols-7 gap-2 mb-2 text-center font-semibold text-gray-600">
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+        <div>Sun</div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="calendar" class="grid grid-cols-7 gap-2"></div>
+
+</div>
+
 <script>
 
 const appointments = {{ appointments | tojson }};
@@ -11,7 +60,7 @@ const currentDay = today.getDate();
 const year = today.getFullYear();
 const month = today.getMonth();
 
-// month name
+// month names
 const monthNames = [
     "January","February","March","April","May","June",
     "July","August","September","October","November","December"
@@ -44,7 +93,7 @@ for(let d = 1; d <= daysInMonth; d++){
     // highlight today
     let highlight = d === currentDay ? "ring-2 ring-blue-500" : "";
 
-    dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[130px] flex flex-col hover:shadow-lg transition ${highlight}`;
+    dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[130px] flex flex-col hover:shadow-lg transition cursor-pointer ${highlight}`;
 
     let html = `
         <div class="flex justify-between items-center mb-1">
@@ -59,12 +108,11 @@ for(let d = 1; d <= daysInMonth; d++){
     dayAppointments.forEach(a => {
 
         let color = "bg-yellow-100 text-yellow-700";
-
         if(a.status === "approve") color = "bg-green-100 text-green-700";
         if(a.status === "reject") color = "bg-red-100 text-red-700";
 
         html += `
-            <div class="${color} text-xs p-1 rounded mb-1 cursor-pointer">
+            <div class="${color} text-xs p-1 rounded mb-1">
                 <div class="font-medium">${a.name}</div>
                 <div>${a.slot} • ${a.doctor}</div>
             </div>
@@ -73,20 +121,72 @@ for(let d = 1; d <= daysInMonth; d++){
 
     dayBox.innerHTML = html;
 
-    // 👇 CLICK DAY (simple interaction)
+    // 🔥 CLICK → MODAL (NO ALERT)
     dayBox.onclick = () => {
-        if(dayAppointments.length === 0){
-            alert(`No appointments on ${dateStr}`);
-        } else {
-            let details = dayAppointments.map(a =>
-                `${a.name} (${a.slot}) - ${a.doctor}`
-            ).join("\n");
 
-            alert(`Appointments on ${dateStr}:\n\n${details}`);
+        const modal = document.getElementById("modal");
+        const content = document.getElementById("modalContent");
+
+        if(dayAppointments.length === 0){
+            content.innerHTML = `<p>No appointments for this day.</p>`;
+        } else {
+
+            let html = "";
+
+            dayAppointments.forEach(a => {
+
+                let statusColor = "text-yellow-600";
+                if(a.status === "approve") statusColor = "text-green-600";
+                if(a.status === "reject") statusColor = "text-red-600";
+
+                html += `
+                    <div class="border-b pb-2">
+                        <div class="font-semibold">${a.name}</div>
+                        <div>${a.slot} • ${a.doctor}</div>
+                        <div class="${statusColor} text-xs capitalize">${a.status}</div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
         }
+
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
     };
 
     calendar.appendChild(dayBox);
 }
 
+// CLOSE MODAL
+function closeModal(){
+    const modal = document.getElementById("modal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+
 </script>
+
+<!-- 🔥 MODAL -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+
+    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+
+        <h2 class="text-xl font-bold mb-4">
+            Appointments
+        </h2>
+
+        <div id="modalContent" class="text-sm text-gray-700 space-y-2">
+        </div>
+
+        <button onclick="closeModal()"
+            class="mt-4 bg-gray-800 text-white px-4 py-2 rounded w-full">
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+</body>
+</html>
