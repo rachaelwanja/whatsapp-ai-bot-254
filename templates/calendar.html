@@ -22,6 +22,25 @@
         </a>
     </div>
 
+    <!-- DOCTOR FILTER -->
+    <div class="mb-4 flex gap-3 items-center">
+        <label class="font-semibold">Doctor:</label>
+
+        <select onchange="filterDoctor(this.value)"
+                class="p-2 border rounded">
+
+            <option value="">All Doctors</option>
+
+            {% for d in doctors %}
+            <option value="{{ d }}"
+                {% if selected_doctor == d %}selected{% endif %}>
+                {{ d }}
+            </option>
+            {% endfor %}
+
+        </select>
+    </div>
+
     <!-- MONTH -->
     <div class="bg-white p-4 rounded-xl shadow mb-4 text-center">
         <h2 id="monthTitle" class="text-xl font-bold"></h2>
@@ -41,7 +60,6 @@
 <script>
 
 const appointments = {{ appointments | tojson }};
-
 const calendar = document.getElementById("calendar");
 const monthTitle = document.getElementById("monthTitle");
 
@@ -58,7 +76,7 @@ const monthNames = [
 
 monthTitle.innerText = `${monthNames[month]} ${year}`;
 
-// START DAY (Mon)
+// FIRST DAY
 let firstDay = new Date(year, month, 1).getDay();
 firstDay = firstDay === 0 ? 6 : firstDay - 1;
 
@@ -66,8 +84,7 @@ const daysInMonth = new Date(year, month + 1, 0).getDate();
 
 // EMPTY CELLS
 for(let i = 0; i < firstDay; i++){
-    const empty = document.createElement("div");
-    calendar.appendChild(empty);
+    calendar.appendChild(document.createElement("div"));
 }
 
 // RENDER DAYS
@@ -81,90 +98,111 @@ for(let d = 1; d <= daysInMonth; d++){
 
     let highlight = d === currentDay ? "ring-2 ring-blue-500" : "";
 
-    dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[130px] flex flex-col hover:shadow-lg transition cursor-pointer ${highlight}`;
+    dayBox.className = `bg-white p-2 rounded-xl shadow min-h-[150px] ${highlight}`;
 
-    // DROP ZONE
-    dayBox.ondragover = (e) => e.preventDefault();
+    // SLOT CONTAINERS
+    const morningBox = document.createElement("div");
+    const afternoonBox = document.createElement("div");
 
-    dayBox.ondrop = (e) => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("id");
-        updateAppointmentDate(id, dateStr);
-    };
+    morningBox.className = "border-b pb-1 mb-1";
+    afternoonBox.className = "pt-1";
 
-    let html = `
-        <div class="flex justify-between items-center mb-1">
+    // DROP ZONES
+    [morningBox, afternoonBox].forEach((box, index) => {
+
+        const slot = index === 0 ? "morning" : "afternoon";
+
+        box.ondragover = (e) => e.preventDefault();
+
+        box.ondrop = (e) => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData("id");
+            updateAppointment(id, dateStr, slot);
+        };
+    });
+
+    // HEADER
+    dayBox.innerHTML = `
+        <div class="flex justify-between mb-1">
             <span class="font-bold text-sm">${d}</span>
             ${dayAppointments.length ? `<span class="text-xs bg-gray-200 px-2 rounded">${dayAppointments.length}</span>` : ""}
         </div>
     `;
 
+    // APPOINTMENTS
     dayAppointments.forEach(a => {
 
         let color = "bg-yellow-100 text-yellow-700";
         if(a.status === "approve") color = "bg-green-100 text-green-700";
         if(a.status === "reject") color = "bg-red-100 text-red-700";
 
-        html += `
-            <div draggable="true"
-                 ondragstart="dragStart(event, '${a.id}')"
-                 class="${color} text-xs p-1 rounded mb-1 cursor-move">
-                <div class="font-medium">${a.name}</div>
-                <div>${a.slot} • ${a.doctor}</div>
+        const item = document.createElement("div");
+
+        item.setAttribute("draggable", true);
+        item.ondragstart = (e) => e.dataTransfer.setData("id", a.id);
+
+        item.className = `${color} text-xs p-1 rounded mb-1 cursor-move`;
+
+        item.innerHTML = `
+            <div class="font-medium text-blue-600 cursor-pointer"
+                 onclick="openPatient('${a.phone}')">
+                ${a.name}
             </div>
+            <div>${a.doctor}</div>
         `;
+
+        if(a.slot === "morning"){
+            morningBox.appendChild(item);
+        } else {
+            afternoonBox.appendChild(item);
+        }
     });
 
-    dayBox.innerHTML = html;
+    dayBox.appendChild(morningBox);
+    dayBox.appendChild(afternoonBox);
 
-    // CLICK → MODAL
     dayBox.onclick = () => openModal(dayAppointments, dateStr);
 
     calendar.appendChild(dayBox);
 }
 
-// DRAG START
-function dragStart(e, id){
-    e.dataTransfer.setData("id", id);
+// FILTER
+function filterDoctor(d){
+    window.location.href = d ? `/calendar?doctor=${encodeURIComponent(d)}` : "/calendar";
 }
 
-// UPDATE DATE
-function updateAppointmentDate(id, newDate){
+// UPDATE (DRAG)
+function updateAppointment(id, date, slot){
     fetch("/reschedule_drag", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({id, date: newDate})
+        body: JSON.stringify({id, date, slot})
     })
     .then(res => res.json())
     .then(() => location.reload());
 }
 
 // MODAL
-function openModal(dayAppointments, dateStr){
+function openModal(data, date){
 
     const modal = document.getElementById("modal");
     const content = document.getElementById("modalContent");
 
-    if(dayAppointments.length === 0){
-        content.innerHTML = `<p>No appointments for ${dateStr}</p>`;
+    if(!data.length){
+        content.innerHTML = `<p>No appointments</p>`;
     } else {
 
         let html = "";
 
-        dayAppointments.forEach(a => {
-
-            let statusColor = "text-yellow-600";
-            if(a.status === "approve") statusColor = "text-green-600";
-            if(a.status === "reject") statusColor = "text-red-600";
+        data.forEach(a => {
 
             html += `
                 <div class="border-b pb-2">
                     <div class="font-semibold">${a.name}</div>
                     <div>${a.slot} • ${a.doctor}</div>
-                    <div class="${statusColor} text-xs mb-1">${a.status}</div>
 
                     ${a.status === "pending" ? `
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mt-1">
                             <button onclick="updateStatus('${a.id}','approve')"
                                 class="bg-green-600 text-white px-2 py-1 rounded text-xs">
                                 Approve
@@ -175,7 +213,8 @@ function openModal(dayAppointments, dateStr){
                                 Reject
                             </button>
                         </div>
-                    ` : ""}
+                    ` : `<div class="text-xs mt-1">${a.status}</div>`}
+
                 </div>
             `;
         });
@@ -187,43 +226,79 @@ function openModal(dayAppointments, dateStr){
     modal.classList.add("flex");
 }
 
-// CLOSE MODAL
 function closeModal(){
-    const modal = document.getElementById("modal");
     modal.classList.add("hidden");
-    modal.classList.remove("flex");
 }
 
-// APPROVE / REJECT
+// APPROVE
 function updateStatus(id, action){
-
     fetch("/appointment_action", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({id, action})
     })
-    .then(res => res.json())
     .then(() => location.reload());
+}
+
+// PATIENT HISTORY
+function openPatient(phone){
+
+    fetch("/patient_history", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            phone,
+            client: "{{ client.name }}"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        const modal = document.getElementById("patientModal");
+        const content = document.getElementById("patientContent");
+
+        let html = "";
+
+        data.history.forEach(a => {
+            html += `
+                <div class="border-b pb-2">
+                    <div>${a.date}</div>
+                    <div>${a.slot} • ${a.doctor}</div>
+                </div>
+            `;
+        });
+
+        html += `<div class="mt-2 font-bold">Visits: ${data.history.length}</div>`;
+
+        content.innerHTML = html;
+
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    });
+}
+
+function closePatient(){
+    document.getElementById("patientModal").classList.add("hidden");
 }
 
 </script>
 
-<!-- MODAL -->
+<!-- MAIN MODAL -->
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-
-    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-
-        <h2 class="text-xl font-bold mb-4">Appointments</h2>
-
-        <div id="modalContent" class="space-y-2 text-sm"></div>
-
-        <button onclick="closeModal()"
-            class="mt-4 bg-gray-800 text-white px-4 py-2 rounded w-full">
-            Close
-        </button>
-
+    <div class="bg-white p-6 rounded-xl w-full max-w-md">
+        <h2 class="font-bold mb-3">Appointments</h2>
+        <div id="modalContent"></div>
+        <button onclick="closeModal()" class="mt-4 w-full bg-gray-800 text-white p-2 rounded">Close</button>
     </div>
+</div>
 
+<!-- PATIENT MODAL -->
+<div id="patientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white p-6 rounded-xl w-full max-w-md">
+        <h2 class="font-bold mb-3">Patient History</h2>
+        <div id="patientContent"></div>
+        <button onclick="closePatient()" class="mt-4 w-full bg-gray-800 text-white p-2 rounded">Close</button>
+    </div>
 </div>
 
 </body>
