@@ -3,6 +3,7 @@
 <head>
     <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -13,7 +14,7 @@
         <a href="/logout" class="text-red-500">Logout</a>
     </div>
 
-    <!-- CONTAINER -->
+    <!-- MAIN -->
     <div class="max-w-6xl mx-auto mt-8 px-4">
 
         <!-- HEADER -->
@@ -21,38 +22,27 @@
             <h2 class="text-2xl font-bold">
                 Welcome, {{ client.name }}
             </h2>
-            <p class="text-gray-500">
-                Manage your WhatsApp AI bot
-            </p>
+            <p class="text-gray-500">Manage your AI WhatsApp bot</p>
         </div>
 
-        <!-- STATUS CARD -->
-        <div class="bg-white p-6 rounded-2xl shadow mb-6">
-            <div class="flex justify-between items-center">
+        <!-- STATUS -->
+        <div class="bg-white p-6 rounded-2xl shadow mb-6 flex justify-between items-center">
 
-                <div>
-                    <p class="text-gray-500">Subscription Status</p>
-                    <h3 class="text-xl font-bold">
-                        {{ status }}
-                    </h3>
-
-                    <p class="text-sm text-gray-400">
-                        Expires: {{ expiry }}
-                    </p>
-                </div>
-
-                {% if status == "EXPIRED ❌" %}
-                <button onclick="payNow()"
-                    class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                    Pay Now 💳
-                </button>
-                {% else %}
-                <span class="text-green-600 font-semibold">
-                    Active ✔
-                </span>
-                {% endif %}
-
+            <div>
+                <p class="text-gray-500">Subscription</p>
+                <h3 class="text-xl font-bold">{{ status }}</h3>
+                <p class="text-sm text-gray-400">Expires: {{ expiry }}</p>
             </div>
+
+            {% if status == "EXPIRED ❌" %}
+            <button onclick="payNow()"
+                class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                Pay Now 💳
+            </button>
+            {% else %}
+            <span class="text-green-600 font-semibold">Active ✔</span>
+            {% endif %}
+
         </div>
 
         <!-- STATS -->
@@ -75,9 +65,22 @@
 
             <div class="bg-white p-5 rounded-2xl shadow">
                 <p class="text-gray-500">Conversion</p>
-                <h2 class="text-2xl font-bold">
-                    {{ analytics.conversion }}%
-                </h2>
+                <h2 class="text-2xl font-bold">{{ analytics.conversion }}%</h2>
+            </div>
+
+        </div>
+
+        <!-- CHARTS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+            <div class="bg-white p-6 rounded-2xl shadow">
+                <h3 class="font-bold mb-4">📊 Performance</h3>
+                <canvas id="leadsChart"></canvas>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow">
+                <h3 class="font-bold mb-4">💰 Conversion</h3>
+                <canvas id="conversionChart"></canvas>
             </div>
 
         </div>
@@ -95,9 +98,7 @@
             </div>
 
             <div class="mt-4">
-                <p class="text-sm text-gray-500">
-                    Share this link with customers:
-                </p>
+                <p class="text-sm text-gray-500">Share this link:</p>
 
                 <div class="bg-gray-200 p-2 rounded mt-1">
                     https://wa.me/{{ client.phone }}
@@ -123,15 +124,45 @@
 
     <!-- JS -->
     <script>
+
         function payNow() {
-            fetch("/pay", {
-                method: "POST"
-            })
+            fetch("/pay", { method: "POST" })
             .then(res => res.json())
             .then(data => {
                 alert(data.message)
             })
         }
+
+        // CHART 1
+        new Chart(document.getElementById('leadsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Leads', 'Bookings', 'Payments'],
+                datasets: [{
+                    label: 'Performance',
+                    data: [
+                        {{ analytics.leads }},
+                        {{ analytics.bookings }},
+                        {{ analytics.payments }}
+                    ]
+                }]
+            }
+        });
+
+        // CHART 2
+        new Chart(document.getElementById('conversionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Converted', 'Not Converted'],
+                datasets: [{
+                    data: [
+                        {{ analytics.conversion }},
+                        {{ 100 - analytics.conversion }}
+                    ]
+                }]
+            }
+        });
+
     </script>
 
 </body>
