@@ -1,40 +1,173 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard - FlowAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans">
 
-<div class="max-w-6xl mx-auto mt-8">
+<div class="max-w-4xl mx-auto mt-10">
 
-<h2 class="text-2xl font-bold mb-6">
-    Welcome, {{ client.name }}
-</h2>
+    <!-- HEADER -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <h2 class="text-2xl font-bold mb-2">
+            Welcome, {{ client.name }} 👋
+        </h2>
 
-<!-- STATUS -->
-<div class="bg-white p-5 rounded-xl shadow mb-6 flex justify-between">
-    <div>
-        <p>Status: {{ status }}</p>
-        <p>Days left: {{ days_left }}</p>
+        <p class="text-gray-600">
+            Manage your WhatsApp AI bot
+        </p>
     </div>
 
-    {% if status == "EXPIRED ❌" %}
-    <button onclick="pay()" class="bg-green-600 text-white px-4 py-2 rounded">
-        Pay Now
-    </button>
-    {% endif %}
+    <!-- STATUS CARD -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h3 class="text-xl font-bold mb-4">Account Status</h3>
+
+        <div class="grid grid-cols-2 gap-4">
+
+            <div>
+                <p class="text-gray-500">Status</p>
+                <p class="font-bold text-lg">{{ status }}</p>
+            </div>
+
+            <div>
+                <p class="text-gray-500">Plan</p>
+                <p class="font-bold text-lg uppercase">{{ client.tier }}</p>
+            </div>
+
+            <div>
+                <p class="text-gray-500">Expires</p>
+                <p class="font-bold text-lg">{{ client.expiry }}</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- BOT INFO -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h3 class="text-xl font-bold mb-4">Your Bot</h3>
+
+        <p class="mb-2">
+            WhatsApp Number:
+            <b>+{{ client.phones[0] }}</b>
+        </p>
+
+        <p class="mb-2">
+            Try sending:
+        </p>
+
+        <div class="bg-gray-200 p-3 rounded">
+            BUY
+        </div>
+
+    </div>
+
+    <!-- PRICING ACTION -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h3 class="text-xl font-bold mb-4">Upgrade Plan</h3>
+
+        <div class="flex gap-4">
+
+            <button onclick="selectPlan('basic')"
+                class="bg-gray-300 px-4 py-2 rounded">
+                Basic (KES 500)
+            </button>
+
+            <button onclick="selectPlan('pro')"
+                class="bg-blue-500 text-white px-4 py-2 rounded">
+                Pro (KES 1000)
+            </button>
+
+            <button onclick="selectPlan('premium')"
+                class="bg-purple-600 text-white px-4 py-2 rounded">
+                Premium (KES 2000)
+            </button>
+
+        </div>
+
+        <button onclick="payNow()"
+            class="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg w-full">
+            💳 Pay with MPESA
+        </button>
+
+    </div>
+
+    <!-- MARKETING -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h3 class="text-xl font-bold mb-4">Marketing</h3>
+
+        <button onclick="sendBroadcast()"
+            class="bg-red-600 text-white px-6 py-3 rounded w-full">
+            🚀 Send Offer to Demo Users
+        </button>
+
+    </div>
+
 </div>
 
-<!-- STATS -->
-<div class="grid grid-cols-3 gap-4 mb-6">
+<!-- SCRIPTS -->
+<script>
 
-<div class="bg-white p-4 rounded shadow text-center">
-<h3 class="text-gray-500">Leads</h3>
-<p class="text-2xl font-bold">{{ analytics.leads }}</p>
-</div>
+function selectPlan(plan) {
+
+    fetch("/set_plan", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({plan: plan})
+    })
+    .then(res => res.json())
+    .then(() => {
+        alert("Plan selected: " + plan.toUpperCase());
+    });
+}
+
+function payNow() {
+
+    fetch("/pay", {
+        method: "POST"
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+    });
+}
+
+function sendBroadcast() {
+
+    const message = `🔥 Limited Offer!
+
+Get your WhatsApp AI bot today 🚀
+
+💰 Starting from KES 500
+
+👉 https://whatsapp-ai-bot-254-1.onrender.com/signup`;
+
+    fetch("/broadcast", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({message: message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Sent to " + data.users + " users 🚀");
+    });
+
+}
+
+</script>
+
+</body>
+</html>
 
 <div class="bg-white p-4 rounded shadow text-center">
 <h3 class="text-gray-500">Payments</h3>
