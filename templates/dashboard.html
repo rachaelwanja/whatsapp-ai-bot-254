@@ -1,221 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard - FlowAI</title>
+    <title>Super Admin - FlowAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
 
-<div class="max-w-4xl mx-auto mt-10">
+<div class="max-w-7xl mx-auto mt-10">
 
     <!-- HEADER -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <h2 class="text-2xl font-bold mb-2">
-            Welcome, {{ client.name }} 👋
-        </h2>
-
-        <p class="text-gray-600">
-            Manage your WhatsApp AI bot
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">
+            Super Admin Dashboard
+        </h1>
+        <p class="text-gray-500">
+            Manage clients, revenue and platform performance
         </p>
     </div>
 
-    <!-- STATUS CARD -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
+    <!-- STATS -->
+    <div class="grid grid-cols-3 gap-6 mb-10">
 
-        <h3 class="text-xl font-bold mb-4">Account Status</h3>
+        <div class="bg-white p-6 rounded-xl shadow">
+            <p class="text-gray-500">Total Revenue</p>
+            <h2 class="text-3xl font-bold mt-2">
+                KES {{ revenue }}
+            </h2>
+        </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white p-6 rounded-xl shadow">
+            <p class="text-gray-500">Total Clients</p>
+            <h2 class="text-3xl font-bold mt-2">
+                {{ total_clients }}
+            </h2>
+        </div>
 
-            <div>
-                <p class="text-gray-500">Status</p>
-                <p class="font-bold text-lg">{{ status }}</p>
-            </div>
-
-            <div>
-                <p class="text-gray-500">Plan</p>
-                <p class="font-bold text-lg uppercase">{{ client.tier }}</p>
-            </div>
-
-            <div>
-                <p class="text-gray-500">Expires</p>
-                <p class="font-bold text-lg">{{ client.expiry }}</p>
-            </div>
-
+        <div class="bg-white p-6 rounded-xl shadow">
+            <p class="text-gray-500">Total Payments</p>
+            <h2 class="text-3xl font-bold mt-2">
+                {{ payments|length }}
+            </h2>
         </div>
 
     </div>
 
-    <!-- BOT INFO -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
+    <!-- CLIENTS SECTION -->
+    <div class="bg-white rounded-xl shadow mb-10">
 
-        <h3 class="text-xl font-bold mb-4">Your Bot</h3>
-
-        <p class="mb-2">
-            WhatsApp Number:
-            <b>+{{ client.phones[0] }}</b>
-        </p>
-
-        <p class="mb-2">
-            Try sending:
-        </p>
-
-        <div class="bg-gray-200 p-3 rounded">
-            BUY
+        <div class="p-6 border-b">
+            <h2 class="text-xl font-bold">Clients</h2>
+            <p class="text-gray-500 text-sm">All registered businesses</p>
         </div>
 
+        <table class="w-full text-left">
+
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-4">Business Name</th>
+                    <th class="p-4">Type</th>
+                    <th class="p-4">Plan</th>
+                    <th class="p-4">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for key, c in clients.items() %}
+                <tr class="border-t hover:bg-gray-50">
+
+                    <td class="p-4 font-medium">{{ c.name }}</td>
+
+                    <td class="p-4 capitalize">
+                        {{ c.type }}
+                    </td>
+
+                    <td class="p-4 uppercase">
+                        {{ c.tier }}
+                    </td>
+
+                    <td class="p-4">
+                        {% if c.plan == "paid" %}
+                            <span class="text-green-600 font-semibold">Active</span>
+                        {% elif c.plan == "expired" %}
+                            <span class="text-red-600 font-semibold">Expired</span>
+                        {% else %}
+                            <span class="text-yellow-600 font-semibold">Trial</span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
     </div>
 
-    <!-- PRICING ACTION -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
+    <!-- PAYMENTS SECTION -->
+    <div class="bg-white rounded-xl shadow">
 
-        <h3 class="text-xl font-bold mb-4">Upgrade Plan</h3>
-
-        <div class="flex gap-4">
-
-            <button onclick="selectPlan('basic')"
-                class="bg-gray-300 px-4 py-2 rounded">
-                Basic (KES 500)
-            </button>
-
-            <button onclick="selectPlan('pro')"
-                class="bg-blue-500 text-white px-4 py-2 rounded">
-                Pro (KES 1000)
-            </button>
-
-            <button onclick="selectPlan('premium')"
-                class="bg-purple-600 text-white px-4 py-2 rounded">
-                Premium (KES 2000)
-            </button>
-
+        <div class="p-6 border-b">
+            <h2 class="text-xl font-bold">Recent Payments</h2>
+            <p class="text-gray-500 text-sm">Latest transactions on the platform</p>
         </div>
 
-        <button onclick="payNow()"
-            class="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg w-full">
-            💳 Pay with MPESA
-        </button>
+        <table class="w-full text-left">
+
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-4">Phone</th>
+                    <th class="p-4">Amount</th>
+                    <th class="p-4">Plan</th>
+                    <th class="p-4">Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for p in payments %}
+                <tr class="border-t hover:bg-gray-50">
+
+                    <td class="p-4">{{ p.phone }}</td>
+
+                    <td class="p-4 font-semibold">
+                        KES {{ p.amount }}
+                    </td>
+
+                    <td class="p-4 uppercase">
+                        {{ p.plan }}
+                    </td>
+
+                    <td class="p-4 text-gray-500">
+                        {{ p.time }}
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+                {% if payments|length == 0 %}
+                <tr>
+                    <td colspan="4" class="p-6 text-center text-gray-500">
+                        No payments yet
+                    </td>
+                </tr>
+                {% endif %}
+
+            </tbody>
+
+        </table>
 
     </div>
 
-    <!-- MARKETING -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
-
-        <h3 class="text-xl font-bold mb-4">Marketing</h3>
-
-        <button onclick="sendBroadcast()"
-            class="bg-red-600 text-white px-6 py-3 rounded w-full">
-            🚀 Send Offer to Demo Users
-        </button>
-
-    </div>
-
 </div>
-
-<!-- SCRIPTS -->
-<script>
-
-function selectPlan(plan) {
-
-    fetch("/set_plan", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({plan: plan})
-    })
-    .then(res => res.json())
-    .then(() => {
-        alert("Plan selected: " + plan.toUpperCase());
-    });
-}
-
-function payNow() {
-
-    fetch("/pay", {
-        method: "POST"
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-    });
-}
-
-function sendBroadcast() {
-
-    const message = `🔥 Limited Offer!
-
-Get your WhatsApp AI bot today 🚀
-
-💰 Starting from KES 500
-
-👉 https://whatsapp-ai-bot-254-1.onrender.com/signup`;
-
-    fetch("/broadcast", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({message: message})
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert("Sent to " + data.users + " users 🚀");
-    });
-
-}
-
-</script>
-
-</body>
-</html>
-
-<div class="bg-white p-4 rounded shadow text-center">
-<h3 class="text-gray-500">Payments</h3>
-<p class="text-2xl font-bold">{{ analytics.payments }}</p>
-</div>
-
-<div class="bg-white p-4 rounded shadow text-center">
-<h3 class="text-gray-500">Conversion</h3>
-<p class="text-2xl font-bold">{{ analytics.conversion }}%</p>
-</div>
-
-</div>
-
-<!-- CHART -->
-<div class="bg-white p-6 rounded shadow mb-6">
-<canvas id="chart"></canvas>
-</div>
-
-<!-- ACTIONS -->
-<div class="flex gap-4">
-<a href="/pricing" class="bg-blue-600 text-white px-4 py-2 rounded">
-Upgrade Plan
-</a>
-</div>
-
-</div>
-
-<script>
-function pay(){
- fetch("/pay",{method:"POST"})
- .then(r=>r.json())
- .then(d=>alert(d.message))
-}
-
-// Chart
-new Chart(document.getElementById("chart"),{
- type:"bar",
- data:{
-  labels:["Leads","Payments"],
-  datasets:[{
-   data:[
-    {{ analytics.leads }},
-    {{ analytics.payments }}
-   ]
-  }]
- }
-})
-</script>
 
 </body>
 </html>
