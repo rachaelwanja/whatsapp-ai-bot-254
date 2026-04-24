@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+<div class="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-2xl shadow">
+
+    <h2 class="text-2xl font-bold mb-4">
+        Welcome, {{ client.name }}
+    </h2>
+
+    <div class="mb-4">
+        <p><span class="font-semibold">Status:</span> {{ status }}</p>
+        <p><span class="font-semibold">Expires:</span> {{ expiry }}</p>
+    </div>
+
+    <hr class="my-4">
+
+    <h3 class="text-lg font-semibold mb-2">Your Bot</h3>
+    <p class="mb-2">Keyword: <b>{{ client.keyword }}</b></p>
+
+    <div class="bg-gray-200 p-3 rounded-lg text-sm">
+        {{ client.keyword }} hi
+    </div>
+
+    <hr class="my-4">
+
+    {% if status == "EXPIRED ❌" %}
+        <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+            ⚠️ Subscription expired. Please pay to continue.
+        </div>
+    {% else %}
+        <div class="bg-green-100 text-green-700 p-4 rounded-lg">
+            ✅ Bot is active
+        </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    <a href="/leads"
+       class="inline-block bg-black text-white px-4 py-2 rounded-lg">
+        View Leads
+    </a>
+
+</div>
+
+</body>
+</html>
