@@ -1,13 +1,17 @@
 from flask import Flask, request, render_template, redirect, session, Response, jsonify
 import json, datetime, os
-
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
 # ================= DATABASE =================
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+uri = os.getenv("DATABASE_URL")
+
+if uri and uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -24,7 +28,16 @@ class Client(db.Model):
     username = db.Column(db.String(50))
     password = db.Column(db.String(50))
 
-# ================= LOAD / SAVE (TEMP - WILL REMOVE LATER) =================
+# ================= DEBUG ROUTES =================
+@app.route("/routes")
+def routes():
+    return str(app.url_map)
+
+@app.route("/test")
+def test():
+    return "TEST WORKING"
+
+# ================= LOAD / SAVE (TEMP) =================
 def load_json(file):
     try:
         with open(file, "r") as f:
@@ -48,7 +61,6 @@ SUPER_ADMIN = {"username": "admin", "password": "admin123"}
 
 # ================= REGISTER STUDENT =================
 def register_student(name, phone, client_id):
-
     client = Client.query.get(client_id)
     plan = client.plan or "basic"
     limit = PLANS[plan]["students"]
@@ -77,7 +89,6 @@ def register_student(name, phone, client_id):
 
 # ================= SAVE PROGRESS =================
 def save_progress(phone, subject, score):
-
     data = load_json("progress.json")
     if "progress" not in data:
         data["progress"] = []
@@ -116,7 +127,7 @@ def dashboard():
 
     client = Client.query.get(session["client_id"])
 
-    if not client.active:
+    if not client or not client.active:
         return render_template("expired.html")
 
     # SCHOOL DASHBOARD
@@ -155,7 +166,7 @@ def whatsapp():
     s = user_sessions[user]
     msg = incoming.lower()
 
-    if msg in ["hi", "menu"]:
+    if msg in ["hi", "menu", "hey", "hello"]:
         return Response("""
 <Response>
 <Message>
