@@ -28,79 +28,14 @@ class Client(db.Model):
     username = db.Column(db.String(50))
     password = db.Column(db.String(50))
 
-# ================= DEBUG ROUTES =================
-@app.route("/routes")
-def routes():
-    return str(app.url_map)
-
+# ================= DEBUG =================
 @app.route("/test")
 def test():
     return "TEST WORKING"
 
-# ================= LOAD / SAVE (TEMP) =================
-def load_json(file):
-    try:
-        with open(file, "r") as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_json(file, data):
-    with open(file, "w") as f:
-        json.dump(data, f, indent=4)
-
-# ================= PLANS =================
-PLANS = {
-    "basic": {"price": 500, "students": 50},
-    "pro": {"price": 1000, "students": 200},
-    "premium": {"price": 2000, "students": 9999}
-}
-
-# ================= SUPER ADMIN =================
-SUPER_ADMIN = {"username": "admin", "password": "admin123"}
-
-# ================= REGISTER STUDENT =================
-def register_student(name, phone, client_id):
-    client = Client.query.get(client_id)
-    plan = client.plan or "basic"
-    limit = PLANS[plan]["students"]
-
-    data = load_json("students.json")
-    if "students" not in data:
-        data["students"] = []
-
-    count = len([s for s in data["students"] if s.get("client") == client_id])
-
-    if count >= limit:
-        return False
-
-    exists = any(s["phone"] == phone for s in data["students"])
-
-    if not exists:
-        data["students"].append({
-            "name": name,
-            "phone": phone,
-            "client": client_id,
-            "joined": str(datetime.datetime.now())
-        })
-
-    save_json("students.json", data)
-    return True
-
-# ================= SAVE PROGRESS =================
-def save_progress(phone, subject, score):
-    data = load_json("progress.json")
-    if "progress" not in data:
-        data["progress"] = []
-
-    data["progress"].append({
-        "phone": phone,
-        "subject": subject,
-        "score": score,
-        "date": str(datetime.datetime.now())
-    })
-
-    save_json("progress.json", data)
+@app.route("/routes")
+def routes():
+    return str(app.url_map)
 
 # ================= LOGIN =================
 @app.route("/login", methods=["GET", "POST"])
@@ -118,6 +53,30 @@ def login():
 
     return render_template("login.html")
 
+# ================= SIGNUP (NEW) =================
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+
+    if request.method == "POST":
+        name = request.form["name"]
+        username = request.form["username"]
+        password = request.form["password"]
+
+        new_client = Client(
+            name=name,
+            username=username,
+            password=password,
+            plan="basic",
+            active=True
+        )
+
+        db.session.add(new_client)
+        db.session.commit()
+
+        return redirect("/login")
+
+    return render_template("signup.html")
+
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
@@ -130,41 +89,16 @@ def dashboard():
     if not client or not client.active:
         return render_template("expired.html")
 
-    # SCHOOL DASHBOARD
-    if client.type == "school":
+    return render_template("dashboard.html", client=client)
 
-        students = load_json("students.json").get("students", [])
-        progress = load_json("progress.json").get("progress", [])
-
-        students = [s for s in students if s.get("client") == client.id]
-
-        return render_template(
-            "school_dashboard.html",
-            client=client,
-            students=students,
-            progress=progress
-        )
-
-    # CLINIC DASHBOARD
-    appointments = load_json("appointments.json")
-    data = [a for a in appointments if a["client"] == client.name]
-
-    return render_template("dashboard.html", client=client, appointments=data)
-
-# ================= WHATSAPP BOT =================
+# ================= WHATSAPP =================
 user_sessions = {}
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming = request.form.get("Body", "").strip()
+    msg = request.form.get("Body", "").lower()
     user = request.form.get("From")
-
-    if user not in user_sessions:
-        user_sessions[user] = {"step": "menu"}
-
-    s = user_sessions[user]
-    msg = incoming.lower()
 
     if msg in ["hi", "menu", "hey", "hello"]:
         return Response("""
@@ -178,81 +112,7 @@ Welcome 📚
 </Response>
 """, mimetype="text/xml")
 
-    if msg == "2":
-        s["step"] = "quiz"
-        return Response("""
-<Response>
-<Message>
-What is 8 × 7?
-
-A) 54  
-B) 56  
-C) 64
-</Message>
-</Response>
-""", mimetype="text/xml")
-
-    if s.get("step") == "quiz":
-
-        score = 1 if msg.upper() == "B" else 0
-        save_progress(user, "math", score)
-
-        s["step"] = "menu"
-
-        return Response("""
-<Response>
-<Message>
-Answer recorded ✅
-</Message>
-</Response>
-""", mimetype="text/xml")
-
-    if "solve" in msg or any(c.isdigit() for c in msg):
-        return Response(f"""
-<Response>
-<Message>
-Let's solve it step-by-step 😊
-
-(Connect OpenAI here for full AI)
-</Message>
-</Response>
-""", mimetype="text/xml")
-
     return Response("<Response><Message>Type menu</Message></Response>", mimetype="text/xml")
-
-# ================= SUPER ADMIN =================
-@app.route("/superadmin", methods=["GET", "POST"])
-def superadmin():
-
-    if request.method == "POST":
-        if request.form["username"] == SUPER_ADMIN["username"] and \
-           request.form["password"] == SUPER_ADMIN["password"]:
-
-            session["admin"] = True
-            return redirect("/superadmin/dashboard")
-
-    return render_template("superadmin_login.html")
-
-@app.route("/superadmin/dashboard")
-def admin_dashboard():
-
-    if not session.get("admin"):
-        return redirect("/superadmin")
-
-    students = load_json("students.json").get("students", [])
-    payments = load_json("payments.json").get("payments", [])
-
-    revenue = sum(p["amount"] for p in payments)
-
-    clients = Client.query.all()
-
-    return render_template(
-        "superadmin_dashboard.html",
-        clients=clients,
-        total_clients=len(clients),
-        total_students=len(students),
-        revenue=revenue
-    )
 
 # ================= HOME =================
 @app.route("/")
