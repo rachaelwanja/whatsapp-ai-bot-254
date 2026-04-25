@@ -18,9 +18,8 @@ def save_json(file, data):
 
 clients = load_json("clients.json")
 
-# ================= APPOINTMENTS =================
+# ================= SAVE APPOINTMENT =================
 def save_appointment(name, phone, date, slot, doctor, client_name):
-
     appointments = load_json("appointments.json")
 
     appointments.append({
@@ -38,34 +37,33 @@ def save_appointment(name, phone, date, slot, doctor, client_name):
     save_json("appointments.json", appointments)
 
 # ================= LOGIN =================
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
         for key, client in clients.items():
-            if client["account"]["username"] == request.form["username"]:
+            acc = client.get("account", {})
+
+            if acc.get("username") == username and acc.get("password") == password:
                 session["client"] = key
                 return redirect("/dashboard")
 
     return render_template("login.html")
 
 # ================= DOCTOR LOGIN =================
-@app.route("/doctor", methods=["GET","POST"])
+@app.route("/doctor", methods=["GET", "POST"])
 def doctor_login():
-
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
 
         for key, client in clients.items():
             for d in client.get("doctors", []):
-
                 if d["username"] == username and d["password"] == password:
-
                     session["doctor"] = d["name"]
                     session["client"] = key
-
                     return redirect("/doctor/dashboard")
 
     return render_template("doctor_login.html")
@@ -73,7 +71,6 @@ def doctor_login():
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
-
     if "client" not in session:
         return redirect("/login")
 
@@ -82,7 +79,6 @@ def dashboard():
 # ================= DOCTOR DASHBOARD =================
 @app.route("/doctor/dashboard")
 def doctor_dashboard():
-
     if "doctor" not in session:
         return redirect("/doctor")
 
@@ -106,7 +102,6 @@ def doctor_dashboard():
 # ================= CALENDAR =================
 @app.route("/calendar")
 def calendar():
-
     if "client" not in session:
         return redirect("/login")
 
@@ -115,10 +110,7 @@ def calendar():
 
     appointments = load_json("appointments.json")
 
-    data = [
-        a for a in appointments
-        if a["client"] == client["name"]
-    ]
+    data = [a for a in appointments if a["client"] == client["name"]]
 
     if doctor_filter:
         data = [a for a in data if a["doctor"] == doctor_filter]
@@ -134,7 +126,6 @@ def calendar():
 # ================= APPROVE / REJECT =================
 @app.route("/appointment_action", methods=["POST"])
 def appointment_action():
-
     data = request.json
     appointment_id = data.get("id")
     action = data.get("action")
@@ -152,7 +143,6 @@ def appointment_action():
 # ================= DRAG RESCHEDULE =================
 @app.route("/reschedule_drag", methods=["POST"])
 def reschedule_drag():
-
     data = request.json
     appointment_id = data.get("id")
     new_date = data.get("date")
@@ -172,7 +162,6 @@ def reschedule_drag():
 # ================= PATIENT HISTORY =================
 @app.route("/patient_history", methods=["POST"])
 def patient_history():
-
     data = request.json
     phone = data.get("phone")
     client_name = data.get("client")
@@ -189,16 +178,17 @@ def patient_history():
 # ================= WHATSAPP BOT =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
-
     incoming = request.form.get("Body", "")
     from_number = request.form.get("From")
 
-    # prompt user
+    # Show instructions
     if "appointment" in incoming.lower():
         return Response("""
 <Response>
 <Message>
-Send: Name Date Slot Doctor
+Please send your booking in this format:
+
+Name Date Slot Doctor
 
 Example:
 John Doe 2026-05-01 morning Dr. Smith
@@ -209,13 +199,16 @@ John Doe 2026-05-01 morning Dr. Smith
     try:
         parts = incoming.split()
 
-        # ✅ FIXED PARSING
+        # FIXED parsing
         name = " ".join(parts[:-4])
         date = parts[-4]
         slot = parts[-3]
         doctor = " ".join(parts[-2:])
 
-        save_appointment(name, from_number, date, slot, doctor, "CarePlus Clinic")
+        # Assign to first client (for now)
+        client_name = list(clients.values())[0]["name"]
+
+        save_appointment(name, from_number, date, slot, doctor, client_name)
 
         return Response(f"""
 <Response>
@@ -229,7 +222,7 @@ Appointment confirmed for {date} in the {slot} with {doctor}.
         return Response("""
 <Response>
 <Message>
-Invalid format. Please follow:
+Invalid format. Please send:
 
 John Doe 2026-05-01 morning Dr. Smith
 </Message>
