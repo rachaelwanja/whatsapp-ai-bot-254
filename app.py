@@ -4,13 +4,13 @@ import json, datetime
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
-# ================= FILE HANDLING =================
+# ================= LOAD / SAVE =================
 def load_json(file):
     try:
         with open(file, "r") as f:
             return json.load(f)
     except:
-        return [] if "appointments" in file else {}
+        return {}
 
 def save_json(file, data):
     with open(file, "w") as f:
@@ -18,27 +18,61 @@ def save_json(file, data):
 
 clients = load_json("clients.json")
 
-# ================= SESSION MEMORY (BOT) =================
-user_sessions = {}
+# ================= PLANS =================
+PLANS = {
+    "basic": {"price": 500, "students": 50},
+    "pro": {"price": 1000, "students": 200},
+    "premium": {"price": 2000, "students": 9999}
+}
 
-# ================= SAVE APPOINTMENT =================
-def save_appointment(name, phone, date, slot, doctor, client_name):
+# ================= SUPER ADMIN =================
+SUPER_ADMIN = {"username": "admin", "password": "admin123"}
 
-    appointments = load_json("appointments.json")
+# ================= REGISTER STUDENT =================
+def register_student(name, phone, client_key):
 
-    appointments.append({
-        "id": str(datetime.datetime.now().timestamp()),
-        "name": name,
+    client = clients[client_key]
+    plan = client.get("plan", "basic")
+    limit = PLANS[plan]["students"]
+
+    data = load_json("students.json")
+    if "students" not in data:
+        data["students"] = []
+
+    # count per client
+    count = len([s for s in data["students"] if s.get("client") == client_key])
+
+    if count >= limit:
+        return False
+
+    exists = any(s["phone"] == phone for s in data["students"])
+
+    if not exists:
+        data["students"].append({
+            "name": name,
+            "phone": phone,
+            "client": client_key,
+            "joined": str(datetime.datetime.now())
+        })
+
+    save_json("students.json", data)
+    return True
+
+# ================= SAVE PROGRESS =================
+def save_progress(phone, subject, score):
+
+    data = load_json("progress.json")
+    if "progress" not in data:
+        data["progress"] = []
+
+    data["progress"].append({
         "phone": phone,
-        "date": date,
-        "slot": slot,
-        "doctor": doctor,
-        "client": client_name,
-        "status": "pending",
-        "created_at": str(datetime.datetime.now())
+        "subject": subject,
+        "score": score,
+        "date": str(datetime.datetime.now())
     })
 
-    save_json("appointments.json", appointments)
+    save_json("progress.json", data)
 
 # ================= LOGIN =================
 @app.route("/login", methods=["GET", "POST"])
@@ -57,141 +91,39 @@ def login():
 
     return render_template("login.html")
 
-# ================= DOCTOR LOGIN =================
-@app.route("/doctor", methods=["GET", "POST"])
-def doctor_login():
-
-    if request.method == "POST":
-
-        username = request.form["username"]
-        password = request.form["password"]
-
-        for key, client in clients.items():
-            for d in client.get("doctors", []):
-
-                if d["username"] == username and d["password"] == password:
-
-                    session["doctor"] = d["name"]
-                    session["client"] = key
-
-                    return redirect("/doctor/dashboard")
-
-    return render_template("doctor_login.html")
-
-# ================= DASHBOARD =================
+# ================= DASHBOARD SWITCH =================
 @app.route("/dashboard")
 def dashboard():
 
     if "client" not in session:
         return redirect("/login")
 
-    return render_template("dashboard.html", client=clients[session["client"]])
-
-# ================= DOCTOR DASHBOARD =================
-@app.route("/doctor/dashboard")
-def doctor_dashboard():
-
-    if "doctor" not in session:
-        return redirect("/doctor")
-
-    doctor = session["doctor"]
     client = clients[session["client"]]
 
+    # SCHOOL DASHBOARD
+    if client.get("type") == "school":
+
+        students = load_json("students.json").get("students", [])
+        progress = load_json("progress.json").get("progress", [])
+
+        students = [s for s in students if s.get("client") == session["client"]]
+
+        return render_template(
+            "school_dashboard.html",
+            client=client,
+            students=students,
+            progress=progress
+        )
+
+    # CLINIC DASHBOARD
     appointments = load_json("appointments.json")
-
-    data = [
-        a for a in appointments
-        if a["doctor"] == doctor and a["client"] == client["name"]
-    ]
-
-    return render_template(
-        "doctor_dashboard.html",
-        appointments=data,
-        doctor=doctor,
-        client=client
-    )
-
-# ================= CALENDAR =================
-@app.route("/calendar")
-def calendar():
-
-    if "client" not in session:
-        return redirect("/login")
-
-    client = clients[session["client"]]
-    doctor_filter = request.args.get("doctor")
-
-    appointments = load_json("appointments.json")
-
     data = [a for a in appointments if a["client"] == client["name"]]
 
-    if doctor_filter:
-        data = [a for a in data if a["doctor"] == doctor_filter]
+    return render_template("dashboard.html", client=client, appointments=data)
 
-    return render_template(
-        "calendar.html",
-        appointments=data,
-        client=client,
-        doctors=[d["name"] for d in client.get("doctors", [])],
-        selected_doctor=doctor_filter
-    )
+# ================= WHATSAPP SCHOOL BOT =================
+user_sessions = {}
 
-# ================= APPROVE / REJECT =================
-@app.route("/appointment_action", methods=["POST"])
-def appointment_action():
-
-    data = request.json
-    appointment_id = data.get("id")
-    action = data.get("action")
-
-    appointments = load_json("appointments.json")
-
-    for a in appointments:
-        if a["id"] == appointment_id:
-            a["status"] = action
-
-    save_json("appointments.json", appointments)
-
-    return jsonify({"status": "updated"})
-
-# ================= DRAG RESCHEDULE =================
-@app.route("/reschedule_drag", methods=["POST"])
-def reschedule_drag():
-
-    data = request.json
-    appointment_id = data.get("id")
-    new_date = data.get("date")
-    new_slot = data.get("slot")
-
-    appointments = load_json("appointments.json")
-
-    for a in appointments:
-        if a["id"] == appointment_id:
-            a["date"] = new_date
-            a["slot"] = new_slot
-
-    save_json("appointments.json", appointments)
-
-    return jsonify({"status": "updated"})
-
-# ================= PATIENT HISTORY =================
-@app.route("/patient_history", methods=["POST"])
-def patient_history():
-
-    data = request.json
-    phone = data.get("phone")
-    client_name = data.get("client")
-
-    appointments = load_json("appointments.json")
-
-    history = [
-        a for a in appointments
-        if a["phone"] == phone and a["client"] == client_name
-    ]
-
-    return jsonify({"history": history})
-
-# ================= WHATSAPP (CONVERSATIONAL BOT 🇰🇪) =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
@@ -199,145 +131,105 @@ def whatsapp():
     user = request.form.get("From")
 
     if user not in user_sessions:
-        user_sessions[user] = {"step": "start"}
+        user_sessions[user] = {"step": "menu"}
 
     s = user_sessions[user]
+    msg = incoming.lower()
 
-    # STEP 1: GREETING
-    if s["step"] == "start":
+    # MENU
+    if msg in ["hi", "menu"]:
+        return Response("""
+<Response>
+<Message>
+Welcome 📚
+
+1️⃣ Homework help  
+2️⃣ Take a quiz  
+</Message>
+</Response>
+""", mimetype="text/xml")
+
+    # QUIZ START
+    if msg == "2":
+        s["step"] = "quiz"
+        return Response("""
+<Response>
+<Message>
+What is 8 × 7?
+
+A) 54  
+B) 56  
+C) 64
+</Message>
+</Response>
+""", mimetype="text/xml")
+
+    # QUIZ ANSWER
+    if s.get("step") == "quiz":
+
+        score = 1 if msg.upper() == "B" else 0
+        save_progress(user, "math", score)
+
         s["step"] = "menu"
 
         return Response("""
 <Response>
 <Message>
-Hello 👋 Welcome to CarePlus Clinic.
-
-How may we assist you today?
-
-1️⃣ Book appointment  
-2️⃣ Check available slots  
-3️⃣ Talk to support
+Answer recorded ✅
 </Message>
 </Response>
 """, mimetype="text/xml")
 
-    # STEP 2: MENU
-    elif s["step"] == "menu":
-
-        if incoming == "1":
-            s["step"] = "name"
-
-            return Response("""
-<Response>
-<Message>
-Great 👍 Kindly share your full name.
-</Message>
-</Response>
-""", mimetype="text/xml")
-
-        return Response("""
-<Response>
-<Message>
-Please reply with 1, 2 or 3.
-</Message>
-</Response>
-""", mimetype="text/xml")
-
-    # STEP 3: NAME
-    elif s["step"] == "name":
-
-        s["name"] = incoming
-        s["step"] = "date"
-
+    # HOMEWORK AI
+    if "solve" in msg or any(c.isdigit() for c in msg):
         return Response(f"""
 <Response>
 <Message>
-Thank you {incoming} 😊
+Let's solve it step-by-step 😊
 
-Please provide your preferred date (e.g. 2026-05-01).
+(Connect OpenAI here for full AI)
 </Message>
 </Response>
 """, mimetype="text/xml")
 
-    # STEP 4: DATE
-    elif s["step"] == "date":
+    return Response("<Response><Message>Type menu</Message></Response>", mimetype="text/xml")
 
-        s["date"] = incoming
-        s["step"] = "slot"
+# ================= SUPER ADMIN =================
+@app.route("/superadmin", methods=["GET", "POST"])
+def superadmin():
 
-        return Response("""
-<Response>
-<Message>
-Select your preferred time:
+    if request.method == "POST":
+        if request.form["username"] == SUPER_ADMIN["username"] and \
+           request.form["password"] == SUPER_ADMIN["password"]:
 
-1️⃣ Morning  
-2️⃣ Afternoon
-</Message>
-</Response>
-""", mimetype="text/xml")
+            session["admin"] = True
+            return redirect("/superadmin/dashboard")
 
-    # STEP 5: SLOT
-    elif s["step"] == "slot":
+    return render_template("superadmin_login.html")
 
-        slot = "morning" if incoming == "1" else "afternoon"
-        s["slot"] = slot
-        s["step"] = "doctor"
+@app.route("/superadmin/dashboard")
+def admin_dashboard():
 
-        return Response("""
-<Response>
-<Message>
-Select your doctor:
+    if not session.get("admin"):
+        return redirect("/superadmin")
 
-1️⃣ Dr. Kamau  
-2️⃣ Dr. Achieng
-</Message>
-</Response>
-""", mimetype="text/xml")
+    students = load_json("students.json").get("students", [])
+    payments = load_json("payments.json").get("payments", [])
 
-    # STEP 6: DOCTOR
-    elif s["step"] == "doctor":
+    revenue = sum(p["amount"] for p in payments)
 
-        doctor = "Dr. Kamau" if incoming == "1" else "Dr. Achieng"
-
-        save_appointment(
-            s["name"],
-            user,
-            s["date"],
-            s["slot"],
-            doctor,
-            list(clients.values())[0]["name"]
-        )
-
-        user_sessions[user] = {"step": "start"}
-
-        return Response(f"""
-<Response>
-<Message>
-Thank you {s['name']} 🙏
-
-Your appointment has been successfully scheduled:
-
-📅 Date: {s['date']}  
-⏰ Time: {s['slot'].capitalize()}  
-👨‍⚕️ Doctor: {doctor}  
-
-We look forward to serving you.
-</Message>
-</Response>
-""", mimetype="text/xml")
-
-    return Response("<Response><Message>OK</Message></Response>", mimetype="text/xml")
+    return render_template(
+        "superadmin_dashboard.html",
+        clients=clients,
+        total_clients=len(clients),
+        total_students=len(students),
+        revenue=revenue
+    )
 
 # ================= HOME =================
 @app.route("/")
 def home():
     return render_template("index.html")
-
-# ================= LOGOUT =================
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
 
 # ================= RUN =================
 if __name__ == "__main__":
