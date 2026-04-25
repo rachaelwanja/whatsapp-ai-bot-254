@@ -12,7 +12,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ================= MODELS =================
+# ================= MODEL =================
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
@@ -28,21 +28,21 @@ class Client(db.Model):
 with app.app_context():
     db.create_all()
 
-    # Create default user if DB empty
+    # create default test user
     if not Client.query.first():
         demo = Client(
-            name="Bright Future Academy",
+            name="Demo School",
             type="school",
             plan="pro",
             active=True,
-            phone="254700000002",
+            phone="254700000000",
             username="school1",
             password="1234"
         )
         db.session.add(demo)
         db.session.commit()
 
-# ================= TEMP JSON (FOR STUDENTS ONLY) =================
+# ================= JSON HELPERS =================
 def load_json(file):
     try:
         with open(file, "r") as f:
@@ -54,28 +54,28 @@ def save_json(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=4)
 
-# ================= PLANS =================
-PLANS = {
-    "basic": {"price": 500, "students": 50},
-    "pro": {"price": 1000, "students": 200},
-    "premium": {"price": 2000, "students": 9999}
-}
+# ================= HOME =================
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # ================= SIGNUP =================
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
 
     if request.method == "POST":
-        name = request.form["name"]
-        phone = request.form["phone"]
-        username = request.form["username"]
-        password = request.form["password"]
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        # check existing user
+        print("SIGNUP:", username)
+
+        # check existing
         if Client.query.filter_by(username=username).first():
-            return "Username already exists"
+            return "Username already exists ❌"
 
-        new_client = Client(
+        new_user = Client(
             name=name,
             phone=phone,
             username=username,
@@ -86,8 +86,10 @@ def signup():
             expiry=datetime.date.today() + datetime.timedelta(days=30)
         )
 
-        db.session.add(new_client)
+        db.session.add(new_user)
         db.session.commit()
+
+        print("USER CREATED:", username)
 
         return redirect("/login")
 
@@ -98,14 +100,23 @@ def signup():
 def login():
 
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        client = Client.query.filter_by(username=username, password=password).first()
+        print("LOGIN ATTEMPT:", username, password)
+
+        client = Client.query.filter_by(username=username).first()
 
         if client:
-            session["client_id"] = client.id
-            return redirect("/dashboard")
+            print("FOUND USER:", client.username, client.password)
+
+            if client.password == password:
+                session["client_id"] = client.id
+                print("LOGIN SUCCESS")
+                return redirect("/dashboard")
+
+        print("LOGIN FAILED")
+        return "Invalid login ❌"
 
     return render_template("login.html")
 
@@ -117,6 +128,9 @@ def dashboard():
         return redirect("/login")
 
     client = Client.query.get(session["client_id"])
+
+    if not client:
+        return redirect("/login")
 
     if not client.active:
         return render_template("expired.html")
@@ -130,31 +144,11 @@ def dashboard():
         students=students
     )
 
-# ================= REGISTER STUDENT =================
-def register_student(name, phone, client_id):
-
-    client = Client.query.get(client_id)
-    plan = client.plan or "basic"
-    limit = PLANS[plan]["students"]
-
-    data = load_json("students.json")
-    if "students" not in data:
-        data["students"] = []
-
-    count = len([s for s in data["students"] if s.get("client") == client_id])
-
-    if count >= limit:
-        return False
-
-    data["students"].append({
-        "name": name,
-        "phone": phone,
-        "client": client_id,
-        "joined": str(datetime.datetime.now())
-    })
-
-    save_json("students.json", data)
-    return True
+# ================= LOGOUT =================
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 # ================= WHATSAPP BOT =================
 user_sessions = {}
@@ -228,24 +222,11 @@ Answer recorded ✅
 <Response>
 <Message>
 Let's solve it step-by-step 😊
-
-(Connect OpenAI here for full AI)
 </Message>
 </Response>
 """, mimetype="text/xml")
 
     return Response("<Response><Message>Type menu</Message></Response>", mimetype="text/xml")
-
-# ================= HOME =================
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-# ================= LOGOUT =================
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 # ================= RUN =================
 if __name__ == "__main__":
