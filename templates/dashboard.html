@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Super Admin - FlowAI</title>
+    <title>FlowAI Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -10,147 +10,89 @@
 <div class="max-w-7xl mx-auto mt-10">
 
     <!-- HEADER -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold">
-            Super Admin Dashboard
-        </h1>
-        <p class="text-gray-500">
-            Manage clients, revenue and platform performance
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">Dashboard</h1>
+            <p class="text-gray-500">{{ client.name }}</p>
+        </div>
+
+        <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded">
+            Logout
+        </a>
+    </div>
+
+    <!-- SUBSCRIPTION -->
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h2 class="text-xl font-bold mb-2">💳 Subscription</h2>
+
+        <p class="mb-2">
+            Plan:
+            <span class="font-semibold text-blue-600">
+                {{ client.plan.upper() }}
+            </span>
         </p>
+
+        {% if days_left is not none %}
+        <p class="mb-4">
+            Days left:
+            <span class="{% if days_left <= 3 %}text-red-600 font-bold{% endif %}">
+                {{ days_left }} day(s)
+            </span>
+        </p>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <!-- BASIC -->
+            <form action="/pay" method="POST" class="border p-4 rounded">
+                <h3 class="font-bold">Basic</h3>
+                <p class="text-sm text-gray-500 mb-2">KES 500</p>
+
+                <input type="hidden" name="plan" value="basic">
+                <input name="phone" placeholder="2547XXXXXXXX"
+                       class="w-full border p-2 rounded mb-2" required>
+
+                <button class="bg-gray-800 text-white w-full py-2 rounded">
+                    Pay
+                </button>
+            </form>
+
+            <!-- PRO -->
+            <form action="/pay" method="POST" class="border p-4 rounded">
+                <h3 class="font-bold">Pro</h3>
+                <p class="text-sm text-gray-500 mb-2">KES 1000</p>
+
+                <input type="hidden" name="plan" value="pro">
+                <input name="phone" placeholder="2547XXXXXXXX"
+                       class="w-full border p-2 rounded mb-2" required>
+
+                <button class="bg-blue-600 text-white w-full py-2 rounded">
+                    Upgrade
+                </button>
+            </form>
+
+            <!-- PREMIUM -->
+            <form action="/pay" method="POST" class="border p-4 rounded">
+                <h3 class="font-bold">Premium</h3>
+                <p class="text-sm text-gray-500 mb-2">KES 2000</p>
+
+                <input type="hidden" name="plan" value="premium">
+                <input name="phone" placeholder="2547XXXXXXXX"
+                       class="w-full border p-2 rounded mb-2" required>
+
+                <button class="bg-green-600 text-white w-full py-2 rounded">
+                    Upgrade
+                </button>
+            </form>
+
+        </div>
     </div>
 
-    <!-- STATS -->
-    <div class="grid grid-cols-3 gap-6 mb-10">
-
-        <div class="bg-white p-6 rounded-xl shadow">
-            <p class="text-gray-500">Total Revenue</p>
-            <h2 class="text-3xl font-bold mt-2">
-                KES {{ revenue }}
-            </h2>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl shadow">
-            <p class="text-gray-500">Total Clients</p>
-            <h2 class="text-3xl font-bold mt-2">
-                {{ total_clients }}
-            </h2>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl shadow">
-            <p class="text-gray-500">Total Payments</p>
-            <h2 class="text-3xl font-bold mt-2">
-                {{ payments|length }}
-            </h2>
-        </div>
-
-    </div>
-
-    <!-- CLIENTS SECTION -->
-    <div class="bg-white rounded-xl shadow mb-10">
-
-        <div class="p-6 border-b">
-            <h2 class="text-xl font-bold">Clients</h2>
-            <p class="text-gray-500 text-sm">All registered businesses</p>
-        </div>
-
-        <table class="w-full text-left">
-
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-4">Business Name</th>
-                    <th class="p-4">Type</th>
-                    <th class="p-4">Plan</th>
-                    <th class="p-4">Status</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for key, c in clients.items() %}
-                <tr class="border-t hover:bg-gray-50">
-
-                    <td class="p-4 font-medium">{{ c.name }}</td>
-
-                    <td class="p-4 capitalize">
-                        {{ c.type }}
-                    </td>
-
-                    <td class="p-4 uppercase">
-                        {{ c.tier }}
-                    </td>
-
-                    <td class="p-4">
-                        {% if c.plan == "paid" %}
-                            <span class="text-green-600 font-semibold">Active</span>
-                        {% elif c.plan == "expired" %}
-                            <span class="text-red-600 font-semibold">Expired</span>
-                        {% else %}
-                            <span class="text-yellow-600 font-semibold">Trial</span>
-                        {% endif %}
-                    </td>
-
-                </tr>
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <!-- PAYMENTS SECTION -->
-    <div class="bg-white rounded-xl shadow">
-
-        <div class="p-6 border-b">
-            <h2 class="text-xl font-bold">Recent Payments</h2>
-            <p class="text-gray-500 text-sm">Latest transactions on the platform</p>
-        </div>
-
-        <table class="w-full text-left">
-
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-4">Phone</th>
-                    <th class="p-4">Amount</th>
-                    <th class="p-4">Plan</th>
-                    <th class="p-4">Date</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for p in payments %}
-                <tr class="border-t hover:bg-gray-50">
-
-                    <td class="p-4">{{ p.phone }}</td>
-
-                    <td class="p-4 font-semibold">
-                        KES {{ p.amount }}
-                    </td>
-
-                    <td class="p-4 uppercase">
-                        {{ p.plan }}
-                    </td>
-
-                    <td class="p-4 text-gray-500">
-                        {{ p.time }}
-                    </td>
-
-                </tr>
-                {% endfor %}
-
-                {% if payments|length == 0 %}
-                <tr>
-                    <td colspan="4" class="p-6 text-center text-gray-500">
-                        No payments yet
-                    </td>
-                </tr>
-                {% endif %}
-
-            </tbody>
-
-        </table>
-
+    <!-- INFO -->
+    <div class="bg-white p-6 rounded-xl shadow">
+        <h2 class="text-xl font-bold mb-3">📊 System Overview</h2>
+        <p class="text-gray-600">Your system is active and running.</p>
     </div>
 
 </div>
