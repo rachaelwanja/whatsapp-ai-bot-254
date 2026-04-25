@@ -18,8 +18,12 @@ def save_json(file, data):
 
 clients = load_json("clients.json")
 
+# ================= SESSION MEMORY (BOT) =================
+user_sessions = {}
+
 # ================= SAVE APPOINTMENT =================
 def save_appointment(name, phone, date, slot, doctor, client_name):
+
     appointments = load_json("appointments.json")
 
     appointments.append({
@@ -39,6 +43,7 @@ def save_appointment(name, phone, date, slot, doctor, client_name):
 # ================= LOGIN =================
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -55,15 +60,20 @@ def login():
 # ================= DOCTOR LOGIN =================
 @app.route("/doctor", methods=["GET", "POST"])
 def doctor_login():
+
     if request.method == "POST":
+
         username = request.form["username"]
         password = request.form["password"]
 
         for key, client in clients.items():
             for d in client.get("doctors", []):
+
                 if d["username"] == username and d["password"] == password:
+
                     session["doctor"] = d["name"]
                     session["client"] = key
+
                     return redirect("/doctor/dashboard")
 
     return render_template("doctor_login.html")
@@ -71,6 +81,7 @@ def doctor_login():
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
+
     if "client" not in session:
         return redirect("/login")
 
@@ -79,6 +90,7 @@ def dashboard():
 # ================= DOCTOR DASHBOARD =================
 @app.route("/doctor/dashboard")
 def doctor_dashboard():
+
     if "doctor" not in session:
         return redirect("/doctor")
 
@@ -102,6 +114,7 @@ def doctor_dashboard():
 # ================= CALENDAR =================
 @app.route("/calendar")
 def calendar():
+
     if "client" not in session:
         return redirect("/login")
 
@@ -126,6 +139,7 @@ def calendar():
 # ================= APPROVE / REJECT =================
 @app.route("/appointment_action", methods=["POST"])
 def appointment_action():
+
     data = request.json
     appointment_id = data.get("id")
     action = data.get("action")
@@ -143,6 +157,7 @@ def appointment_action():
 # ================= DRAG RESCHEDULE =================
 @app.route("/reschedule_drag", methods=["POST"])
 def reschedule_drag():
+
     data = request.json
     appointment_id = data.get("id")
     new_date = data.get("date")
@@ -162,6 +177,7 @@ def reschedule_drag():
 # ================= PATIENT HISTORY =================
 @app.route("/patient_history", methods=["POST"])
 def patient_history():
+
     data = request.json
     phone = data.get("phone")
     client_name = data.get("client")
@@ -175,59 +191,142 @@ def patient_history():
 
     return jsonify({"history": history})
 
-# ================= WHATSAPP BOT =================
+# ================= WHATSAPP (CONVERSATIONAL BOT 🇰🇪) =================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
-    incoming = request.form.get("Body", "")
-    from_number = request.form.get("From")
 
-    # Show instructions
-    if "appointment" in incoming.lower():
+    incoming = request.form.get("Body", "").strip()
+    user = request.form.get("From")
+
+    if user not in user_sessions:
+        user_sessions[user] = {"step": "start"}
+
+    s = user_sessions[user]
+
+    # STEP 1: GREETING
+    if s["step"] == "start":
+        s["step"] = "menu"
+
         return Response("""
 <Response>
 <Message>
-Please send your booking in this format:
+Hello 👋 Welcome to CarePlus Clinic.
 
-Name Date Slot Doctor
+How may we assist you today?
 
-Example:
-John Doe 2026-05-01 morning Dr. Smith
+1️⃣ Book appointment  
+2️⃣ Check available slots  
+3️⃣ Talk to support
 </Message>
 </Response>
 """, mimetype="text/xml")
 
-    try:
-        parts = incoming.split()
+    # STEP 2: MENU
+    elif s["step"] == "menu":
 
-        # FIXED parsing
-        name = " ".join(parts[:-4])
-        date = parts[-4]
-        slot = parts[-3]
-        doctor = " ".join(parts[-2:])
+        if incoming == "1":
+            s["step"] = "name"
 
-        # Assign to first client (for now)
-        client_name = list(clients.values())[0]["name"]
+            return Response("""
+<Response>
+<Message>
+Great 👍 Kindly share your full name.
+</Message>
+</Response>
+""", mimetype="text/xml")
 
-        save_appointment(name, from_number, date, slot, doctor, client_name)
+        return Response("""
+<Response>
+<Message>
+Please reply with 1, 2 or 3.
+</Message>
+</Response>
+""", mimetype="text/xml")
+
+    # STEP 3: NAME
+    elif s["step"] == "name":
+
+        s["name"] = incoming
+        s["step"] = "date"
 
         return Response(f"""
 <Response>
 <Message>
-Appointment confirmed for {date} in the {slot} with {doctor}.
+Thank you {incoming} 😊
+
+Please provide your preferred date (e.g. 2026-05-01).
 </Message>
 </Response>
 """, mimetype="text/xml")
 
-    except:
+    # STEP 4: DATE
+    elif s["step"] == "date":
+
+        s["date"] = incoming
+        s["step"] = "slot"
+
         return Response("""
 <Response>
 <Message>
-Invalid format. Please send:
+Select your preferred time:
 
-John Doe 2026-05-01 morning Dr. Smith
+1️⃣ Morning  
+2️⃣ Afternoon
 </Message>
 </Response>
 """, mimetype="text/xml")
+
+    # STEP 5: SLOT
+    elif s["step"] == "slot":
+
+        slot = "morning" if incoming == "1" else "afternoon"
+        s["slot"] = slot
+        s["step"] = "doctor"
+
+        return Response("""
+<Response>
+<Message>
+Select your doctor:
+
+1️⃣ Dr. Kamau  
+2️⃣ Dr. Achieng
+</Message>
+</Response>
+""", mimetype="text/xml")
+
+    # STEP 6: DOCTOR
+    elif s["step"] == "doctor":
+
+        doctor = "Dr. Kamau" if incoming == "1" else "Dr. Achieng"
+
+        save_appointment(
+            s["name"],
+            user,
+            s["date"],
+            s["slot"],
+            doctor,
+            list(clients.values())[0]["name"]
+        )
+
+        user_sessions[user] = {"step": "start"}
+
+        return Response(f"""
+<Response>
+<Message>
+Thank you {s['name']} 🙏
+
+Your appointment has been successfully scheduled:
+
+📅 Date: {s['date']}  
+⏰ Time: {s['slot'].capitalize()}  
+👨‍⚕️ Doctor: {doctor}  
+
+We look forward to serving you.
+</Message>
+</Response>
+""", mimetype="text/xml")
+
+    return Response("<Response><Message>OK</Message></Response>", mimetype="text/xml")
 
 # ================= HOME =================
 @app.route("/")
