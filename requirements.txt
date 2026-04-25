@@ -1,4 +1,7 @@
-Flask
+flask
+sqlalchemy
+flask_sqlalchemy
+psycopg2-binary
+requests
 twilio
 gunicorn
-requests
