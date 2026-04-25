@@ -1,10 +1,30 @@
 from flask import Flask, request, render_template, redirect, session, Response, jsonify
-import json, datetime
+import json, datetime, os
+
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
-# ================= LOAD / SAVE =================
+# ================= DATABASE =================
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+# ================= MODELS =================
+class Client(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    type = db.Column(db.String(50))
+    plan = db.Column(db.String(20))
+    active = db.Column(db.Boolean, default=True)
+    expiry = db.Column(db.Date)
+    phone = db.Column(db.String(20))
+    username = db.Column(db.String(50))
+    password = db.Column(db.String(50))
+
+# ================= LOAD / SAVE (TEMP - WILL REMOVE LATER) =================
 def load_json(file):
     try:
         with open(file, "r") as f:
@@ -15,8 +35,6 @@ def load_json(file):
 def save_json(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=4)
-
-clients = load_json("clients.json")
 
 # ================= PLANS =================
 PLANS = {
@@ -29,18 +47,17 @@ PLANS = {
 SUPER_ADMIN = {"username": "admin", "password": "admin123"}
 
 # ================= REGISTER STUDENT =================
-def register_student(name, phone, client_key):
+def register_student(name, phone, client_id):
 
-    client = clients[client_key]
-    plan = client.get("plan", "basic")
+    client = Client.query.get(client_id)
+    plan = client.plan or "basic"
     limit = PLANS[plan]["students"]
 
     data = load_json("students.json")
     if "students" not in data:
         data["students"] = []
 
-    # count per client
-    count = len([s for s in data["students"] if s.get("client") == client_key])
+    count = len([s for s in data["students"] if s.get("client") == client_id])
 
     if count >= limit:
         return False
@@ -51,7 +68,7 @@ def register_student(name, phone, client_key):
         data["students"].append({
             "name": name,
             "phone": phone,
-            "client": client_key,
+            "client": client_id,
             "joined": str(datetime.datetime.now())
         })
 
@@ -82,31 +99,33 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        for key, client in clients.items():
-            acc = client.get("account", {})
+        client = Client.query.filter_by(username=username, password=password).first()
 
-            if acc.get("username") == username and acc.get("password") == password:
-                session["client"] = key
-                return redirect("/dashboard")
+        if client:
+            session["client_id"] = client.id
+            return redirect("/dashboard")
 
     return render_template("login.html")
 
-# ================= DASHBOARD SWITCH =================
+# ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
 
-    if "client" not in session:
+    if "client_id" not in session:
         return redirect("/login")
 
-    client = clients[session["client"]]
+    client = Client.query.get(session["client_id"])
+
+    if not client.active:
+        return render_template("expired.html")
 
     # SCHOOL DASHBOARD
-    if client.get("type") == "school":
+    if client.type == "school":
 
         students = load_json("students.json").get("students", [])
         progress = load_json("progress.json").get("progress", [])
 
-        students = [s for s in students if s.get("client") == session["client"]]
+        students = [s for s in students if s.get("client") == client.id]
 
         return render_template(
             "school_dashboard.html",
@@ -117,11 +136,11 @@ def dashboard():
 
     # CLINIC DASHBOARD
     appointments = load_json("appointments.json")
-    data = [a for a in appointments if a["client"] == client["name"]]
+    data = [a for a in appointments if a["client"] == client.name]
 
     return render_template("dashboard.html", client=client, appointments=data)
 
-# ================= WHATSAPP SCHOOL BOT =================
+# ================= WHATSAPP BOT =================
 user_sessions = {}
 
 @app.route("/whatsapp", methods=["POST"])
@@ -136,7 +155,6 @@ def whatsapp():
     s = user_sessions[user]
     msg = incoming.lower()
 
-    # MENU
     if msg in ["hi", "menu"]:
         return Response("""
 <Response>
@@ -149,7 +167,6 @@ Welcome 📚
 </Response>
 """, mimetype="text/xml")
 
-    # QUIZ START
     if msg == "2":
         s["step"] = "quiz"
         return Response("""
@@ -164,7 +181,6 @@ C) 64
 </Response>
 """, mimetype="text/xml")
 
-    # QUIZ ANSWER
     if s.get("step") == "quiz":
 
         score = 1 if msg.upper() == "B" else 0
@@ -180,7 +196,6 @@ Answer recorded ✅
 </Response>
 """, mimetype="text/xml")
 
-    # HOMEWORK AI
     if "solve" in msg or any(c.isdigit() for c in msg):
         return Response(f"""
 <Response>
@@ -218,6 +233,8 @@ def admin_dashboard():
 
     revenue = sum(p["amount"] for p in payments)
 
+    clients = Client.query.all()
+
     return render_template(
         "superadmin_dashboard.html",
         clients=clients,
@@ -230,6 +247,10 @@ def admin_dashboard():
 @app.route("/")
 def home():
     return render_template("index.html")
+
+# ================= INIT DB =================
+with app.app_context():
+    db.create_all()
 
 # ================= RUN =================
 if __name__ == "__main__":
