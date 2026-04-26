@@ -3,9 +3,22 @@
 <head>
     <title>FlowAI — WhatsApp Receptionist</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ANIMATION -->
+    <style>
+    .fade-in {
+        animation: fadeIn 1s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+
 </head>
 
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gradient-to-b from-white to-gray-100 text-gray-900">
 
 <!-- NAVBAR -->
 <div class="flex justify-between items-center px-8 py-4 bg-white shadow-sm">
@@ -20,7 +33,7 @@
 </div>
 
 <!-- HERO -->
-<div class="text-center py-24 px-6">
+<div class="text-center py-24 px-6 fade-in">
 
     <h1 class="text-5xl font-bold leading-tight mb-6">
         Your WhatsApp,<br>
@@ -46,35 +59,58 @@
 
     </div>
 
+    <p class="text-sm text-gray-500 mt-4">
+        No app needed — works directly on WhatsApp
+    </p>
+
 </div>
 
-<!-- TRUST STRIP -->
-<div class="text-center text-gray-500 mb-12">
+<!-- TRUST -->
+<div class="text-center text-gray-500 mb-12 fade-in">
     Trusted by growing Kenyan businesses 🇰🇪
 </div>
 
+<!-- PRODUCT PREVIEW -->
+<div class="max-w-6xl mx-auto px-6 mt-10 fade-in">
+
+    <h2 class="text-3xl font-bold text-center mb-10">
+        See FlowAI in Action 👀
+    </h2>
+
+    <div class="bg-white p-4 rounded-2xl shadow-lg">
+        <img src="https://via.placeholder.com/1200x600"
+             alt="Dashboard Preview"
+             class="rounded-xl">
+    </div>
+
+    <p class="text-center text-gray-500 mt-4">
+        Manage bookings, customers, and payments in one place
+    </p>
+
+</div>
+
 <!-- FEATURES -->
-<div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 mb-20">
+<div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 mt-20 fade-in">
 
-    <div class="bg-white p-8 rounded-2xl shadow-sm">
+    <div class="bg-white/70 backdrop-blur p-8 rounded-2xl shadow-sm hover:shadow-lg transition">
         <h3 class="font-semibold text-lg mb-2">🤖 AI Conversations</h3>
-        <p class="text-gray-600">Respond to customers instantly like a real person</p>
+        <p class="text-gray-600">Reply to customers instantly like a real receptionist</p>
     </div>
 
-    <div class="bg-white p-8 rounded-2xl shadow-sm">
+    <div class="bg-white/70 backdrop-blur p-8 rounded-2xl shadow-sm hover:shadow-lg transition">
         <h3 class="font-semibold text-lg mb-2">📅 Smart Bookings</h3>
-        <p class="text-gray-600">Automatically schedule appointments via WhatsApp</p>
+        <p class="text-gray-600">Automatically schedule appointments</p>
     </div>
 
-    <div class="bg-white p-8 rounded-2xl shadow-sm">
+    <div class="bg-white/70 backdrop-blur p-8 rounded-2xl shadow-sm hover:shadow-lg transition">
         <h3 class="font-semibold text-lg mb-2">💳 M-Pesa Payments</h3>
-        <p class="text-gray-600">Receive payments instantly from customers</p>
+        <p class="text-gray-600">Receive payments directly via WhatsApp</p>
     </div>
 
 </div>
 
 <!-- HOW IT WORKS -->
-<div class="bg-white py-20">
+<div class="bg-white py-20 mt-20 fade-in">
 
     <h2 class="text-3xl font-bold text-center mb-12">
         How It Works
@@ -84,7 +120,7 @@
 
         <div>
             <div class="text-3xl mb-2">📩</div>
-            <p>Customer sends a WhatsApp message</p>
+            <p>Customer sends a message</p>
         </div>
 
         <div>
@@ -102,7 +138,7 @@
 </div>
 
 <!-- DEMO CHAT -->
-<div class="max-w-3xl mx-auto mt-20 bg-white p-8 rounded-2xl shadow-sm">
+<div class="max-w-3xl mx-auto mt-20 bg-white p-8 rounded-2xl shadow-sm fade-in">
 
     <h3 class="font-bold text-lg mb-4 text-center">
         Real Conversation 💬
@@ -116,7 +152,7 @@
 </div>
 
 <!-- USE CASES -->
-<div class="max-w-6xl mx-auto mt-20 px-6">
+<div class="max-w-6xl mx-auto mt-20 px-6 fade-in">
 
     <h2 class="text-3xl font-bold text-center mb-12">
         Built for Your Business
@@ -133,8 +169,21 @@
 
 </div>
 
+<!-- TESTIMONIAL -->
+<div class="max-w-3xl mx-auto mt-20 bg-white p-8 rounded-2xl shadow fade-in">
+
+    <p class="text-lg italic">
+        “Since using FlowAI, we never miss customer messages. Bookings have increased significantly.”
+    </p>
+
+    <p class="mt-4 font-semibold">
+        — Salon Owner, Nairobi
+    </p>
+
+</div>
+
 <!-- PRICING -->
-<div class="max-w-5xl mx-auto mt-20 text-center px-6">
+<div class="max-w-5xl mx-auto mt-20 text-center px-6 fade-in">
 
     <h2 class="text-3xl font-bold mb-10">
         Simple Pricing 💰
@@ -159,10 +208,15 @@
 
     </div>
 
+    <a href="/signup"
+       class="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg">
+        Start Free Trial 🚀
+    </a>
+
 </div>
 
 <!-- FINAL CTA -->
-<div class="text-center mt-20 mb-16">
+<div class="text-center mt-20 mb-16 fade-in">
 
     <h2 class="text-3xl font-bold mb-4">
         Ready to automate your business?
