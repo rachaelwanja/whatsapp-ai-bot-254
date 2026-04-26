@@ -1,114 +1,112 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FlowAI — WhatsApp Receptionist for Businesses</title>
+    <title>FlowAI — WhatsApp Receptionist</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-50 text-gray-900">
+
+<!-- NAVBAR -->
+<div class="flex justify-between items-center px-8 py-4 bg-white shadow-sm">
+    <h1 class="font-bold text-xl">FlowAI</h1>
+
+    <div class="space-x-4">
+        <a href="/login" class="text-gray-600 hover:text-black">Login</a>
+        <a href="/signup" class="bg-green-600 text-white px-4 py-2 rounded-lg">
+            Start Free Trial
+        </a>
+    </div>
+</div>
 
 <!-- HERO -->
-<div class="bg-white py-16 text-center shadow">
-    <h1 class="text-4xl font-bold mb-4">
-        Turn Your WhatsApp Into a 24/7 Receptionist 🤖
+<div class="text-center py-24 px-6">
+
+    <h1 class="text-5xl font-bold leading-tight mb-6">
+        Your WhatsApp,<br>
+        <span class="text-green-600">Fully Automated Receptionist</span>
     </h1>
 
-    <p class="text-gray-600 mb-6">
-        Automatically reply to customers, book appointments, and get paid — even when you're offline.
+    <p class="text-lg text-gray-600 max-w-xl mx-auto mb-8">
+        Reply instantly, book customers, and receive payments — all on autopilot.
     </p>
 
     <div class="flex justify-center gap-4">
 
-        <!-- CTA -->
         <a href="/signup"
-           class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg text-lg">
+           class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl text-lg">
             Start Free Trial 🚀
         </a>
 
-        <!-- DEMO -->
         <a href="https://wa.me/14155238886?text=menu"
            target="_blank"
-           class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg text-lg">
-            💬 Try Demo
+           class="border px-8 py-4 rounded-xl text-lg">
+            💬 Live Demo
         </a>
 
     </div>
 
-    <p class="text-sm text-gray-500 mt-3">
-        No app needed — works directly on WhatsApp
-    </p>
 </div>
 
-<!-- WHO IT’S FOR -->
-<div class="max-w-5xl mx-auto mt-12 text-center">
+<!-- TRUST STRIP -->
+<div class="text-center text-gray-500 mb-12">
+    Trusted by growing Kenyan businesses 🇰🇪
+</div>
 
-    <h2 class="text-2xl font-bold mb-6">
-        Perfect for Kenyan Businesses 🇰🇪
-    </h2>
+<!-- FEATURES -->
+<div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 mb-20">
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div class="bg-white p-8 rounded-2xl shadow-sm">
+        <h3 class="font-semibold text-lg mb-2">🤖 AI Conversations</h3>
+        <p class="text-gray-600">Respond to customers instantly like a real person</p>
+    </div>
 
-        <div class="bg-white p-4 rounded shadow">💇 Salons</div>
-        <div class="bg-white p-4 rounded shadow">🏥 Clinics</div>
-        <div class="bg-white p-4 rounded shadow">🪑 Shops</div>
-        <div class="bg-white p-4 rounded shadow">📚 Schools</div>
+    <div class="bg-white p-8 rounded-2xl shadow-sm">
+        <h3 class="font-semibold text-lg mb-2">📅 Smart Bookings</h3>
+        <p class="text-gray-600">Automatically schedule appointments via WhatsApp</p>
+    </div>
 
+    <div class="bg-white p-8 rounded-2xl shadow-sm">
+        <h3 class="font-semibold text-lg mb-2">💳 M-Pesa Payments</h3>
+        <p class="text-gray-600">Receive payments instantly from customers</p>
     </div>
 
 </div>
 
 <!-- HOW IT WORKS -->
-<div class="max-w-5xl mx-auto mt-16 text-center">
+<div class="bg-white py-20">
 
-    <h2 class="text-2xl font-bold mb-6">How It Works</h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="bg-white p-6 rounded shadow">
-            <h3 class="font-bold mb-2">1️⃣ Customer Messages You</h3>
-            <p>They send a message on WhatsApp</p>
-        </div>
-
-        <div class="bg-white p-6 rounded shadow">
-            <h3 class="font-bold mb-2">2️⃣ AI Replies Instantly</h3>
-            <p>Your bot responds like a real receptionist</p>
-        </div>
-
-        <div class="bg-white p-6 rounded shadow">
-            <h3 class="font-bold mb-2">3️⃣ You Get Bookings & Payments</h3>
-            <p>Customers book or pay automatically</p>
-        </div>
-
-    </div>
-
-</div>
-
-<!-- FEATURES -->
-<div class="max-w-5xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="font-bold mb-2">🤖 AI Replies</h3>
-        <p>Respond to customers instantly 24/7</p>
-    </div>
-
-    <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="font-bold mb-2">📅 Bookings</h3>
-        <p>Automatically schedule appointments</p>
-    </div>
-
-    <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="font-bold mb-2">💳 M-Pesa Payments</h3>
-        <p>Get paid directly via WhatsApp</p>
-    </div>
-
-</div>
-
-<!-- LIVE EXAMPLE -->
-<div class="max-w-3xl mx-auto mt-16 bg-white p-6 rounded shadow">
-
-    <h2 class="text-xl font-bold mb-4 text-center">
-        See It In Action 💬
+    <h2 class="text-3xl font-bold text-center mb-12">
+        How It Works
     </h2>
+
+    <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-10 text-center px-6">
+
+        <div>
+            <div class="text-3xl mb-2">📩</div>
+            <p>Customer sends a WhatsApp message</p>
+        </div>
+
+        <div>
+            <div class="text-3xl mb-2">⚡</div>
+            <p>AI replies instantly</p>
+        </div>
+
+        <div>
+            <div class="text-3xl mb-2">💰</div>
+            <p>Booking or payment completed</p>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- DEMO CHAT -->
+<div class="max-w-3xl mx-auto mt-20 bg-white p-8 rounded-2xl shadow-sm">
+
+    <h3 class="font-bold text-lg mb-4 text-center">
+        Real Conversation 💬
+    </h3>
 
     <p class="mb-2"><b>Customer:</b> Hi</p>
     <p class="mb-2"><b>Bot:</b> Karibu 😊 how can I help?</p>
@@ -117,55 +115,68 @@
 
 </div>
 
-<!-- PRICING -->
-<div class="max-w-5xl mx-auto mt-16 text-center">
+<!-- USE CASES -->
+<div class="max-w-6xl mx-auto mt-20 px-6">
 
-    <h2 class="text-2xl font-bold mb-6">
-        Simple Pricing 💰 (7-Day Free Trial)
+    <h2 class="text-3xl font-bold text-center mb-12">
+        Built for Your Business
     </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-4 gap-6 text-center">
 
-        <div class="bg-white p-6 rounded shadow">
-            <h3 class="text-xl font-bold">Basic</h3>
+        <div class="bg-white p-6 rounded-xl shadow-sm">💇 Salons</div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">🏥 Clinics</div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">🪑 Shops</div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">📚 Schools</div>
+
+    </div>
+
+</div>
+
+<!-- PRICING -->
+<div class="max-w-5xl mx-auto mt-20 text-center px-6">
+
+    <h2 class="text-3xl font-bold mb-10">
+        Simple Pricing 💰
+    </h2>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="bg-white p-8 rounded-2xl shadow-sm">
+            <h3 class="font-bold text-lg mb-2">Basic</h3>
             <p class="text-3xl font-bold">KES 500</p>
         </div>
 
-        <div class="bg-white p-6 rounded shadow border-2 border-blue-500">
-            <h3 class="text-xl font-bold">Pro</h3>
+        <div class="bg-white p-8 rounded-2xl shadow border-2 border-green-600">
+            <h3 class="font-bold text-lg mb-2">Pro</h3>
             <p class="text-3xl font-bold">KES 1000</p>
         </div>
 
-        <div class="bg-white p-6 rounded shadow">
-            <h3 class="text-xl font-bold">Premium</h3>
+        <div class="bg-white p-8 rounded-2xl shadow-sm">
+            <h3 class="font-bold text-lg mb-2">Premium</h3>
             <p class="text-3xl font-bold">KES 2000</p>
         </div>
 
     </div>
 
-    <a href="/signup"
-       class="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg">
-        Start Free Trial 🚀
-    </a>
-
 </div>
 
 <!-- FINAL CTA -->
-<div class="text-center mt-16">
+<div class="text-center mt-20 mb-16">
 
-    <h2 class="text-2xl font-bold mb-4">
-        Ready to Automate Your Business?
+    <h2 class="text-3xl font-bold mb-4">
+        Ready to automate your business?
     </h2>
 
     <a href="/signup"
-       class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg">
-        Create Your WhatsApp Bot 🚀
+       class="bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-xl text-lg">
+        Get Started Now 🚀
     </a>
 
 </div>
 
 <!-- FOOTER -->
-<div class="mt-16 text-center text-gray-500 pb-6">
+<div class="text-center text-gray-500 pb-6">
     © 2026 FlowAI — Built for Kenyan businesses 🇰🇪
 </div>
 
