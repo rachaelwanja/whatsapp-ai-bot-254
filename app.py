@@ -1,4 +1,4 @@
-give me exact script tofrom flask import Flask, request, render_template, redirect, session, Response, jsonify
+from flask import Flask, request, render_template, redirect, session, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import datetime, os, requests, base64
 
