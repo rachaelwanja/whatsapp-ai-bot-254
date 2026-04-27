@@ -1,7 +1,8 @@
-from flask import Flask, request, render_template, redirect, session, Response, jsonify
+give me exact script tofrom flask import Flask, request, render_template, redirect, session, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import datetime, os, requests, base64
 
+# ================= APP =================
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
@@ -23,7 +24,7 @@ user_sessions = {}
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))  # WhatsApp number
+    phone = db.Column(db.String(20))  # WhatsApp number (Twilio number)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
     plan = db.Column(db.String(20), default="basic")
@@ -57,39 +58,41 @@ def get_access_token():
     return res.json().get("access_token")
 
 def stk_push(phone, amount, client_id):
-    access_token = get_access_token()
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    try:
+        access_token = get_access_token()
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-    password = base64.b64encode(
-        (MPESA["shortcode"] + MPESA["passkey"] + timestamp).encode()
-    ).decode()
+        password = base64.b64encode(
+            (MPESA["shortcode"] + MPESA["passkey"] + timestamp).encode()
+        ).decode()
 
-    payload = {
-        "BusinessShortCode": MPESA["shortcode"],
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": amount,
-        "PartyA": phone,
-        "PartyB": MPESA["shortcode"],
-        "PhoneNumber": phone,
-        "CallBackURL": "https://flowai.co.ke/mpesa/callback",
-        "AccountReference": str(client_id),
-        "TransactionDesc": "FlowAI Subscription"
-    }
+        payload = {
+            "BusinessShortCode": MPESA["shortcode"],
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": amount,
+            "PartyA": phone,
+            "PartyB": MPESA["shortcode"],
+            "PhoneNumber": phone,
+            "CallBackURL": "https://flowai.co.ke/mpesa/callback",
+            "AccountReference": str(client_id),
+            "TransactionDesc": "FlowAI Subscription"
+        }
 
-    headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {"Authorization": f"Bearer {access_token}"}
 
-    requests.post(
-        "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
-        json=payload,
-        headers=headers
-    )
+        requests.post(
+            "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+            json=payload,
+            headers=headers
+        )
+    except Exception as e:
+        print("STK ERROR:", e)
 
 # ================= MPESA CALLBACK =================
 @app.route("/mpesa/callback", methods=["POST"])
 def mpesa_callback():
-
     data = request.get_json()
 
     try:
@@ -118,7 +121,7 @@ def mpesa_callback():
                 db.session.commit()
 
     except Exception as e:
-        print("MPESA ERROR:", e)
+        print("MPESA CALLBACK ERROR:", e)
 
     return jsonify({"status": "ok"})
 
@@ -126,11 +129,12 @@ def mpesa_callback():
 def ai_reply(message, client):
 
     prompt = f"""
-You are a Kenyan WhatsApp receptionist for {client.name}.
+You are a smart Kenyan WhatsApp receptionist for {client.name}.
 
-- Speak naturally (Kenyan tone)
-- Detect booking → BOOKING_REQUEST: <date>
-- Detect payment → PAYMENT_REQUEST
+Rules:
+- Be friendly and natural (Kenyan tone)
+- If booking → return: BOOKING_REQUEST: <date>
+- If payment → return: PAYMENT_REQUEST
 - Upsell services
 
 User: {message}
@@ -152,7 +156,7 @@ User: {message}
         return response.json()["choices"][0]["message"]["content"]
 
     except:
-        return "Sasa 👋 how can I help?"
+        return "Karibu 😊 how can I help?"
 
 # ================= WHATSAPP =================
 @app.route("/whatsapp", methods=["POST"])
@@ -174,7 +178,7 @@ def whatsapp():
 
     s = user_sessions[user]
 
-    # 🔥 PAY FLOW
+    # ===== PAYMENT FLOW =====
     if msg == "pay":
         s["step"] = "pay_number"
         return Response("<Response><Message>Tuma namba ya MPESA (2547...)</Message></Response>", mimetype="text/xml")
@@ -182,13 +186,13 @@ def whatsapp():
     if s.get("step") == "pay_number":
         stk_push(incoming, PLANS[client.plan], client.id)
         s["step"] = None
-        return Response("<Response><Message>STK sent 👍</Message></Response>", mimetype="text/xml")
+        return Response("<Response><Message>STK sent 👍 Weka PIN</Message></Response>", mimetype="text/xml")
 
-    # 🔒 SUBSCRIPTION BLOCK
+    # ===== BLOCK EXPIRED =====
     if not client.active or client.expiry < datetime.date.today():
-        return Response("<Response><Message>Subscription expired. Reply PAY.</Message></Response>", mimetype="text/xml")
+        return Response("<Response><Message>⚠️ Subscription expired. Reply PAY.</Message></Response>", mimetype="text/xml")
 
-    # 🤖 AI RESPONSE
+    # ===== AI =====
     ai = ai_reply(incoming, client)
 
     if ai.startswith("BOOKING_REQUEST:"):
@@ -201,7 +205,7 @@ def whatsapp():
         ))
         db.session.commit()
 
-        return Response(f"<Response><Message>Booked {date}</Message></Response>", mimetype="text/xml")
+        return Response(f"<Response><Message>Booked {date} ✅</Message></Response>", mimetype="text/xml")
 
     if ai == "PAYMENT_REQUEST":
         s["step"] = "pay_number"
@@ -209,42 +213,11 @@ def whatsapp():
 
     return Response(f"<Response><Message>{ai}</Message></Response>", mimetype="text/xml")
 
-# ================= REMINDER SYSTEM (SAFE) =================
-def send_whatsapp_message(phone, message):
-    print(f"[REMINDER] {phone}: {message}")
+# ================= ROUTES =================
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-def check_subscriptions():
-
-    today = datetime.date.today()
-    clients = Client.query.all()
-
-    for c in clients:
-
-        if not c.expiry:
-            continue
-
-        days_left = (c.expiry - today).days
-
-        if days_left == 3:
-            send_whatsapp_message(c.phone, f"{c.name} 👋 expires in 3 days. Reply PAY.")
-
-        if days_left == 1:
-            send_whatsapp_message(c.phone, f"⚠️ expires tomorrow. Reply PAY.")
-
-        if days_left < 0:
-            c.active = False
-
-    db.session.commit()
-
-# ⚠️ SAFE SCHEDULER (WON’T CRASH RENDER)
-if os.getenv("RENDER"):
-    from apscheduler.schedulers.background import BackgroundScheduler
-
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=check_subscriptions, trigger="interval", hours=6)
-    scheduler.start()
-
-# ================= AUTH =================
 @app.route("/signup", methods=["GET","POST"])
 def signup():
     if request.method == "POST":
@@ -290,17 +263,12 @@ def dashboard():
 
     revenue = sum(p.amount for p in payments)
 
-    chart_labels = [p.date for p in payments]
-    chart_data = [p.amount for p in payments]
-
     return render_template(
         "dashboard.html",
         total_customers=len(appointments),
         total_bookings=len(appointments),
         revenue=revenue,
-        payments=payments,
-        chart_labels=chart_labels,
-        chart_data=chart_data
+        payments=payments
     )
 
 # ================= INIT =================
