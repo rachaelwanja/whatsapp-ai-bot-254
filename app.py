@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, redirect, session, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from apscheduler.schedulers.background import BackgroundScheduler
 import datetime, os, requests, base64
 
 app = Flask(__name__)
@@ -44,7 +43,7 @@ class Payment(db.Model):
     date = db.Column(db.String(50))
     client_id = db.Column(db.Integer)
 
-# ================= MPESA CONFIG =================
+# ================= MPESA =================
 MPESA = {
     "consumer_key": os.getenv("MPESA_CONSUMER_KEY"),
     "consumer_secret": os.getenv("MPESA_CONSUMER_SECRET"),
@@ -52,14 +51,12 @@ MPESA = {
     "passkey": os.getenv("MPESA_PASSKEY")
 }
 
-# ================= MPESA =================
 def get_access_token():
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
     res = requests.get(url, auth=(MPESA["consumer_key"], MPESA["consumer_secret"]))
     return res.json().get("access_token")
 
 def stk_push(phone, amount, client_id):
-
     access_token = get_access_token()
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
@@ -89,7 +86,7 @@ def stk_push(phone, amount, client_id):
         headers=headers
     )
 
-# ================= CALLBACK =================
+# ================= MPESA CALLBACK =================
 @app.route("/mpesa/callback", methods=["POST"])
 def mpesa_callback():
 
@@ -129,11 +126,10 @@ def mpesa_callback():
 def ai_reply(message, client):
 
     prompt = f"""
-You are a Kenyan WhatsApp receptionist and sales assistant for {client.name}.
+You are a Kenyan WhatsApp receptionist for {client.name}.
 
-Rules:
-- Be friendly (Kenyan tone)
-- Detect booking → BOOKING_REQUEST: <date/time>
+- Speak naturally (Kenyan tone)
+- Detect booking → BOOKING_REQUEST: <date>
 - Detect payment → PAYMENT_REQUEST
 - Upsell services
 
@@ -158,9 +154,64 @@ User: {message}
     except:
         return "Sasa 👋 how can I help?"
 
-# ================= REMINDER SYSTEM =================
+# ================= WHATSAPP =================
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
+
+    incoming = request.form.get("Body", "").strip()
+    user = request.form.get("From")
+    to = request.form.get("To")
+
+    client = Client.query.filter_by(phone=to).first()
+
+    if not client:
+        return Response("<Response><Message>Bot not configured</Message></Response>", mimetype="text/xml")
+
+    msg = incoming.lower()
+
+    if user not in user_sessions:
+        user_sessions[user] = {}
+
+    s = user_sessions[user]
+
+    # 🔥 PAY FLOW
+    if msg == "pay":
+        s["step"] = "pay_number"
+        return Response("<Response><Message>Tuma namba ya MPESA (2547...)</Message></Response>", mimetype="text/xml")
+
+    if s.get("step") == "pay_number":
+        stk_push(incoming, PLANS[client.plan], client.id)
+        s["step"] = None
+        return Response("<Response><Message>STK sent 👍</Message></Response>", mimetype="text/xml")
+
+    # 🔒 SUBSCRIPTION BLOCK
+    if not client.active or client.expiry < datetime.date.today():
+        return Response("<Response><Message>Subscription expired. Reply PAY.</Message></Response>", mimetype="text/xml")
+
+    # 🤖 AI RESPONSE
+    ai = ai_reply(incoming, client)
+
+    if ai.startswith("BOOKING_REQUEST:"):
+        date = ai.replace("BOOKING_REQUEST:", "").strip()
+
+        db.session.add(Appointment(
+            phone=user,
+            date=date,
+            client_id=client.id
+        ))
+        db.session.commit()
+
+        return Response(f"<Response><Message>Booked {date}</Message></Response>", mimetype="text/xml")
+
+    if ai == "PAYMENT_REQUEST":
+        s["step"] = "pay_number"
+        return Response("<Response><Message>Tuma namba ya MPESA</Message></Response>", mimetype="text/xml")
+
+    return Response(f"<Response><Message>{ai}</Message></Response>", mimetype="text/xml")
+
+# ================= REMINDER SYSTEM (SAFE) =================
 def send_whatsapp_message(phone, message):
-    print(f"Sending to {phone}: {message}")
+    print(f"[REMINDER] {phone}: {message}")
 
 def check_subscriptions():
 
@@ -185,14 +236,13 @@ def check_subscriptions():
 
     db.session.commit()
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_subscriptions, trigger="interval", hours=6)
-scheduler.start()
+# ⚠️ SAFE SCHEDULER (WON’T CRASH RENDER)
+if os.getenv("RENDER"):
+    from apscheduler.schedulers.background import BackgroundScheduler
 
-# ================= ROUTES =================
-@app.route("/")
-def home():
-    return render_template("index.html")
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=check_subscriptions, trigger="interval", hours=6)
+    scheduler.start()
 
 # ================= AUTH =================
 @app.route("/signup", methods=["GET","POST"])
@@ -252,64 +302,6 @@ def dashboard():
         chart_labels=chart_labels,
         chart_data=chart_data
     )
-
-# ================= WHATSAPP =================
-@app.route("/whatsapp", methods=["POST"])
-def whatsapp():
-
-    incoming = request.form.get("Body", "").strip()
-    user = request.form.get("From")
-    to = request.form.get("To")
-
-    client = Client.query.filter_by(phone=to).first()
-
-    if not client:
-        return Response("<Response><Message>Bot not configured</Message></Response>", mimetype="text/xml")
-
-    msg = incoming.lower()
-
-    if user not in user_sessions:
-        user_sessions[user] = {}
-
-    s = user_sessions[user]
-
-    # 🔥 PAY TRIGGER
-    if msg == "pay":
-        s["step"] = "pay_number"
-        return Response("<Response><Message>Tuma namba ya MPESA (2547...)</Message></Response>", mimetype="text/xml")
-
-    # RECEIVE NUMBER
-    if s.get("step") == "pay_number":
-        stk_push(incoming, PLANS[client.plan], client.id)
-        s["step"] = None
-        return Response("<Response><Message>STK sent 👍</Message></Response>", mimetype="text/xml")
-
-    # SUBSCRIPTION CHECK
-    if not client.active or client.expiry < datetime.date.today():
-        return Response("<Response><Message>Subscription expired. Reply PAY.</Message></Response>", mimetype="text/xml")
-
-    # AI
-    ai = ai_reply(incoming, client)
-
-    # BOOKING
-    if ai.startswith("BOOKING_REQUEST:"):
-        date = ai.replace("BOOKING_REQUEST:", "").strip()
-
-        db.session.add(Appointment(
-            phone=user,
-            date=date,
-            client_id=client.id
-        ))
-        db.session.commit()
-
-        return Response(f"<Response><Message>Booked {date}</Message></Response>", mimetype="text/xml")
-
-    # PAYMENT REQUEST
-    if ai == "PAYMENT_REQUEST":
-        s["step"] = "pay_number"
-        return Response("<Response><Message>Tuma namba ya MPESA</Message></Response>", mimetype="text/xml")
-
-    return Response(f"<Response><Message>{ai}</Message></Response>", mimetype="text/xml")
 
 # ================= INIT =================
 with app.app_context():
