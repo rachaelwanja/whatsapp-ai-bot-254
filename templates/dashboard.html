@@ -1,101 +1,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FlowAI Dashboard</title>
+    <title>Dashboard - FlowAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-50">
 
-<div class="max-w-7xl mx-auto mt-10">
+<div class="flex">
 
-    <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-3xl font-bold">Dashboard</h1>
-            <p class="text-gray-500">{{ client.name }}</p>
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-white h-screen shadow p-6">
+        <h1 class="text-xl font-bold mb-8">FlowAI</h1>
+
+        <ul class="space-y-4">
+            <li class="text-blue-600 font-semibold">Dashboard</li>
+            <li>Payments</li>
+            <li>Customers</li>
+            <li>Settings</li>
+        </ul>
+    </div>
+
+    <!-- MAIN -->
+    <div class="flex-1 p-8">
+
+        <!-- TOP BAR -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+
+            <!-- FILTER -->
+            <select id="filter" class="border px-3 py-2 rounded">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all">All time</option>
+            </select>
         </div>
 
-        <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded">
-            Logout
-        </a>
-    </div>
+        <!-- CARDS -->
+        <div class="grid grid-cols-3 gap-6 mb-6">
 
-    <!-- SUBSCRIPTION -->
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
+            <div class="bg-white p-6 rounded-xl shadow">
+                <p class="text-gray-500">Revenue</p>
+                <h3 class="text-2xl font-bold">KES {{ revenue }}</h3>
+            </div>
 
-        <h2 class="text-xl font-bold mb-2">💳 Subscription</h2>
+            <div class="bg-white p-6 rounded-xl shadow">
+                <p class="text-gray-500">Bookings</p>
+                <h3 class="text-2xl font-bold">{{ total_bookings }}</h3>
+            </div>
 
-        <p class="mb-2">
-            Plan:
-            <span class="font-semibold text-blue-600">
-                {{ client.plan.upper() }}
-            </span>
-        </p>
-
-        {% if days_left is not none %}
-        <p class="mb-4">
-            Days left:
-            <span class="{% if days_left <= 3 %}text-red-600 font-bold{% endif %}">
-                {{ days_left }} day(s)
-            </span>
-        </p>
-        {% endif %}
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-            <!-- BASIC -->
-            <form action="/pay" method="POST" class="border p-4 rounded">
-                <h3 class="font-bold">Basic</h3>
-                <p class="text-sm text-gray-500 mb-2">KES 500</p>
-
-                <input type="hidden" name="plan" value="basic">
-                <input name="phone" placeholder="2547XXXXXXXX"
-                       class="w-full border p-2 rounded mb-2" required>
-
-                <button class="bg-gray-800 text-white w-full py-2 rounded">
-                    Pay
-                </button>
-            </form>
-
-            <!-- PRO -->
-            <form action="/pay" method="POST" class="border p-4 rounded">
-                <h3 class="font-bold">Pro</h3>
-                <p class="text-sm text-gray-500 mb-2">KES 1000</p>
-
-                <input type="hidden" name="plan" value="pro">
-                <input name="phone" placeholder="2547XXXXXXXX"
-                       class="w-full border p-2 rounded mb-2" required>
-
-                <button class="bg-blue-600 text-white w-full py-2 rounded">
-                    Upgrade
-                </button>
-            </form>
-
-            <!-- PREMIUM -->
-            <form action="/pay" method="POST" class="border p-4 rounded">
-                <h3 class="font-bold">Premium</h3>
-                <p class="text-sm text-gray-500 mb-2">KES 2000</p>
-
-                <input type="hidden" name="plan" value="premium">
-                <input name="phone" placeholder="2547XXXXXXXX"
-                       class="w-full border p-2 rounded mb-2" required>
-
-                <button class="bg-green-600 text-white w-full py-2 rounded">
-                    Upgrade
-                </button>
-            </form>
+            <div class="bg-white p-6 rounded-xl shadow">
+                <p class="text-gray-500">Customers</p>
+                <h3 class="text-2xl font-bold">{{ total_customers }}</h3>
+            </div>
 
         </div>
-    </div>
 
-    <!-- INFO -->
-    <div class="bg-white p-6 rounded-xl shadow">
-        <h2 class="text-xl font-bold mb-3">📊 System Overview</h2>
-        <p class="text-gray-600">Your system is active and running.</p>
-    </div>
+        <!-- CHART -->
+        <div class="bg-white p-6 rounded-xl shadow mb-6">
+            <canvas id="revenueChart"></canvas>
+        </div>
 
+        <!-- SEARCH -->
+        <input
+            type="text"
+            id="search"
+            placeholder="Search payments..."
+            class="border p-2 rounded w-full mb-4"
+        />
+
+        <!-- TABLE -->
+        <div class="bg-white p-6 rounded-xl shadow">
+
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b">
+                        <th class="py-2">Phone</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+                    {% for p in payments %}
+                    <tr class="border-b">
+                        <td class="py-2">{{ p.phone }}</td>
+                        <td>KES {{ p.amount }}</td>
+                        <td>{{ p.date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
 </div>
+
+<!-- CHART SCRIPT -->
+<script>
+const labels = {{ chart_labels | tojson }};
+const data = {{ chart_data | tojson }};
+
+const ctx = document.getElementById('revenueChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Revenue',
+            data: data,
+            tension: 0.4
+        }]
+    }
+});
+</script>
+
+<!-- SEARCH SCRIPT -->
+<script>
+document.getElementById("search").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#tableBody tr");
+
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+</script>
 
 </body>
 </html>
