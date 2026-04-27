@@ -2,7 +2,6 @@ from flask import Flask, request, render_template, redirect, session, Response, 
 from flask_sqlalchemy import SQLAlchemy
 import datetime, os, requests, base64
 
-# ================= APP =================
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
@@ -24,7 +23,7 @@ user_sessions = {}
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))  # WhatsApp number (Twilio number)
+    phone = db.Column(db.String(20))  # Twilio number
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
     plan = db.Column(db.String(20), default="basic")
@@ -131,8 +130,7 @@ def ai_reply(message, client):
     prompt = f"""
 You are a smart Kenyan WhatsApp receptionist for {client.name}.
 
-Rules:
-- Be friendly and natural (Kenyan tone)
+- Talk naturally (Kenyan style)
 - If booking → return: BOOKING_REQUEST: <date>
 - If payment → return: PAYMENT_REQUEST
 - Upsell services
@@ -188,11 +186,11 @@ def whatsapp():
         s["step"] = None
         return Response("<Response><Message>STK sent 👍 Weka PIN</Message></Response>", mimetype="text/xml")
 
-    # ===== BLOCK EXPIRED =====
+    # ===== SUBSCRIPTION BLOCK =====
     if not client.active or client.expiry < datetime.date.today():
         return Response("<Response><Message>⚠️ Subscription expired. Reply PAY.</Message></Response>", mimetype="text/xml")
 
-    # ===== AI =====
+    # ===== AI RESPONSE =====
     ai = ai_reply(incoming, client)
 
     if ai.startswith("BOOKING_REQUEST:"):
@@ -213,11 +211,34 @@ def whatsapp():
 
     return Response(f"<Response><Message>{ai}</Message></Response>", mimetype="text/xml")
 
-# ================= ROUTES =================
-@app.route("/")
-def home():
-    return render_template("index.html")
+# ================= DASHBOARD =================
+@app.route("/dashboard")
+def dashboard():
 
+    client_id = session.get("client_id")
+    if not client_id:
+        return redirect("/login")
+
+    payments = Payment.query.filter_by(client_id=client_id).all()
+    appointments = Appointment.query.filter_by(client_id=client_id).all()
+
+    revenue = sum(p.amount or 0 for p in payments)
+
+    # ===== CHART DATA =====
+    chart_labels = [p.date for p in payments]
+    chart_data = [p.amount or 0 for p in payments]
+
+    return render_template(
+        "dashboard.html",
+        total_customers=len(appointments),
+        total_bookings=len(appointments),
+        revenue=revenue,
+        payments=payments,
+        chart_labels=chart_labels,
+        chart_data=chart_data
+    )
+
+# ================= AUTH =================
 @app.route("/signup", methods=["GET","POST"])
 def signup():
     if request.method == "POST":
@@ -249,27 +270,10 @@ def login():
 
     return render_template("login.html")
 
-# ================= DASHBOARD =================
-@app.route("/dashboard")
-def dashboard():
-
-    if "client_id" not in session:
-        return redirect("/login")
-
-    client_id = session["client_id"]
-
-    payments = Payment.query.filter_by(client_id=client_id).all()
-    appointments = Appointment.query.filter_by(client_id=client_id).all()
-
-    revenue = sum(p.amount for p in payments)
-
-    return render_template(
-        "dashboard.html",
-        total_customers=len(appointments),
-        total_bookings=len(appointments),
-        revenue=revenue,
-        payments=payments
-    )
+# ================= HOME =================
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # ================= INIT =================
 with app.app_context():
