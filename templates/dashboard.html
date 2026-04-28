@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard - FlowAI</title>
+    <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -12,28 +12,30 @@
 
     <!-- SIDEBAR -->
     <div class="w-64 bg-white h-screen shadow p-6">
+
         <h1 class="text-xl font-bold mb-8">FlowAI</h1>
 
         <ul class="space-y-4">
-            <li class="text-blue-600 font-semibold">Dashboard</li>
-            <li>Payments</li>
-            <li>Customers</li>
-            <li>Settings</li>
+
+            <li><a href="/dashboard" class="text-blue-600 font-semibold">Dashboard</a></li>
+            <li><a href="/payments">Payments</a></li>
+            <li><a href="/customers">Customers</a></li>
+            <li><a href="/settings">Settings</a></li>
+
         </ul>
+
     </div>
 
     <!-- MAIN -->
     <div class="flex-1 p-8">
 
-        <!-- TOP BAR -->
-        <div class="flex justify-between items-center mb-6">
+        <!-- TOP -->
+        <div class="flex justify-between mb-6">
             <h2 class="text-2xl font-bold">Dashboard</h2>
 
-            <!-- FILTER -->
-            <select id="filter" class="border px-3 py-2 rounded">
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="all">All time</option>
+            <select class="border p-2 rounded">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
             </select>
         </div>
 
@@ -41,17 +43,17 @@
         <div class="grid grid-cols-3 gap-6 mb-6">
 
             <div class="bg-white p-6 rounded-xl shadow">
-                <p class="text-gray-500">Revenue</p>
+                <p>Revenue</p>
                 <h3 class="text-2xl font-bold">KES {{ revenue }}</h3>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow">
-                <p class="text-gray-500">Bookings</p>
+                <p>Bookings</p>
                 <h3 class="text-2xl font-bold">{{ total_bookings }}</h3>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow">
-                <p class="text-gray-500">Customers</p>
+                <p>Customers</p>
                 <h3 class="text-2xl font-bold">{{ total_customers }}</h3>
             </div>
 
@@ -59,38 +61,35 @@
 
         <!-- CHART -->
         <div class="bg-white p-6 rounded-xl shadow mb-6">
-            <canvas id="revenueChart"></canvas>
+            <canvas id="chart"></canvas>
         </div>
 
         <!-- SEARCH -->
-        <input
-            type="text"
-            id="search"
-            placeholder="Search payments..."
-            class="border p-2 rounded w-full mb-4"
-        />
+        <input id="search" placeholder="Search payments..."
+               class="border p-2 rounded w-full mb-4">
 
         <!-- TABLE -->
         <div class="bg-white p-6 rounded-xl shadow">
 
-            <table class="w-full text-left">
+            <table class="w-full">
                 <thead>
-                    <tr class="border-b">
-                        <th class="py-2">Phone</th>
+                    <tr>
+                        <th>Phone</th>
                         <th>Amount</th>
                         <th>Date</th>
                     </tr>
                 </thead>
 
-                <tbody id="tableBody">
+                <tbody id="table">
                     {% for p in payments %}
-                    <tr class="border-b">
-                        <td class="py-2">{{ p.phone }}</td>
+                    <tr>
+                        <td>{{ p.phone }}</td>
                         <td>KES {{ p.amount }}</td>
                         <td>{{ p.date }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
 
         </div>
@@ -98,19 +97,17 @@
     </div>
 </div>
 
-<!-- CHART SCRIPT -->
+<!-- CHART -->
 <script>
 const labels = {{ chart_labels | tojson }};
 const data = {{ chart_data | tojson }};
 
-const ctx = document.getElementById('revenueChart').getContext('2d');
-
-new Chart(ctx, {
-    type: 'line',
+new Chart(document.getElementById("chart"), {
+    type: "line",
     data: {
         labels: labels,
         datasets: [{
-            label: 'Revenue',
+            label: "Revenue",
             data: data,
             tension: 0.4
         }]
@@ -118,14 +115,12 @@ new Chart(ctx, {
 });
 </script>
 
-<!-- SEARCH SCRIPT -->
+<!-- SEARCH -->
 <script>
-document.getElementById("search").addEventListener("keyup", function() {
-    let value = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#tableBody tr");
-
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+document.getElementById("search").addEventListener("keyup", function(){
+    let v = this.value.toLowerCase();
+    document.querySelectorAll("#table tr").forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none";
     });
 });
 </script>
