@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, redirect, session
 from flask_sqlalchemy import SQLAlchemy
-import datetime, os
+import datetime, os, requests, base64
 
 app = Flask(__name__)
 app.secret_key = "secret"
@@ -36,19 +36,58 @@ class Payment(db.Model):
 
 # ================= HELPERS =================
 def require_login():
-    if "client_id" not in session:
-        return False
-    return True
+    return "client_id" in session
 
 def get_client():
     return Client.query.get(session.get("client_id"))
 
-# ================= HOME =================
+# ================= MPESA =================
+def get_access_token():
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    response = requests.get(
+        url,
+        auth=(os.getenv("MPESA_CONSUMER_KEY"), os.getenv("MPESA_CONSUMER_SECRET"))
+    )
+    return response.json().get("access_token")
+
+def stk_push(phone, amount):
+    access_token = get_access_token()
+
+    shortcode = os.getenv("MPESA_SHORTCODE")
+    passkey = os.getenv("MPESA_PASSKEY")
+    callback_url = os.getenv("CALLBACK_URL")
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode((shortcode + passkey + timestamp).encode()).decode()
+
+    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": amount,
+        "PartyA": phone,
+        "PartyB": shortcode,
+        "PhoneNumber": phone,
+        "CallBackURL": callback_url,
+        "AccountReference": "FlowAI",
+        "TransactionDesc": "Subscription Payment"
+    }
+
+    requests.post(url, json=payload, headers=headers)
+
+# ================= ROUTES =================
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ================= AUTH =================
+# ===== AUTH =====
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -84,7 +123,7 @@ def logout():
     session.clear()
     return redirect("/")
 
-# ================= DASHBOARD =================
+# ===== DASHBOARD =====
 @app.route("/dashboard")
 def dashboard():
     if not require_login():
@@ -97,21 +136,17 @@ def dashboard():
 
     revenue = sum(p.amount or 0 for p in payments)
 
-    chart_labels = [p.date for p in payments]
-    chart_data = [p.amount or 0 for p in payments]
-
     return render_template(
         "dashboard.html",
-        client=client,
         revenue=revenue,
         total_bookings=len(appointments),
         total_customers=len(appointments),
         payments=payments,
-        chart_labels=chart_labels,
-        chart_data=chart_data
+        chart_labels=[p.date for p in payments],
+        chart_data=[p.amount for p in payments]
     )
 
-# ================= PAYMENTS =================
+# ===== PAYMENTS =====
 @app.route("/payments")
 def payments():
     if not require_login():
@@ -122,7 +157,49 @@ def payments():
 
     return render_template("payments.html", payments=payments)
 
-# ================= CUSTOMERS =================
+@app.route("/pay", methods=["POST"])
+def pay():
+    if not require_login():
+        return redirect("/login")
+
+    phone = request.form.get("phone")
+    amount = int(request.form.get("amount"))
+
+    stk_push(phone, amount)
+
+    return "Payment request sent 📲"
+
+# ===== MPESA CALLBACK =====
+@app.route("/callback", methods=["POST"])
+def mpesa_callback():
+    data = request.get_json()
+
+    try:
+        result = data["Body"]["stkCallback"]
+
+        if result["ResultCode"] == 0:
+
+            metadata = result["CallbackMetadata"]["Item"]
+
+            amount = next(i["Value"] for i in metadata if i["Name"] == "Amount")
+            phone = next(i["Value"] for i in metadata if i["Name"] == "PhoneNumber")
+
+            payment = Payment(
+                phone=str(phone),
+                amount=int(amount),
+                date=str(datetime.datetime.now()),
+                client_id=1  # later make dynamic
+            )
+
+            db.session.add(payment)
+            db.session.commit()
+
+    except Exception as e:
+        print("MPESA ERROR:", e)
+
+    return "OK"
+
+# ===== CUSTOMERS =====
 @app.route("/customers")
 def customers():
     if not require_login():
@@ -133,7 +210,7 @@ def customers():
 
     return render_template("customers.html", customers=customers)
 
-# ================= SETTINGS =================
+# ===== SETTINGS =====
 @app.route("/settings")
 def settings():
     if not require_login():
@@ -142,7 +219,7 @@ def settings():
     client = get_client()
     return render_template("settings.html", client=client)
 
-# ================= AUTO DB =================
+# ================= INIT =================
 with app.app_context():
     db.create_all()
 
