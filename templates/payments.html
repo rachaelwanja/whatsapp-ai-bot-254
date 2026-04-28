@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payments</title>
+</head>
+<body>
+
+<h1>Payments</h1>
+
+{% for p in payments %}
+<p>{{ p.phone }} - KES {{ p.amount }} - {{ p.date }}</p>
+{% endfor %}
+
+</body>
+</html>
