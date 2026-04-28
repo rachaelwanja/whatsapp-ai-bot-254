@@ -1,15 +1,111 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Payments</title>
+    <title>Payments — FlowAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
 
-<h1>Payments</h1>
+<body class="bg-gray-100">
 
-{% for p in payments %}
-<p>{{ p.phone }} - KES {{ p.amount }} - {{ p.date }}</p>
-{% endfor %}
+<div class="flex">
+
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-white h-screen shadow p-4">
+
+        <h1 class="text-xl font-bold mb-6">FlowAI</h1>
+
+        <a href="/dashboard" class="block mb-3 text-gray-700">Dashboard</a>
+        <a href="/payments" class="block mb-3 font-bold text-green-600">Payments</a>
+        <a href="/customers" class="block mb-3 text-gray-700">Customers</a>
+        <a href="/settings" class="block mb-3 text-gray-700">Settings</a>
+
+    </div>
+
+    <!-- MAIN -->
+    <div class="flex-1 p-6">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Payments</h2>
+
+            <!-- DATE FILTER -->
+            <select class="border p-2 rounded">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+            </select>
+        </div>
+
+        <!-- PAYMENT FORM -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="font-bold mb-4">Send MPESA Payment</h3>
+
+            <form method="POST" action="/pay" class="flex gap-4 flex-wrap">
+
+                <input name="phone"
+                       placeholder="2547XXXXXXXX"
+                       required
+                       class="border p-3 rounded w-60">
+
+                <input name="amount"
+                       placeholder="Amount (KES)"
+                       required
+                       class="border p-3 rounded w-40">
+
+                <button class="bg-green-600 text-white px-6 py-3 rounded">
+                    Pay via MPESA 💳
+                </button>
+
+            </form>
+        </div>
+
+        <!-- SEARCH -->
+        <input id="search"
+               placeholder="Search payments..."
+               class="border p-3 w-full mb-4 rounded">
+
+        <!-- TABLE -->
+        <div class="bg-white rounded shadow overflow-hidden">
+
+            <table class="w-full text-left">
+
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="p-3">Phone</th>
+                        <th class="p-3">Amount</th>
+                        <th class="p-3">Date</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+
+                    {% for p in payments %}
+                    <tr class="border-t">
+                        <td class="p-3">{{ p.phone }}</td>
+                        <td class="p-3 font-bold text-green-600">KES {{ p.amount }}</td>
+                        <td class="p-3 text-gray-500">{{ p.date }}</td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- SEARCH SCRIPT -->
+<script>
+document.getElementById("search").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#tableBody tr");
+
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+</script>
 
 </body>
 </html>
