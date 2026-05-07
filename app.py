@@ -1,228 +1,171 @@
-from flask import Flask, request, render_template, redirect, session
-from flask_sqlalchemy import SQLAlchemy
-import datetime, os, requests, base64
+from flask import Flask, request, render_template, redirect, jsonify, Response
+from twilio.twiml.voice_response import VoiceResponse
+import requests, json
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "secret"
 
-# ================= DATABASE =================
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+# -----------------------------
+# HELPERS
+# -----------------------------
 
-# ================= MODELS =================
-class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    username = db.Column(db.String(50))
-    password = db.Column(db.String(50))
-    plan = db.Column(db.String(20), default="basic")
-    active = db.Column(db.Boolean, default=True)
-    expiry = db.Column(db.Date)
+def load_json(file):
+    try:
+        with open(file, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-class Appointment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(20))
-    date = db.Column(db.String(100))
-    client_id = db.Column(db.Integer)
+def save_json(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=2)
 
-class Payment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(20))
-    amount = db.Column(db.Integer)
-    date = db.Column(db.String(50))
-    client_id = db.Column(db.Integer)
 
-# ================= HELPERS =================
-def require_login():
-    return "client_id" in session
-
-def get_client():
-    return Client.query.get(session.get("client_id"))
-
-# ================= MPESA =================
-def get_access_token():
-    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    response = requests.get(
-        url,
-        auth=(os.getenv("MPESA_CONSUMER_KEY"), os.getenv("MPESA_CONSUMER_SECRET"))
-    )
-    return response.json().get("access_token")
-
-def stk_push(phone, amount):
-    access_token = get_access_token()
-
-    shortcode = os.getenv("MPESA_SHORTCODE")
-    passkey = os.getenv("MPESA_PASSKEY")
-    callback_url = os.getenv("CALLBACK_URL")
-
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    password = base64.b64encode((shortcode + passkey + timestamp).encode()).decode()
-
-    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-
-    payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": amount,
-        "PartyA": phone,
-        "PartyB": shortcode,
-        "PhoneNumber": phone,
-        "CallBackURL": callback_url,
-        "AccountReference": "FlowAI",
-        "TransactionDesc": "Subscription Payment"
-    }
-
-    requests.post(url, json=payload, headers=headers)
-
-# ================= ROUTES =================
+# -----------------------------
+# HOME
+# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ===== AUTH =====
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    if request.method == "POST":
-        client = Client(
-            name=request.form.get("name"),
-            phone=request.form.get("phone"),
-            username=request.form.get("username"),
-            password=request.form.get("password"),
-            expiry=datetime.date.today() + datetime.timedelta(days=7)
-        )
-        db.session.add(client)
-        db.session.commit()
-        return redirect("/login")
 
-    return render_template("signup.html")
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        client = Client.query.filter_by(
-            username=request.form.get("username"),
-            password=request.form.get("password")
-        ).first()
-
-        if client:
-            session["client_id"] = client.id
-            return redirect("/dashboard")
-
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-# ===== DASHBOARD =====
+# -----------------------------
+# DASHBOARD
+# -----------------------------
 @app.route("/dashboard")
 def dashboard():
-    if not require_login():
-        return redirect("/login")
+    payments = load_json("payments.json")
+    appointments = load_json("appointments.json")
 
-    client = get_client()
-
-    payments = Payment.query.filter_by(client_id=client.id).all()
-    appointments = Appointment.query.filter_by(client_id=client.id).all()
-
-    revenue = sum(p.amount or 0 for p in payments)
+    total_revenue = sum([p["amount"] for p in payments]) if payments else 0
 
     return render_template(
         "dashboard.html",
-        revenue=revenue,
-        total_bookings=len(appointments),
-        total_customers=len(appointments),
         payments=payments,
-        chart_labels=[p.date for p in payments],
-        chart_data=[p.amount for p in payments]
+        appointments=appointments,
+        revenue=total_revenue
     )
 
-# ===== PAYMENTS =====
+
+# -----------------------------
+# PAYMENTS PAGE
+# -----------------------------
 @app.route("/payments")
-def payments():
-    if not require_login():
-        return redirect("/login")
-
-    client = get_client()
-    payments = Payment.query.filter_by(client_id=client.id).all()
-
+def payments_page():
+    payments = load_json("payments.json")
     return render_template("payments.html", payments=payments)
+
+
+# -----------------------------
+# CUSTOMERS PAGE
+# -----------------------------
+@app.route("/customers")
+def customers_page():
+    customers = load_json("appointments.json")
+    return render_template("customers.html", customers=customers)
+
+
+# -----------------------------
+# SETTINGS PAGE
+# -----------------------------
+@app.route("/settings")
+def settings():
+    return render_template("settings.html")
+
+
+# -----------------------------
+# MPESA STK PUSH (SIMPLIFIED)
+# -----------------------------
+def stk_push(phone, amount):
+    print("Sending STK push to:", phone, "Amount:", amount)
+
+    # TODO: Replace with real MPESA API
+    return True
+
 
 @app.route("/pay", methods=["POST"])
 def pay():
-    if not require_login():
-        return redirect("/login")
+    data = request.json
 
-    phone = request.form.get("phone")
-    amount = int(request.form.get("amount"))
+    phone = data.get("phone")
+    amount = data.get("amount")
 
     stk_push(phone, amount)
 
-    return "Payment request sent 📲"
+    return jsonify({"status": "Payment request sent"})
 
-# ===== MPESA CALLBACK =====
+
+# -----------------------------
+# MPESA CALLBACK (SAVE PAYMENT)
+# -----------------------------
 @app.route("/callback", methods=["POST"])
-def mpesa_callback():
-    data = request.get_json()
+def callback():
+    data = request.json
 
-    try:
-        result = data["Body"]["stkCallback"]
+    phone = data.get("PhoneNumber", "unknown")
+    amount = int(data.get("Amount", 0))
 
-        if result["ResultCode"] == 0:
+    payments = load_json("payments.json")
 
-            metadata = result["CallbackMetadata"]["Item"]
+    payments.append({
+        "phone": phone,
+        "amount": amount,
+        "date": str(datetime.now())
+    })
 
-            amount = next(i["Value"] for i in metadata if i["Name"] == "Amount")
-            phone = next(i["Value"] for i in metadata if i["Name"] == "PhoneNumber")
+    save_json("payments.json", payments)
 
-            payment = Payment(
-                phone=str(phone),
-                amount=int(amount),
-                date=str(datetime.datetime.now()),
-                client_id=1  # later make dynamic
-            )
+    return jsonify({"ResultCode": 0})
 
-            db.session.add(payment)
-            db.session.commit()
 
-    except Exception as e:
-        print("MPESA ERROR:", e)
+# -----------------------------
+# VOICE AI (CORE SYSTEM)
+# -----------------------------
+@app.route("/voice", methods=["POST"])
+def voice():
+    response = VoiceResponse()
 
-    return "OK"
+    speech = request.values.get("SpeechResult")
 
-# ===== CUSTOMERS =====
-@app.route("/customers")
-def customers():
-    if not require_login():
-        return redirect("/login")
+    if not speech:
+        gather = response.gather(input="speech", action="/voice", method="POST")
+        gather.say("Hello! Welcome to Flow AI. What service would you like to book?")
+        return Response(str(response), mimetype="text/xml")
 
-    client = get_client()
-    customers = Appointment.query.filter_by(client_id=client.id).all()
+    speech = speech.lower()
+    phone = request.values.get("From").replace("+", "")
 
-    return render_template("customers.html", customers=customers)
+    # SIMPLE AI LOGIC
+    if "hair" in speech or "appointment" in speech:
 
-# ===== SETTINGS =====
-@app.route("/settings")
-def settings():
-    if not require_login():
-        return redirect("/login")
+        # SAVE BOOKING
+        appointments = load_json("appointments.json")
 
-    client = get_client()
-    return render_template("settings.html", client=client)
+        booking = {
+            "phone": phone,
+            "service": "Hair Service",
+            "date": str(datetime.now())
+        }
 
-# ================= INIT =================
-with app.app_context():
-    db.create_all()
+        appointments.append(booking)
+        save_json("appointments.json", appointments)
 
-# ================= RUN =================
+        # SEND PAYMENT
+        requests.post("https://whatsapp-ai-bot-254-1.onrender.com/pay", json={
+            "phone": phone,
+            "amount": 1000
+        })
+
+        response.say("Your appointment has been booked. A payment request has been sent to your phone.")
+
+    else:
+        response.say("Sorry, I didn't understand. Please say the service you want.")
+
+    return Response(str(response), mimetype="text/xml")
+
+
+# -----------------------------
+# RUN
+# -----------------------------
 if __name__ == "__main__":
     app.run(debug=True)
