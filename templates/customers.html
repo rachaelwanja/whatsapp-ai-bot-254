@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customers — FlowAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex">
+
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-white h-screen shadow p-6">
+
+        <h1 class="text-xl font-bold mb-8">FlowAI</h1>
+
+        <a href="/dashboard" class="block mb-4 text-gray-700 hover:text-black">Dashboard</a>
+        <a href="/payments" class="block mb-4 text-gray-700 hover:text-black">Payments</a>
+        <a href="/customers" class="block mb-4 font-bold text-blue-600">Customers</a>
+        <a href="/settings" class="block mb-4 text-gray-700 hover:text-black">Settings</a>
+
+        <a href="/logout" class="block mt-10 text-red-500">Logout</a>
+
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 p-8">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Customers</h2>
+
+            <input id="search"
+                   placeholder="Search customers..."
+                   class="border p-2 rounded w-64">
+        </div>
+
+        <!-- TABLE -->
+        <div class="bg-white rounded shadow overflow-hidden">
+
+            {% if customers %}
+
+            <table class="w-full text-left">
+
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="p-3">Phone</th>
+                        <th class="p-3">Service</th>
+                        <th class="p-3">Date</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+
+                    {% for c in customers %}
+                    <tr class="border-t">
+                        <td class="p-3">{{ c.phone }}</td>
+                        <td class="p-3">{{ c.service if c.service else "—" }}</td>
+                        <td class="p-3 text-gray-500">{{ c.date }}</td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            {% else %}
+
+            <div class="p-6 text-gray-500">
+                No customers yet
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SEARCH SCRIPT -->
+<script>
+document.getElementById("search").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#tableBody tr");
+
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+</script>
+
+</body>
+</html>
