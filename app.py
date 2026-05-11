@@ -1,217 +1,165 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from twilio.twiml.voice_response import VoiceResponse, Gather
+from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
 
-import requests
-import datetime
 import os
+import datetime
+import requests
 import base64
 
-# =========================================
-# APP
-# =========================================
+# ==================================================
+# APP CONFIG
+# ==================================================
+
 app = Flask(__name__)
-app.secret_key = "secret"
 
-# =========================================
-# SOCKET
-# =========================================
-socketio = SocketIO(
-    app,
-    cors_allowed_origins="*"
-)
+app.secret_key = os.getenv("SECRET_KEY", "flowai_secret")
 
-# =========================================
-# DATABASE
-# =========================================
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# =========================================
-# BUSINESS
-# =========================================
+# ==================================================
+# DATABASE MODELS
+# ==================================================
+
 class Business(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    business_name = db.Column(db.String(200))
+    email = db.Column(db.String(200))
+    phone = db.Column(db.String(30))
+    password = db.Column(db.String(200))
 
-    name = db.Column(db.String(100))
+    plan = db.Column(db.String(50), default="basic")
 
-    industry = db.Column(db.String(100))
+    opening_time = db.Column(db.String(20), default="08:00")
+    closing_time = db.Column(db.String(20), default="18:00")
 
-    phone = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    opening_time = db.Column(
-        db.String(20),
-        default="08:00"
-    )
 
-    closing_time = db.Column(
-        db.String(20),
-        default="18:00"
-    )
-
-    active = db.Column(
-        db.Boolean,
-        default=True
-    )
-
-# =========================================
-# CLIENT
-# =========================================
-class Client(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    business_id = db.Column(db.Integer)
-
-    name = db.Column(db.String(100))
-
-    phone = db.Column(db.String(20))
-
-    username = db.Column(db.String(50))
-
-    password = db.Column(db.String(50))
-
-    expiry = db.Column(db.Date)
-
-# =========================================
-# SERVICE
-# =========================================
 class Service(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(db.Integer)
 
-    name = db.Column(db.String(100))
-
+    name = db.Column(db.String(200))
     price = db.Column(db.Integer)
-
     duration = db.Column(db.Integer)
 
-    active = db.Column(
-        db.Boolean,
-        default=True
-    )
+    active = db.Column(db.Boolean, default=True)
 
-# =========================================
-# APPOINTMENT
-# =========================================
+
 class Appointment(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(db.Integer)
 
-    phone = db.Column(db.String(20))
+    customer_name = db.Column(db.String(200))
+    phone = db.Column(db.String(30))
 
-    service = db.Column(db.String(100))
+    service = db.Column(db.String(200))
 
-    date = db.Column(db.String(100))
+    appointment_date = db.Column(db.String(100))
+    appointment_time = db.Column(db.String(100))
 
-    time = db.Column(db.String(100))
+    status = db.Column(db.String(50), default="Booked")
 
-# =========================================
-# PAYMENT
-# =========================================
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+
 class Payment(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(db.Integer)
 
-    phone = db.Column(db.String(20))
-
+    phone = db.Column(db.String(30))
     amount = db.Column(db.Integer)
 
-    status = db.Column(
-        db.String(20),
-        default="pending"
-    )
+    status = db.Column(db.String(50), default="Pending")
 
-    mpesa_receipt = db.Column(
-        db.String(100)
-    )
+    mpesa_receipt = db.Column(db.String(200))
 
-    date = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-# =========================================
-# CALL LOG
-# =========================================
+
 class CallLog(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(db.Integer)
 
-    phone = db.Column(db.String(20))
+    caller = db.Column(db.String(30))
 
-    role = db.Column(db.String(20))
+    transcript = db.Column(db.Text)
 
-    message = db.Column(db.String(500))
+    ai_response = db.Column(db.Text)
 
-    date = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-# =========================================
+# ==================================================
 # HELPERS
-# =========================================
-def require_login():
+# ==================================================
 
-    return "client_id" in session
+def logged_in():
+    return "business_id" in session
 
-def get_client():
 
-    return Client.query.get(
-        session.get("client_id")
-    )
+def current_business():
+    return Business.query.get(session["business_id"])
 
-# =========================================
-# AVAILABILITY
-# =========================================
-def check_availability(
-    business_id,
-    date,
-    time
-):
+
+def slot_available(business_id, date, time):
 
     existing = Appointment.query.filter_by(
         business_id=business_id,
-        date=date,
-        time=time
+        appointment_date=date,
+        appointment_time=time
     ).first()
 
     return existing is None
 
-# =========================================
+
+def inside_working_hours(business, appointment_time):
+
+    opening = int(business.opening_time.split(":")[0])
+    closing = int(business.closing_time.split(":")[0])
+
+    booking_hour = int(appointment_time.split(":")[0])
+
+    return opening <= booking_hour < closing
+
+# ==================================================
+# WHATSAPP CONFIRMATION
+# ==================================================
+
+def send_whatsapp_confirmation(phone, message):
+
+    client = Client(
+        os.getenv("TWILIO_ACCOUNT_SID"),
+        os.getenv("TWILIO_AUTH_TOKEN")
+    )
+
+    client.messages.create(
+        from_='whatsapp:+14155238886',
+        body=message,
+        to=f'whatsapp:+{phone}'
+    )
+
+# ==================================================
 # MPESA
-# =========================================
+# ==================================================
+
 def get_access_token():
 
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
 
-    res = requests.get(
+    response = requests.get(
         url,
         auth=(
             os.getenv("MPESA_CONSUMER_KEY"),
@@ -219,193 +167,103 @@ def get_access_token():
         )
     )
 
-    return res.json().get(
-        "access_token"
-    )
+    return response.json().get("access_token")
+
 
 def stk_push(phone, amount):
 
     access_token = get_access_token()
 
-    shortcode = os.getenv(
-        "MPESA_SHORTCODE"
-    )
+    shortcode = os.getenv("MPESA_SHORTCODE")
+    passkey = os.getenv("MPESA_PASSKEY")
 
-    passkey = os.getenv(
-        "MPESA_PASSKEY"
-    )
-
-    callback_url = os.getenv(
-        "CALLBACK_URL"
-    )
-
-    timestamp = datetime.datetime.now().strftime(
-        "%Y%m%d%H%M%S"
-    )
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
     password = base64.b64encode(
-        (
-            shortcode +
-            passkey +
-            timestamp
-        ).encode()
+        (shortcode + passkey + timestamp).encode()
     ).decode()
 
-    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-
     headers = {
-        "Authorization":
-        f"Bearer {access_token}"
+        "Authorization": f"Bearer {access_token}"
     }
 
     payload = {
-
         "BusinessShortCode": shortcode,
-
         "Password": password,
-
         "Timestamp": timestamp,
-
-        "TransactionType":
-        "CustomerPayBillOnline",
-
+        "TransactionType": "CustomerPayBillOnline",
         "Amount": amount,
-
         "PartyA": phone,
-
         "PartyB": shortcode,
-
         "PhoneNumber": phone,
-
-        "CallBackURL": callback_url,
-
-        "AccountReference":
-        "FlowAI",
-
-        "TransactionDesc":
-        "Booking Payment"
+        "CallBackURL": os.getenv("CALLBACK_URL"),
+        "AccountReference": "FlowAI",
+        "TransactionDesc": "FlowAI Payment"
     }
 
     requests.post(
-        url,
+        "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
         json=payload,
         headers=headers
     )
 
-# =========================================
+# ==================================================
 # HOME
-# =========================================
+# ==================================================
+
 @app.route("/")
 def home():
+    return render_template("index.html")
 
-    return render_template(
-        "index.html"
-    )
-
-# =========================================
+# ==================================================
 # SIGNUP
-# =========================================
-@app.route(
-    "/signup",
-    methods=["GET", "POST"]
-)
+# ==================================================
+
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
 
     if request.method == "POST":
 
         business = Business(
-
-            name=request.form.get(
-                "business_name"
-            ),
-
-            industry=request.form.get(
-                "industry"
-            ),
-
-            phone=request.form.get(
-                "phone"
-            )
+            business_name=request.form.get("business_name"),
+            email=request.form.get("email"),
+            phone=request.form.get("phone"),
+            password=request.form.get("password")
         )
 
-        db.session.add(
-            business
-        )
-
-        db.session.commit()
-
-        client = Client(
-
-            business_id=business.id,
-
-            name=request.form.get(
-                "name"
-            ),
-
-            phone=request.form.get(
-                "phone"
-            ),
-
-            username=request.form.get(
-                "username"
-            ),
-
-            password=request.form.get(
-                "password"
-            ),
-
-            expiry=datetime.date.today() +
-            datetime.timedelta(days=30)
-        )
-
-        db.session.add(client)
-
+        db.session.add(business)
         db.session.commit()
 
         return redirect("/login")
 
-    return render_template(
-        "signup.html"
-    )
+    return render_template("signup.html")
 
-# =========================================
+# ==================================================
 # LOGIN
-# =========================================
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+# ==================================================
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
 
-        client = Client.query.filter_by(
-
-            username=request.form.get(
-                "username"
-            ),
-
-            password=request.form.get(
-                "password"
-            )
-
+        business = Business.query.filter_by(
+            email=request.form.get("email"),
+            password=request.form.get("password")
         ).first()
 
-        if client:
+        if business:
 
-            session["client_id"] = client.id
+            session["business_id"] = business.id
 
-            return redirect(
-                "/dashboard"
-            )
+            return redirect("/dashboard")
 
-    return render_template(
-        "login.html"
-    )
+    return render_template("login.html")
 
-# =========================================
+# ==================================================
 # LOGOUT
-# =========================================
+# ==================================================
+
 @app.route("/logout")
 def logout():
 
@@ -413,152 +271,57 @@ def logout():
 
     return redirect("/")
 
-# =========================================
+# ==================================================
 # DASHBOARD
-# =========================================
+# ==================================================
+
 @app.route("/dashboard")
 def dashboard():
 
-    if not require_login():
-
+    if not logged_in():
         return redirect("/login")
 
-    client = get_client()
-
-    payments = Payment.query.filter_by(
-        business_id=client.business_id
-    ).all()
+    business = current_business()
 
     appointments = Appointment.query.filter_by(
-        business_id=client.business_id
+        business_id=business.id
     ).all()
 
-    logs = CallLog.query.filter_by(
-        business_id=client.business_id
-    ).order_by(
-        CallLog.id.desc()
-    ).limit(10).all()
+    payments = Payment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    services = Service.query.filter_by(
+        business_id=business.id
+    ).all()
 
     revenue = sum(
-        p.amount or 0
-        for p in payments
-        if p.status == "paid"
+        [p.amount for p in payments if p.amount]
     )
 
-    chart_labels = [
-        p.date[:10]
-        for p in payments
-    ]
-
-    chart_data = [
-        p.amount
-        for p in payments
-    ]
-
     return render_template(
-
         "dashboard.html",
-
-        revenue=revenue,
-
-        total_customers=len(
-            appointments
-        ),
-
-        total_bookings=len(
-            appointments
-        ),
-
-        total_payments=len(
-            payments
-        ),
-
+        business=business,
+        appointments=appointments,
         payments=payments,
-
-        logs=logs,
-
-        chart_labels=chart_labels,
-
-        chart_data=chart_data
+        services=services,
+        revenue=revenue
     )
 
-# =========================================
-# APPOINTMENTS
-# =========================================
-@app.route("/appointments")
-def appointments():
-
-    if not require_login():
-
-        return redirect("/login")
-
-    client = get_client()
-
-    appointments = Appointment.query.filter_by(
-        business_id=client.business_id
-    ).all()
-
-    return render_template(
-        "appointments.html",
-        appointments=appointments
-    )
-
-# =========================================
-# CUSTOMERS
-# =========================================
-@app.route("/customers")
-def customers():
-
-    if not require_login():
-
-        return redirect("/login")
-
-    client = get_client()
-
-    customers = Appointment.query.filter_by(
-        business_id=client.business_id
-    ).all()
-
-    return render_template(
-        "customers.html",
-        customers=customers
-    )
-
-# =========================================
-# PAYMENTS
-# =========================================
-@app.route("/payments")
-def payments():
-
-    if not require_login():
-
-        return redirect("/login")
-
-    client = get_client()
-
-    payments = Payment.query.filter_by(
-        business_id=client.business_id
-    ).all()
-
-    return render_template(
-        "payments.html",
-        payments=payments
-    )
-
-# =========================================
+# ==================================================
 # SERVICES
-# =========================================
+# ==================================================
+
 @app.route("/services")
 def services():
 
-    if not require_login():
-
+    if not logged_in():
         return redirect("/login")
 
-    client = get_client()
+    business = current_business()
 
     services = Service.query.filter_by(
-        business_id=client.business_id
+        business_id=business.id
     ).all()
 
     return render_template(
@@ -566,56 +329,121 @@ def services():
         services=services
     )
 
-# =========================================
-# CREATE SERVICE
-# =========================================
-@app.route(
-    "/services/create",
-    methods=["POST"]
-)
-def create_service():
 
-    client = get_client()
+@app.route("/add-service", methods=["POST"])
+def add_service():
+
+    if not logged_in():
+        return redirect("/login")
+
+    business = current_business()
 
     service = Service(
-
-        business_id=client.business_id,
-
-        name=request.form.get(
-            "name"
-        ),
-
-        price=int(
-            request.form.get("price")
-        ),
-
-        duration=int(
-            request.form.get("duration")
-        )
+        business_id=business.id,
+        name=request.form.get("name"),
+        price=request.form.get("price"),
+        duration=request.form.get("duration")
     )
 
     db.session.add(service)
-
     db.session.commit()
 
     return redirect("/services")
 
-# =========================================
-# CALL LOGS
-# =========================================
-@app.route("/call_logs")
-def call_logs():
+# ==================================================
+# APPOINTMENTS
+# ==================================================
 
-    if not require_login():
+@app.route("/appointments")
+def appointments():
 
+    if not logged_in():
         return redirect("/login")
 
-    client = get_client()
+    business = current_business()
+
+    appointments = Appointment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    return render_template(
+        "appointments.html",
+        appointments=appointments
+    )
+
+# ==================================================
+# CUSTOMERS
+# ==================================================
+
+@app.route("/customers")
+def customers():
+
+    if not logged_in():
+        return redirect("/login")
+
+    business = current_business()
+
+    customers = Appointment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    return render_template(
+        "customers.html",
+        customers=customers
+    )
+
+# ==================================================
+# PAYMENTS
+# ==================================================
+
+@app.route("/payments")
+def payments():
+
+    if not logged_in():
+        return redirect("/login")
+
+    business = current_business()
+
+    payments = Payment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    return render_template(
+        "payments.html",
+        payments=payments
+    )
+
+# ==================================================
+# SETTINGS
+# ==================================================
+
+@app.route("/settings")
+def settings():
+
+    if not logged_in():
+        return redirect("/login")
+
+    business = current_business()
+
+    return render_template(
+        "settings.html",
+        business=business
+    )
+
+# ==================================================
+# CALL LOGS
+# ==================================================
+
+@app.route("/call-logs")
+def call_logs():
+
+    if not logged_in():
+        return redirect("/login")
+
+    business = current_business()
 
     logs = CallLog.query.filter_by(
-        business_id=client.business_id
-    ).order_by(
-        CallLog.id.desc()
+        business_id=business.id
     ).all()
 
     return render_template(
@@ -623,401 +451,242 @@ def call_logs():
         logs=logs
     )
 
-# =========================================
-# SUBSCRIPTION
-# =========================================
+# ==================================================
+# SUBSCRIPTIONS
+# ==================================================
+
 @app.route("/subscription")
 def subscription():
 
-    if not require_login():
-
+    if not logged_in():
         return redirect("/login")
 
-    client = get_client()
+    business = current_business()
 
     return render_template(
         "subscription.html",
-        client=client
-    )
-
-# =========================================
-# SETTINGS
-# =========================================
-@app.route("/settings")
-def settings():
-
-    if not require_login():
-
-        return redirect("/login")
-
-    client = get_client()
-
-    business = Business.query.get(
-        client.business_id
-    )
-
-    return render_template(
-        "settings.html",
         business=business
     )
 
-# =========================================
-# UPDATE HOURS
-# =========================================
-@app.route(
-    "/settings/hours",
-    methods=["POST"]
-)
-def update_hours():
+# ==================================================
+# BOOK APPOINTMENT
+# ==================================================
 
-    client = get_client()
+@app.route("/book", methods=["POST"])
+def book():
 
-    business = Business.query.get(
-        client.business_id
+    business = current_business()
+
+    customer_name = request.form.get("customer_name")
+    phone = request.form.get("phone")
+
+    service = request.form.get("service")
+
+    appointment_date = request.form.get("appointment_date")
+    appointment_time = request.form.get("appointment_time")
+
+    amount = int(request.form.get("amount"))
+
+    # =========================
+    # WORKING HOURS CHECK
+    # =========================
+
+    if not inside_working_hours(
+        business,
+        appointment_time
+    ):
+
+        return "Business closed at that time"
+
+    # =========================
+    # DOUBLE BOOKING CHECK
+    # =========================
+
+    if not slot_available(
+        business.id,
+        appointment_date,
+        appointment_time
+    ):
+
+        return "Time slot already booked"
+
+    # =========================
+    # CREATE APPOINTMENT
+    # =========================
+
+    appointment = Appointment(
+        business_id=business.id,
+        customer_name=customer_name,
+        phone=phone,
+        service=service,
+        appointment_date=appointment_date,
+        appointment_time=appointment_time
     )
 
-    business.opening_time = request.form.get(
-        "opening_time"
-    )
-
-    business.closing_time = request.form.get(
-        "closing_time"
-    )
-
+    db.session.add(appointment)
     db.session.commit()
 
-    return redirect("/settings")
+    # =========================
+    # MPESA STK PUSH
+    # =========================
 
-# =========================================
-# CALLBACK
-# =========================================
-@app.route(
-    "/callback",
-    methods=["POST"]
-)
+    stk_push(phone, amount)
+
+    # =========================
+    # WHATSAPP CONFIRMATION
+    # =========================
+
+    send_whatsapp_confirmation(
+        phone,
+        f"""
+✅ Booking Confirmed
+
+Service: {service}
+
+Date: {appointment_date}
+
+Time: {appointment_time}
+
+Thank you for choosing FlowAI.
+"""
+    )
+
+    # =========================
+    # LIVE DASHBOARD NOTIFICATION
+    # =========================
+
+    socketio.emit(
+        "new_notification",
+        {
+            "message": f"🔥 New booking from {customer_name}"
+        }
+    )
+
+    return redirect("/appointments")
+
+# ==================================================
+# MPESA CALLBACK
+# ==================================================
+
+@app.route("/callback", methods=["POST"])
 def callback():
 
     data = request.get_json()
 
-    try:
+    print(data)
 
-        result = data["Body"]["stkCallback"]
+    return jsonify({
+        "ResultCode": 0
+    })
 
-        if result["ResultCode"] == 0:
+# ==================================================
+# WHATSAPP AI
+# ==================================================
 
-            metadata = result[
-                "CallbackMetadata"
-            ]["Item"]
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
 
-            amount = next(
-                i["Value"]
-                for i in metadata
-                if i["Name"] == "Amount"
-            )
+    incoming = request.values.get("Body", "").lower()
 
-            phone = next(
-                i["Value"]
-                for i in metadata
-                if i["Name"] == "PhoneNumber"
-            )
+    response = MessagingResponse()
 
-            receipt = next(
-                i["Value"]
-                for i in metadata
-                if i["Name"] == "MpesaReceiptNumber"
-            )
+    if "hello" in incoming or "hi" in incoming:
 
-            payment = Payment.query.filter_by(
-                phone=str(phone),
-                status="pending"
-            ).first()
+        response.message(
+            "👋 Welcome to FlowAI.\nHow can I help you today?"
+        )
 
-            if payment:
+    elif "book" in incoming:
 
-                payment.status = "paid"
+        response.message(
+            "📅 Please send:\nService\nDate\nTime"
+        )
 
-                payment.mpesa_receipt = receipt
+    elif "price" in incoming:
 
-                db.session.commit()
+        response.message(
+            "💰 Basic KES 500\nPro KES 1000\nPremium KES 2000"
+        )
 
-                socketio.emit(
-                    "new_payment",
-                    {
-                        "message":
-                        f"💰 New payment KES {amount}"
-                    }
-                )
+    else:
 
-    except Exception as e:
+        response.message(
+            "🤖 FlowAI received your message."
+        )
 
-        print(e)
+    return str(response)
 
-    return "OK"
-
-# =========================================
+# ==================================================
 # VOICE AI
-# =========================================
-sessions = {}
+# ==================================================
 
-@app.route(
-    "/voice",
-    methods=["POST"]
-)
+@app.route("/voice", methods=["POST"])
 def voice():
-
-    business_id = 1
-
-    socketio.emit(
-        "call_status",
-        {
-            "message":
-            "📞 Incoming customer call"
-        }
-    )
 
     response = VoiceResponse()
 
-    call_id = request.values.get(
-        "CallSid"
+    gather = Gather(
+        input="speech",
+        action="/process-speech",
+        method="POST"
     )
 
-    speech = request.values.get(
-        "SpeechResult"
+    gather.say(
+        "Hello. Welcome to Flow AI. What service would you like to book?"
     )
 
-    if call_id not in sessions:
+    response.append(gather)
 
-        sessions[call_id] = {
-            "step": "service"
-        }
+    return str(response)
 
-    current = sessions[call_id]
 
-    # FIRST MESSAGE
-    if not speech:
+@app.route("/process-speech", methods=["POST"])
+def process_speech():
 
-        gather = Gather(
-            input="speech",
-            action="/voice",
-            method="POST"
-        )
+    speech = request.form.get("SpeechResult")
 
-        gather.say(
-            "Hello! Welcome to Flow AI. "
-            "What service would you like?"
-        )
+    response = VoiceResponse()
 
-        response.append(gather)
+    ai_reply = f"""
+You said {speech}.
 
-        return str(response)
+Please provide your preferred date and time.
+"""
 
-    speech = speech.lower()
+    response.say(ai_reply)
 
-    # SAVE CUSTOMER LOG
-    user_log = CallLog(
+    # SAVE CALL LOG
 
-        business_id=business_id,
-
-        phone=request.values.get(
-            "From"
-        ),
-
-        role="customer",
-
-        message=speech,
-
-        date=str(
-            datetime.datetime.now()
-        )
+    log = CallLog(
+        business_id=1,
+        caller=request.form.get("From"),
+        transcript=speech,
+        ai_response=ai_reply
     )
 
-    db.session.add(user_log)
-
+    db.session.add(log)
     db.session.commit()
 
-    # STEP 1
-    if current["step"] == "service":
+    return str(response)
 
-        current["service"] = speech
+# ==================================================
+# SOCKET EVENTS
+# ==================================================
 
-        current["step"] = "date"
+@socketio.on("connect")
+def connected():
+    print("Client connected")
 
-        ai_text = "What date would you like?"
+# ==================================================
+# INIT DATABASE
+# ==================================================
 
-        ai_log = CallLog(
-
-            business_id=business_id,
-
-            phone=request.values.get(
-                "From"
-            ),
-
-            role="AI",
-
-            message=ai_text,
-
-            date=str(
-                datetime.datetime.now()
-            )
-        )
-
-        db.session.add(ai_log)
-
-        db.session.commit()
-
-        gather = Gather(
-            input="speech",
-            action="/voice",
-            method="POST"
-        )
-
-        gather.say(ai_text)
-
-        response.append(gather)
-
-        return str(response)
-
-    # STEP 2
-    elif current["step"] == "date":
-
-        current["date"] = speech
-
-        current["step"] = "time"
-
-        ai_text = "What time works for you?"
-
-        ai_log = CallLog(
-
-            business_id=business_id,
-
-            phone=request.values.get(
-                "From"
-            ),
-
-            role="AI",
-
-            message=ai_text,
-
-            date=str(
-                datetime.datetime.now()
-            )
-        )
-
-        db.session.add(ai_log)
-
-        db.session.commit()
-
-        gather = Gather(
-            input="speech",
-            action="/voice",
-            method="POST"
-        )
-
-        gather.say(ai_text)
-
-        response.append(gather)
-
-        return str(response)
-
-    # STEP 3
-    elif current["step"] == "time":
-
-        current["time"] = speech
-
-        available = check_availability(
-            business_id,
-            current["date"],
-            current["time"]
-        )
-
-        if not available:
-
-            response.say(
-                "Sorry, that slot is already booked."
-            )
-
-            return str(response)
-
-        phone = request.values.get(
-            "From"
-        ).replace("+", "")
-
-        appointment = Appointment(
-
-            business_id=business_id,
-
-            phone=phone,
-
-            service=current["service"],
-
-            date=current["date"],
-
-            time=current["time"]
-        )
-
-        db.session.add(
-            appointment
-        )
-
-        db.session.commit()
-
-        # PAYMENT
-        payment = Payment(
-
-            business_id=business_id,
-
-            phone=phone,
-
-            amount=1000,
-
-            status="pending",
-
-            date=str(
-                datetime.datetime.now()
-            )
-        )
-
-        db.session.add(payment)
-
-        db.session.commit()
-
-        # STK PUSH
-        stk_push(
-            phone,
-            1000
-        )
-
-        # LIVE BOOKING
-        socketio.emit(
-            "new_booking",
-            {
-                "message":
-                f"📅 New booking for {current['service']}"
-            }
-        )
-
-        response.say(
-            "Your appointment has been booked successfully. "
-            "We have sent payment request to your phone."
-        )
-
-        sessions.pop(call_id)
-
-        return str(response)
-
-# =========================================
-# INIT
-# =========================================
 with app.app_context():
-
     db.create_all()
 
-# =========================================
+# ==================================================
 # RUN
-# =========================================
-if __name__ == "__main__":
+# ==================================================
 
-    socketio.run(
-        app,
-        debug=True
-    )
+if __name__ == "__main__":
+    socketio.run(app, debug=True)
