@@ -1,110 +1,165 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO
-from twilio.twiml.voice_response import VoiceResponse, Gather
-from twilio.twiml.messaging_response import MessagingResponse
-from twilio.rest import Client
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    jsonify,
+    Response
+)
 
-import os
-import datetime
+from flask_sqlalchemy import SQLAlchemy
+from twilio.twiml.voice_response import VoiceResponse, Gather
+from twilio.rest import Client as TwilioClient
+
+from datetime import datetime, time
 import requests
+import os
 import base64
 
-# ==================================================
+# =========================================================
 # APP CONFIG
-# ==================================================
+# =========================================================
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY", "flowai_secret")
+app.secret_key = os.getenv("SECRET_KEY", "flowai-secret")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ==================================================
+# =========================================================
+# TWILIO
+# =========================================================
+
+twilio_client = TwilioClient(
+    os.getenv("TWILIO_ACCOUNT_SID"),
+    os.getenv("TWILIO_AUTH_TOKEN")
+)
+
+TWILIO_WHATSAPP = "whatsapp:+14155238886"
+
+# =========================================================
 # DATABASE MODELS
-# ==================================================
+# =========================================================
 
 class Business(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     business_name = db.Column(db.String(200))
-    email = db.Column(db.String(200))
-    phone = db.Column(db.String(30))
+    email = db.Column(db.String(200), unique=True)
+    phone = db.Column(db.String(50))
+
     password = db.Column(db.String(200))
 
-    plan = db.Column(db.String(50), default="basic")
+    plan = db.Column(db.String(50), default="Starter")
 
     opening_time = db.Column(db.String(20), default="08:00")
     closing_time = db.Column(db.String(20), default="18:00")
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    business_id = db.Column(db.Integer)
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
 
     name = db.Column(db.String(200))
     price = db.Column(db.Integer)
     duration = db.Column(db.Integer)
 
-    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Customer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
+
+    name = db.Column(db.String(200))
+    phone = db.Column(db.String(50))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    business_id = db.Column(db.Integer)
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
 
-    customer_name = db.Column(db.String(200))
-    phone = db.Column(db.String(30))
+    customer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("customer.id")
+    )
 
-    service = db.Column(db.String(200))
+    service_id = db.Column(
+        db.Integer,
+        db.ForeignKey("service.id")
+    )
 
     appointment_date = db.Column(db.String(100))
     appointment_time = db.Column(db.String(100))
 
     status = db.Column(db.String(50), default="Booked")
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    business_id = db.Column(db.Integer)
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
 
-    phone = db.Column(db.String(30))
+    customer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("customer.id")
+    )
+
     amount = db.Column(db.Integer)
+
+    phone = db.Column(db.String(50))
 
     status = db.Column(db.String(50), default="Pending")
 
-    mpesa_receipt = db.Column(db.String(200))
+    mpesa_receipt = db.Column(db.String(100))
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class CallLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    business_id = db.Column(db.Integer)
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
 
-    caller = db.Column(db.String(30))
+    customer_phone = db.Column(db.String(50))
 
     transcript = db.Column(db.Text)
 
-    ai_response = db.Column(db.Text)
+    ai_reply = db.Column(db.Text)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# ==================================================
+# =========================================================
 # HELPERS
-# ==================================================
+# =========================================================
 
 def logged_in():
     return "business_id" in session
@@ -114,46 +169,116 @@ def current_business():
     return Business.query.get(session["business_id"])
 
 
-def slot_available(business_id, date, time):
+def send_whatsapp(phone, message):
+
+    try:
+
+        twilio_client.messages.create(
+            from_=TWILIO_WHATSAPP,
+            body=message,
+            to=f"whatsapp:+{phone}"
+        )
+
+    except Exception as e:
+        print("WHATSAPP ERROR:", e)
+
+
+def get_ai_reply(text):
+
+    try:
+
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}"
+            },
+
+            json={
+                "model": "openai/gpt-4o-mini",
+
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": """
+                        You are FlowAI.
+
+                        You are a friendly Kenyan AI receptionist.
+
+                        You help customers:
+                        - book appointments
+                        - ask business questions
+                        - confirm services
+                        - talk naturally
+                        """
+                    },
+
+                    {
+                        "role": "user",
+                        "content": text
+                    }
+                ]
+            }
+        )
+
+        data = response.json()
+
+        return data["choices"][0]["message"]["content"]
+
+    except Exception as e:
+
+        print("AI ERROR:", e)
+
+        return "Hello 👋 How can I help you today?"
+
+
+# =========================================================
+# DOUBLE BOOKING PREVENTION
+# =========================================================
+
+def slot_available(business_id, date, appointment_time):
 
     existing = Appointment.query.filter_by(
         business_id=business_id,
         appointment_date=date,
-        appointment_time=time
+        appointment_time=appointment_time
     ).first()
 
     return existing is None
 
 
-def inside_working_hours(business, appointment_time):
+# =========================================================
+# WORKING HOURS CHECK
+# =========================================================
 
-    opening = int(business.opening_time.split(":")[0])
-    closing = int(business.closing_time.split(":")[0])
+def within_working_hours(business, appointment_time):
 
-    booking_hour = int(appointment_time.split(":")[0])
+    try:
 
-    return opening <= booking_hour < closing
+        open_time = datetime.strptime(
+            business.opening_time,
+            "%H:%M"
+        ).time()
 
-# ==================================================
-# WHATSAPP CONFIRMATION
-# ==================================================
+        close_time = datetime.strptime(
+            business.closing_time,
+            "%H:%M"
+        ).time()
 
-def send_whatsapp_confirmation(phone, message):
+        check_time = datetime.strptime(
+            appointment_time,
+            "%H:%M"
+        ).time()
 
-    client = Client(
-        os.getenv("TWILIO_ACCOUNT_SID"),
-        os.getenv("TWILIO_AUTH_TOKEN")
-    )
+        return open_time <= check_time <= close_time
 
-    client.messages.create(
-        from_='whatsapp:+14155238886',
-        body=message,
-        to=f'whatsapp:+{phone}'
-    )
+    except:
+        return False
 
-# ==================================================
+
+# =========================================================
 # MPESA
-# ==================================================
+# =========================================================
 
 def get_access_token():
 
@@ -177,7 +302,7 @@ def stk_push(phone, amount):
     shortcode = os.getenv("MPESA_SHORTCODE")
     passkey = os.getenv("MPESA_PASSKEY")
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     password = base64.b64encode(
         (shortcode + passkey + timestamp).encode()
@@ -198,7 +323,7 @@ def stk_push(phone, amount):
         "PhoneNumber": phone,
         "CallBackURL": os.getenv("CALLBACK_URL"),
         "AccountReference": "FlowAI",
-        "TransactionDesc": "FlowAI Payment"
+        "TransactionDesc": "Appointment Payment"
     }
 
     requests.post(
@@ -207,17 +332,17 @@ def stk_push(phone, amount):
         headers=headers
     )
 
-# ==================================================
+# =========================================================
 # HOME
-# ==================================================
+# =========================================================
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ==================================================
+# =========================================================
 # SIGNUP
-# ==================================================
+# =========================================================
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -238,9 +363,9 @@ def signup():
 
     return render_template("signup.html")
 
-# ==================================================
+# =========================================================
 # LOGIN
-# ==================================================
+# =========================================================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -260,9 +385,9 @@ def login():
 
     return render_template("login.html")
 
-# ==================================================
+# =========================================================
 # LOGOUT
-# ==================================================
+# =========================================================
 
 @app.route("/logout")
 def logout():
@@ -271,9 +396,9 @@ def logout():
 
     return redirect("/")
 
-# ==================================================
+# =========================================================
 # DASHBOARD
-# ==================================================
+# =========================================================
 
 @app.route("/dashboard")
 def dashboard():
@@ -291,26 +416,31 @@ def dashboard():
         business_id=business.id
     ).all()
 
-    services = Service.query.filter_by(
+    customers = Customer.query.filter_by(
         business_id=business.id
     ).all()
 
-    revenue = sum(
-        [p.amount for p in payments if p.amount]
-    )
+    revenue = sum([
+        p.amount or 0 for p in payments
+    ])
 
     return render_template(
         "dashboard.html",
+
         business=business,
+
         appointments=appointments,
+
         payments=payments,
-        services=services,
+
+        customers=customers,
+
         revenue=revenue
     )
 
-# ==================================================
+# =========================================================
 # SERVICES
-# ==================================================
+# =========================================================
 
 @app.route("/services")
 def services():
@@ -350,9 +480,9 @@ def add_service():
 
     return redirect("/services")
 
-# ==================================================
+# =========================================================
 # APPOINTMENTS
-# ==================================================
+# =========================================================
 
 @app.route("/appointments")
 def appointments():
@@ -371,9 +501,9 @@ def appointments():
         appointments=appointments
     )
 
-# ==================================================
+# =========================================================
 # CUSTOMERS
-# ==================================================
+# =========================================================
 
 @app.route("/customers")
 def customers():
@@ -383,7 +513,7 @@ def customers():
 
     business = current_business()
 
-    customers = Appointment.query.filter_by(
+    customers = Customer.query.filter_by(
         business_id=business.id
     ).all()
 
@@ -392,9 +522,9 @@ def customers():
         customers=customers
     )
 
-# ==================================================
+# =========================================================
 # PAYMENTS
-# ==================================================
+# =========================================================
 
 @app.route("/payments")
 def payments():
@@ -413,26 +543,9 @@ def payments():
         payments=payments
     )
 
-# ==================================================
-# SETTINGS
-# ==================================================
-
-@app.route("/settings")
-def settings():
-
-    if not logged_in():
-        return redirect("/login")
-
-    business = current_business()
-
-    return render_template(
-        "settings.html",
-        business=business
-    )
-
-# ==================================================
+# =========================================================
 # CALL LOGS
-# ==================================================
+# =========================================================
 
 @app.route("/call-logs")
 def call_logs():
@@ -451,12 +564,12 @@ def call_logs():
         logs=logs
     )
 
-# ==================================================
-# SUBSCRIPTIONS
-# ==================================================
+# =========================================================
+# SETTINGS
+# =========================================================
 
-@app.route("/subscription")
-def subscription():
+@app.route("/settings")
+def settings():
 
     if not logged_in():
         return redirect("/login")
@@ -464,161 +577,37 @@ def subscription():
     business = current_business()
 
     return render_template(
-        "subscription.html",
+        "settings.html",
         business=business
     )
 
-# ==================================================
-# BOOK APPOINTMENT
-# ==================================================
-
-@app.route("/book", methods=["POST"])
-def book():
-
-    business = current_business()
-
-    customer_name = request.form.get("customer_name")
-    phone = request.form.get("phone")
-
-    service = request.form.get("service")
-
-    appointment_date = request.form.get("appointment_date")
-    appointment_time = request.form.get("appointment_time")
-
-    amount = int(request.form.get("amount"))
-
-    # =========================
-    # WORKING HOURS CHECK
-    # =========================
-
-    if not inside_working_hours(
-        business,
-        appointment_time
-    ):
-
-        return "Business closed at that time"
-
-    # =========================
-    # DOUBLE BOOKING CHECK
-    # =========================
-
-    if not slot_available(
-        business.id,
-        appointment_date,
-        appointment_time
-    ):
-
-        return "Time slot already booked"
-
-    # =========================
-    # CREATE APPOINTMENT
-    # =========================
-
-    appointment = Appointment(
-        business_id=business.id,
-        customer_name=customer_name,
-        phone=phone,
-        service=service,
-        appointment_date=appointment_date,
-        appointment_time=appointment_time
-    )
-
-    db.session.add(appointment)
-    db.session.commit()
-
-    # =========================
-    # MPESA STK PUSH
-    # =========================
-
-    stk_push(phone, amount)
-
-    # =========================
-    # WHATSAPP CONFIRMATION
-    # =========================
-
-    send_whatsapp_confirmation(
-        phone,
-        f"""
-✅ Booking Confirmed
-
-Service: {service}
-
-Date: {appointment_date}
-
-Time: {appointment_time}
-
-Thank you for choosing FlowAI.
-"""
-    )
-
-    # =========================
-    # LIVE DASHBOARD NOTIFICATION
-    # =========================
-
-    socketio.emit(
-        "new_notification",
-        {
-            "message": f"🔥 New booking from {customer_name}"
-        }
-    )
-
-    return redirect("/appointments")
-
-# ==================================================
-# MPESA CALLBACK
-# ==================================================
-
-@app.route("/callback", methods=["POST"])
-def callback():
-
-    data = request.get_json()
-
-    print(data)
-
-    return jsonify({
-        "ResultCode": 0
-    })
-
-# ==================================================
+# =========================================================
 # WHATSAPP AI
-# ==================================================
+# =========================================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming = request.values.get("Body", "").lower()
+    incoming = request.values.get("Body", "")
+    phone = request.values.get("From", "")
 
+    clean_phone = phone.replace("whatsapp:+", "")
+
+    ai_reply = get_ai_reply(incoming)
+
+    msg = VoiceResponse()
     response = MessagingResponse()
 
-    if "hello" in incoming or "hi" in incoming:
+    response.message(ai_reply)
 
-        response.message(
-            "👋 Welcome to FlowAI.\nHow can I help you today?"
-        )
+    return Response(
+        str(response),
+        mimetype="application/xml"
+    )
 
-    elif "book" in incoming:
-
-        response.message(
-            "📅 Please send:\nService\nDate\nTime"
-        )
-
-    elif "price" in incoming:
-
-        response.message(
-            "💰 Basic KES 500\nPro KES 1000\nPremium KES 2000"
-        )
-
-    else:
-
-        response.message(
-            "🤖 FlowAI received your message."
-        )
-
-    return str(response)
-
-# ==================================================
-# VOICE AI
-# ==================================================
+# =========================================================
+# TWILIO VOICE AI
+# =========================================================
 
 @app.route("/voice", methods=["POST"])
 def voice():
@@ -632,7 +621,7 @@ def voice():
     )
 
     gather.say(
-        "Hello. Welcome to Flow AI. What service would you like to book?"
+        "Hello. Welcome to Flow AI. How can I help you today?"
     )
 
     response.append(gather)
@@ -647,46 +636,40 @@ def process_speech():
 
     response = VoiceResponse()
 
-    ai_reply = f"""
-You said {speech}.
-
-Please provide your preferred date and time.
-"""
+    ai_reply = get_ai_reply(speech)
 
     response.say(ai_reply)
 
-    # SAVE CALL LOG
-
-    log = CallLog(
-        business_id=1,
-        caller=request.form.get("From"),
-        transcript=speech,
-        ai_response=ai_reply
-    )
-
-    db.session.add(log)
-    db.session.commit()
-
     return str(response)
 
-# ==================================================
-# SOCKET EVENTS
-# ==================================================
+# =========================================================
+# MPESA CALLBACK
+# =========================================================
 
-@socketio.on("connect")
-def connected():
-    print("Client connected")
+@app.route("/callback", methods=["POST"])
+def callback():
 
-# ==================================================
-# INIT DATABASE
-# ==================================================
+    print(request.json)
+
+    return jsonify({
+        "ResultCode": 0,
+        "ResultDesc": "Accepted"
+    })
+
+# =========================================================
+# DATABASE INIT
+# =========================================================
 
 with app.app_context():
+
     db.create_all()
 
-# ==================================================
+    print("✅ Database ready")
+
+# =========================================================
 # RUN
-# ==================================================
+# =========================================================
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+
+    app.run(debug=True)
