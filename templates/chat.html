@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Chat</h2>
+
+<input id="msg">
+<button onclick="send()">Send</button>
+
+<div id="chat"></div>
+
+<script>
+async function send(){
+    let msg = document.getElementById("msg").value
+
+    let res = await fetch("/chat_api",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            message:msg,
+            client:"demo"
+        })
+    })
+
+    let data = await res.json()
+
+    document.getElementById("chat").innerHTML += "<p>"+data.reply+"</p>"
+}
+</script>
+
+</body>
+</html>
