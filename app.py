@@ -10,9 +10,10 @@ from flask import (
 
 from flask_sqlalchemy import SQLAlchemy
 from twilio.twiml.voice_response import VoiceResponse, Gather
+from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client as TwilioClient
 
-from datetime import datetime, time
+from datetime import datetime
 import requests
 import os
 import base64
@@ -31,7 +32,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # =========================================================
-# TWILIO
+# TWILIO CONFIG
 # =========================================================
 
 twilio_client = TwilioClient(
@@ -46,6 +47,7 @@ TWILIO_WHATSAPP = "whatsapp:+14155238886"
 # =========================================================
 
 class Business(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_name = db.Column(db.String(200))
@@ -63,6 +65,7 @@ class Business(db.Model):
 
 
 class Service(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(
@@ -71,13 +74,16 @@ class Service(db.Model):
     )
 
     name = db.Column(db.String(200))
+
     price = db.Column(db.Integer)
+
     duration = db.Column(db.Integer)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Customer(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(
@@ -86,12 +92,14 @@ class Customer(db.Model):
     )
 
     name = db.Column(db.String(200))
+
     phone = db.Column(db.String(50))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Appointment(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(
@@ -110,6 +118,7 @@ class Appointment(db.Model):
     )
 
     appointment_date = db.Column(db.String(100))
+
     appointment_time = db.Column(db.String(100))
 
     status = db.Column(db.String(50), default="Booked")
@@ -118,6 +127,7 @@ class Appointment(db.Model):
 
 
 class Payment(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(
@@ -142,6 +152,7 @@ class Payment(db.Model):
 
 
 class CallLog(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
     business_id = db.Column(
@@ -162,28 +173,20 @@ class CallLog(db.Model):
 # =========================================================
 
 def logged_in():
+
     return "business_id" in session
 
 
 def current_business():
+
     return Business.query.get(session["business_id"])
 
 
-def send_whatsapp(phone, message):
+# =========================================================
+# AI REPLY
+# =========================================================
 
-    try:
-
-        twilio_client.messages.create(
-            from_=TWILIO_WHATSAPP,
-            body=message,
-            to=f"whatsapp:+{phone}"
-        )
-
-    except Exception as e:
-        print("WHATSAPP ERROR:", e)
-
-
-def get_ai_reply(text):
+def get_ai_reply(message):
 
     try:
 
@@ -205,17 +208,17 @@ def get_ai_reply(text):
 
                         You are a friendly Kenyan AI receptionist.
 
-                        You help customers:
+                        Help customers:
                         - book appointments
-                        - ask business questions
-                        - confirm services
+                        - ask questions
                         - talk naturally
+                        - collect booking details
                         """
                     },
 
                     {
                         "role": "user",
-                        "content": text
+                        "content": message
                     }
                 ]
             }
@@ -236,12 +239,12 @@ def get_ai_reply(text):
 # DOUBLE BOOKING PREVENTION
 # =========================================================
 
-def slot_available(business_id, date, appointment_time):
+def slot_available(business_id, date, booking_time):
 
     existing = Appointment.query.filter_by(
         business_id=business_id,
         appointment_date=date,
-        appointment_time=appointment_time
+        appointment_time=booking_time
     ).first()
 
     return existing is None
@@ -251,29 +254,49 @@ def slot_available(business_id, date, appointment_time):
 # WORKING HOURS CHECK
 # =========================================================
 
-def within_working_hours(business, appointment_time):
+def within_working_hours(business, booking_time):
 
     try:
 
-        open_time = datetime.strptime(
+        opening = datetime.strptime(
             business.opening_time,
             "%H:%M"
         ).time()
 
-        close_time = datetime.strptime(
+        closing = datetime.strptime(
             business.closing_time,
             "%H:%M"
         ).time()
 
-        check_time = datetime.strptime(
-            appointment_time,
+        requested = datetime.strptime(
+            booking_time,
             "%H:%M"
         ).time()
 
-        return open_time <= check_time <= close_time
+        return opening <= requested <= closing
 
     except:
+
         return False
+
+
+# =========================================================
+# SEND WHATSAPP CONFIRMATION
+# =========================================================
+
+def send_whatsapp(phone, message):
+
+    try:
+
+        twilio_client.messages.create(
+            from_=TWILIO_WHATSAPP,
+            body=message,
+            to=f"whatsapp:+{phone}"
+        )
+
+    except Exception as e:
+
+        print("WHATSAPP ERROR:", e)
 
 
 # =========================================================
@@ -286,6 +309,7 @@ def get_access_token():
 
     response = requests.get(
         url,
+
         auth=(
             os.getenv("MPESA_CONSUMER_KEY"),
             os.getenv("MPESA_CONSUMER_SECRET")
@@ -308,27 +332,40 @@ def stk_push(phone, amount):
         (shortcode + passkey + timestamp).encode()
     ).decode()
 
+    payload = {
+
+        "BusinessShortCode": shortcode,
+
+        "Password": password,
+
+        "Timestamp": timestamp,
+
+        "TransactionType": "CustomerPayBillOnline",
+
+        "Amount": amount,
+
+        "PartyA": phone,
+
+        "PartyB": shortcode,
+
+        "PhoneNumber": phone,
+
+        "CallBackURL": os.getenv("CALLBACK_URL"),
+
+        "AccountReference": "FlowAI",
+
+        "TransactionDesc": "Appointment Payment"
+    }
+
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
 
-    payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": amount,
-        "PartyA": phone,
-        "PartyB": shortcode,
-        "PhoneNumber": phone,
-        "CallBackURL": os.getenv("CALLBACK_URL"),
-        "AccountReference": "FlowAI",
-        "TransactionDesc": "Appointment Payment"
-    }
-
     requests.post(
         "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+
         json=payload,
+
         headers=headers
     )
 
@@ -338,6 +375,7 @@ def stk_push(phone, amount):
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
 
 # =========================================================
@@ -350,13 +388,18 @@ def signup():
     if request.method == "POST":
 
         business = Business(
+
             business_name=request.form.get("business_name"),
+
             email=request.form.get("email"),
+
             phone=request.form.get("phone"),
+
             password=request.form.get("password")
         )
 
         db.session.add(business)
+
         db.session.commit()
 
         return redirect("/login")
@@ -373,8 +416,11 @@ def login():
     if request.method == "POST":
 
         business = Business.query.filter_by(
+
             email=request.form.get("email"),
+
             password=request.form.get("password")
+
         ).first()
 
         if business:
@@ -404,6 +450,7 @@ def logout():
 def dashboard():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -425,17 +472,18 @@ def dashboard():
     ])
 
     return render_template(
+
         "dashboard.html",
 
         business=business,
 
-        appointments=appointments,
+        revenue=revenue,
 
-        payments=payments,
+        appointments=appointments,
 
         customers=customers,
 
-        revenue=revenue
+        payments=payments
     )
 
 # =========================================================
@@ -446,6 +494,7 @@ def dashboard():
 def services():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -464,18 +513,24 @@ def services():
 def add_service():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
 
     service = Service(
+
         business_id=business.id,
+
         name=request.form.get("name"),
+
         price=request.form.get("price"),
+
         duration=request.form.get("duration")
     )
 
     db.session.add(service)
+
     db.session.commit()
 
     return redirect("/services")
@@ -488,6 +543,7 @@ def add_service():
 def appointments():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -509,6 +565,7 @@ def appointments():
 def customers():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -530,6 +587,7 @@ def customers():
 def payments():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -551,6 +609,7 @@ def payments():
 def call_logs():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -572,6 +631,7 @@ def call_logs():
 def settings():
 
     if not logged_in():
+
         return redirect("/login")
 
     business = current_business()
@@ -582,20 +642,20 @@ def settings():
     )
 
 # =========================================================
-# WHATSAPP AI
+# WHATSAPP WEBHOOK
 # =========================================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
     incoming = request.values.get("Body", "")
+
     phone = request.values.get("From", "")
 
     clean_phone = phone.replace("whatsapp:+", "")
 
     ai_reply = get_ai_reply(incoming)
 
-    msg = VoiceResponse()
     response = MessagingResponse()
 
     response.message(ai_reply)
@@ -615,8 +675,11 @@ def voice():
     response = VoiceResponse()
 
     gather = Gather(
+
         input="speech",
+
         action="/process-speech",
+
         method="POST"
     )
 
@@ -632,11 +695,11 @@ def voice():
 @app.route("/process-speech", methods=["POST"])
 def process_speech():
 
-    speech = request.form.get("SpeechResult")
-
-    response = VoiceResponse()
+    speech = request.form.get("SpeechResult", "")
 
     ai_reply = get_ai_reply(speech)
+
+    response = VoiceResponse()
 
     response.say(ai_reply)
 
@@ -652,19 +715,24 @@ def callback():
     print(request.json)
 
     return jsonify({
+
         "ResultCode": 0,
+
         "ResultDesc": "Accepted"
     })
 
 # =========================================================
-# DATABASE INIT
+# DATABASE RESET (TEMPORARY)
 # =========================================================
 
 with app.app_context():
 
+    # TEMP RESET
+    db.drop_all()
+
     db.create_all()
 
-    print("✅ Database ready")
+    print("✅ DATABASE RESET SUCCESS")
 
 # =========================================================
 # RUN
