@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Services — FlowAI</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gray-100 pb-24">
+
+<!-- TOP BAR -->
+<div class="sticky top-0 bg-white shadow-sm z-40 px-5 py-4 flex justify-between items-center">
+
+    <div>
+
+        <h1 class="text-2xl font-bold">
+            Services
+        </h1>
+
+        <p class="text-gray-500 text-sm">
+            Manage business services
+        </p>
+
+    </div>
+
+    <a href="/dashboard"
+       class="bg-black text-white px-4 py-2 rounded-xl">
+        Dashboard
+    </a>
+
+</div>
+
+<!-- MAIN -->
+<div class="p-5">
+
+    <!-- ADD SERVICE -->
+    <div class="bg-white rounded-3xl shadow-lg p-6 mb-6">
+
+        <h2 class="text-xl font-bold mb-4">
+            Add New Service
+        </h2>
+
+        <form action="/services/create"
+              method="POST"
+              class="space-y-4">
+
+            <!-- NAME -->
+            <div>
+
+                <label class="block mb-2 text-sm font-semibold">
+                    Service Name
+                </label>
+
+                <input type="text"
+                       name="name"
+                       placeholder="Haircut"
+                       required
+                       class="w-full border rounded-2xl px-4 py-3">
+
+            </div>
+
+            <!-- PRICE -->
+            <div>
+
+                <label class="block mb-2 text-sm font-semibold">
+                    Price (KES)
+                </label>
+
+                <input type="number"
+                       name="price"
+                       placeholder="1000"
+                       required
+                       class="w-full border rounded-2xl px-4 py-3">
+
+            </div>
+
+            <!-- DURATION -->
+            <div>
+
+                <label class="block mb-2 text-sm font-semibold">
+                    Duration (minutes)
+                </label>
+
+                <input type="number"
+                       name="duration"
+                       placeholder="60"
+                       required
+                       class="w-full border rounded-2xl px-4 py-3">
+
+            </div>
+
+            <!-- BUTTON -->
+            <button type="submit"
+                    class="w-full bg-black text-white py-3 rounded-2xl font-semibold">
+
+                Add Service
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- SERVICES LIST -->
+    <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
+
+        <div class="p-5 border-b">
+
+            <h2 class="text-xl font-bold">
+                Business Services
+            </h2>
+
+        </div>
+
+        {% if services %}
+
+        <div class="divide-y">
+
+            {% for service in services %}
+
+            <div class="p-5 flex justify-between items-center">
+
+                <div>
+
+                    <h3 class="font-bold text-lg">
+                        {{ service.name }}
+                    </h3>
+
+                    <p class="text-gray-500 text-sm mt-1">
+
+                        KES {{ service.price }}
+                        •
+                        {{ service.duration }} mins
+
+                    </p>
+
+                </div>
+
+                <!-- STATUS -->
+                {% if service.active %}
+
+                <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">
+                    Active
+                </span>
+
+                {% else %}
+
+                <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm">
+                    Inactive
+                </span>
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="p-6 text-gray-500">
+
+            No services added yet
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- MOBILE NAV -->
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl flex justify-around py-3">
+
+    <a href="/dashboard"
+       class="flex flex-col items-center text-gray-500">
+
+        <span class="text-xl">📊</span>
+
+        <span class="text-xs">
+            Dashboard
+        </span>
+
+    </a>
+
+    <a href="/payments"
+       class="flex flex-col items-center text-gray-500">
+
+        <span class="text-xl">💰</span>
+
+        <span class="text-xs">
+            Payments
+        </span>
+
+    </a>
+
+    <a href="/customers"
+       class="flex flex-col items-center text-gray-500">
+
+        <span class="text-xl">👥</span>
+
+        <span class="text-xs">
+            Customers
+        </span>
+
+    </a>
+
+    <a href="/services"
+       class="flex flex-col items-center text-black">
+
+        <span class="text-xl">✂️</span>
+
+        <span class="text-xs font-semibold">
+            Services
+        </span>
+
+    </a>
+
+    <a href="/settings"
+       class="flex flex-col items-center text-gray-500">
+
+        <span class="text-xl">⚙️</span>
+
+        <span class="text-xs">
+            Settings
+        </span>
+
+    </a>
+
+</div>
+
+</body>
+</html>
