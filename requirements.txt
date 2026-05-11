@@ -6,3 +6,5 @@ requests
 twilio
 gunicorn
 apscheduler
+flask-socketio
+eventlet
