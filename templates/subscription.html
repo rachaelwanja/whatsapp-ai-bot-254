@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Subscription — FlowAI</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gray-100 pb-24">
+
+<!-- HEADER -->
+<div class="sticky top-0 bg-white shadow-sm px-5 py-4 flex justify-between items-center">
+
+    <div>
+
+        <h1 class="text-2xl font-bold">
+            Subscription
+        </h1>
+
+        <p class="text-gray-500 text-sm">
+            Manage your plan
+        </p>
+
+    </div>
+
+    <a href="/dashboard"
+       class="bg-black text-white px-4 py-2 rounded-xl">
+        Dashboard
+    </a>
+
+</div>
+
+<!-- MAIN -->
+<div class="p-5">
+
+    <!-- CURRENT PLAN -->
+    <div class="bg-white rounded-3xl shadow-lg p-6 mb-6">
+
+        <p class="text-gray-500 text-sm">
+            Current Plan
+        </p>
+
+        <h2 class="text-3xl font-bold mt-2">
+            Pro Plan
+        </h2>
+
+        <p class="text-gray-500 mt-2">
+            Active until:
+            {{ client.expiry }}
+        </p>
+
+    </div>
+
+    <!-- PLANS -->
+    <div class="grid gap-5">
+
+        <!-- STARTER -->
+        <div class="bg-white rounded-3xl shadow-lg p-6">
+
+            <h3 class="text-2xl font-bold">
+                Starter
+            </h3>
+
+            <p class="text-gray-500 mt-2">
+                KES 1,500/month
+            </p>
+
+            <ul class="mt-4 space-y-2 text-gray-700">
+
+                <li>✔ AI Calls</li>
+                <li>✔ Dashboard</li>
+                <li>✔ Bookings</li>
+
+            </ul>
+
+        </div>
+
+        <!-- PRO -->
+        <div class="bg-black text-white rounded-3xl shadow-lg p-6">
+
+            <h3 class="text-2xl font-bold">
+                Pro
+            </h3>
+
+            <p class="text-gray-300 mt-2">
+                KES 3,000/month
+            </p>
+
+            <ul class="mt-4 space-y-2">
+
+                <li>✔ Everything in Starter</li>
+                <li>✔ MPESA automation</li>
+                <li>✔ Analytics</li>
+                <li>✔ Live notifications</li>
+
+            </ul>
+
+        </div>
+
+        <!-- PREMIUM -->
+        <div class="bg-white rounded-3xl shadow-lg p-6">
+
+            <h3 class="text-2xl font-bold">
+                Premium
+            </h3>
+
+            <p class="text-gray-500 mt-2">
+                KES 5,000/month
+            </p>
+
+            <ul class="mt-4 space-y-2 text-gray-700">
+
+                <li>✔ Everything in Pro</li>
+                <li>✔ WhatsApp automation</li>
+                <li>✔ AI memory</li>
+                <li>✔ Smart scheduling</li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
