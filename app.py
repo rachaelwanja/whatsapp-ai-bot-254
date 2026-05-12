@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 from datetime import datetime
 import os
 import requests
@@ -16,9 +17,17 @@ app.secret_key = os.environ.get(
     "flowai-secret"
 )
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL"
-)
+database_url = os.environ.get("DATABASE_URL")
+
+# Render sometimes gives postgres://
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -76,7 +85,6 @@ class Business(db.Model):
         default=datetime.utcnow
     )
 
-
 # ====================================
 # HOME
 # ====================================
@@ -87,7 +95,6 @@ def home():
     return render_template(
         "index.html"
     )
-
 
 # ====================================
 # SIGNUP
@@ -162,7 +169,6 @@ def signup():
         "signup.html"
     )
 
-
 # ====================================
 # LOGIN
 # ====================================
@@ -211,7 +217,6 @@ def login():
         "login.html"
     )
 
-
 # ====================================
 # DASHBOARD
 # ====================================
@@ -229,11 +234,18 @@ def dashboard():
         session["business_id"]
     )
 
+    if not business:
+
+        session.clear()
+
+        return redirect(
+            "/login"
+        )
+
     return render_template(
         "dashboard.html",
         business=business
     )
-
 
 # ====================================
 # LOGOUT
@@ -248,7 +260,6 @@ def logout():
         "/login"
     )
 
-
 # ====================================
 # RESET DATABASE
 # ====================================
@@ -259,11 +270,11 @@ def reset_database():
     try:
 
         db.session.execute(
-            db.text("DROP SCHEMA public CASCADE")
+            text("DROP SCHEMA public CASCADE")
         )
 
         db.session.execute(
-            db.text("CREATE SCHEMA public")
+            text("CREATE SCHEMA public")
         )
 
         db.session.commit()
@@ -277,7 +288,6 @@ def reset_database():
         db.session.rollback()
 
         return f"ERROR: {str(e)}"
-
 
 # ====================================
 # ELEVENLABS TEST
@@ -293,6 +303,10 @@ def voice_test():
     voice_id = os.environ.get(
         "ELEVENLABS_VOICE_ID"
     )
+
+    if not api_key or not voice_id:
+
+        return "Missing ElevenLabs environment variables"
 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -328,8 +342,9 @@ def voice_test():
 
     <p>Status Code: {response.status_code}</p>
 
-    """
+    <pre>{response.text}</pre>
 
+    """
 
 # ====================================
 # CREATE TABLES
@@ -339,11 +354,14 @@ with app.app_context():
 
     db.create_all()
 
-
 # ====================================
 # RUN APP
 # ====================================
 
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
