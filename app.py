@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import text
 from datetime import datetime
 import os
 import requests
@@ -17,24 +16,16 @@ app.secret_key = os.environ.get(
     "flowai-secret"
 )
 
-database_url = os.environ.get("DATABASE_URL")
-
-# Render sometimes gives postgres://
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace(
-        "postgres://",
-        "postgresql://",
-        1
-    )
-
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL"
+)
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
 # ====================================
-# DATABASE MODEL
+# BUSINESS MODEL
 # ====================================
 
 class Business(db.Model):
@@ -85,6 +76,48 @@ class Business(db.Model):
         default=datetime.utcnow
     )
 
+
+# ====================================
+# APPOINTMENT MODEL
+# ====================================
+
+class Appointment(db.Model):
+
+    __tablename__ = "appointment"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id")
+    )
+
+    customer_name = db.Column(
+        db.String(200),
+        nullable=False
+    )
+
+    customer_phone = db.Column(
+        db.String(100)
+    )
+
+    service = db.Column(
+        db.String(200)
+    )
+
+    appointment_time = db.Column(
+        db.String(100)
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+
 # ====================================
 # HOME
 # ====================================
@@ -95,6 +128,7 @@ def home():
     return render_template(
         "index.html"
     )
+
 
 # ====================================
 # SIGNUP
@@ -120,6 +154,16 @@ def signup():
         business_phone = request.form.get(
             "business_phone"
         )
+
+        if not username or not password:
+
+            flash(
+                "Username and password required"
+            )
+
+            return redirect(
+                "/signup"
+            )
 
         existing_user = Business.query.filter_by(
             username=username
@@ -169,6 +213,7 @@ def signup():
         "signup.html"
     )
 
+
 # ====================================
 # LOGIN
 # ====================================
@@ -217,6 +262,7 @@ def login():
         "login.html"
     )
 
+
 # ====================================
 # DASHBOARD
 # ====================================
@@ -242,10 +288,96 @@ def dashboard():
             "/login"
         )
 
-    return render_template(
-        "dashboard.html",
-        business=business
+    appointments = Appointment.query.filter_by(
+        business_id=business.id
+    ).order_by(
+        Appointment.created_at.desc()
+    ).all()
+
+    appointments_count = len(
+        appointments
     )
+
+    revenue = appointments_count * 1500
+
+    services = [
+
+        "Haircut",
+        "Beard Trim",
+        "Facial"
+
+    ]
+
+    return render_template(
+
+        "dashboard.html",
+
+        business=business,
+
+        revenue=revenue,
+
+        appointments_count=appointments_count,
+
+        services=services,
+
+        appointments=appointments
+
+    )
+
+
+# ====================================
+# CREATE APPOINTMENT
+# ====================================
+
+@app.route("/create-appointment", methods=["POST"])
+def create_appointment():
+
+    if "business_id" not in session:
+
+        return redirect(
+            "/login"
+        )
+
+    customer_name = request.form.get(
+        "customer_name"
+    )
+
+    customer_phone = request.form.get(
+        "customer_phone"
+    )
+
+    service = request.form.get(
+        "service"
+    )
+
+    appointment_time = request.form.get(
+        "appointment_time"
+    )
+
+    appointment = Appointment(
+
+        business_id=session["business_id"],
+
+        customer_name=customer_name,
+
+        customer_phone=customer_phone,
+
+        service=service,
+
+        appointment_time=appointment_time
+
+    )
+
+    db.session.add(
+        appointment
+    )
+
+    db.session.commit()
+
+    return redirect(
+        "/dashboard"
+    )
+
 
 # ====================================
 # LOGOUT
@@ -260,6 +392,7 @@ def logout():
         "/login"
     )
 
+
 # ====================================
 # RESET DATABASE
 # ====================================
@@ -270,11 +403,11 @@ def reset_database():
     try:
 
         db.session.execute(
-            text("DROP SCHEMA public CASCADE")
+            db.text("DROP SCHEMA public CASCADE")
         )
 
         db.session.execute(
-            text("CREATE SCHEMA public")
+            db.text("CREATE SCHEMA public")
         )
 
         db.session.commit()
@@ -288,6 +421,7 @@ def reset_database():
         db.session.rollback()
 
         return f"ERROR: {str(e)}"
+
 
 # ====================================
 # ELEVENLABS TEST
@@ -303,10 +437,6 @@ def voice_test():
     voice_id = os.environ.get(
         "ELEVENLABS_VOICE_ID"
     )
-
-    if not api_key or not voice_id:
-
-        return "Missing ElevenLabs environment variables"
 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -342,9 +472,8 @@ def voice_test():
 
     <p>Status Code: {response.status_code}</p>
 
-    <pre>{response.text}</pre>
-
     """
+
 
 # ====================================
 # CREATE TABLES
@@ -354,14 +483,11 @@ with app.app_context():
 
     db.create_all()
 
+
 # ====================================
 # RUN APP
 # ====================================
 
 if __name__ == "__main__":
 
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
+    app.run(debug=True)
