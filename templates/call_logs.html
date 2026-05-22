@@ -1,84 +1,388 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Appointments — FlowAI</title>
+
+    <title>Call Logs — FlowAI</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
-<body class="bg-gray-100 pb-24">
+<body class="bg-gray-100 min-h-screen pb-24">
 
-<div class="p-5">
+<div class="flex">
 
-    <div class="mb-6">
+    <!-- SIDEBAR -->
 
-        <h1 class="text-3xl font-bold">
-            Appointments
+    <div class="w-64 bg-white shadow-xl min-h-screen p-6 hidden md:block">
+
+        <h1 class="text-2xl font-bold mb-10">
+
+            FlowAI
+
         </h1>
 
-        <p class="text-gray-500">
-            Manage bookings
-        </p>
+        <nav class="space-y-4">
+
+            <a href="/dashboard"
+               class="block text-gray-600 hover:text-black">
+
+                Dashboard
+
+            </a>
+
+            <a href="/appointments"
+               class="block text-gray-600 hover:text-black">
+
+                Appointments
+
+            </a>
+
+            <a href="/customers"
+               class="block text-gray-600 hover:text-black">
+
+                Customers
+
+            </a>
+
+            <a href="/call-logs"
+               class="block font-bold text-blue-600">
+
+                Call Logs
+
+            </a>
+
+            <a href="/logout"
+               class="block text-red-500 mt-10">
+
+                Logout
+
+            </a>
+
+        </nav>
 
     </div>
 
-    <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
+    <!-- MAIN CONTENT -->
 
-        {% if appointments %}
+    <div class="flex-1 p-5 md:p-10">
 
-        <div class="divide-y">
+        <!-- HEADER -->
 
-            {% for a in appointments %}
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
 
-            <div class="p-5">
+            <div>
 
-                <div class="flex justify-between items-start">
+                <h1 class="text-3xl font-bold">
 
-                    <div>
+                    Call Logs
 
-                        <h2 class="font-bold text-lg">
-                            {{ a.service }}
-                        </h2>
+                </h1>
 
-                        <p class="text-gray-500 mt-1">
-                            {{ a.phone }}
-                        </p>
+                <p class="text-gray-500 mt-2">
 
-                        <p class="text-sm mt-2">
-                            📅 {{ a.date }}
-                        </p>
+                    AI receptionist call history
 
-                        <p class="text-sm">
-                            ⏰ {{ a.time }}
-                        </p>
-
-                    </div>
-
-                    <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">
-                        Confirmed
-                    </span>
-
-                </div>
+                </p>
 
             </div>
 
-            {% endfor %}
+            <input
+                id="search"
+                type="text"
+                placeholder="Search calls..."
+                class="mt-4 md:mt-0 border border-gray-300 rounded-xl px-4 py-3 w-full md:w-80"
+            >
 
         </div>
 
-        {% else %}
+        <!-- STATS -->
 
-        <div class="p-6 text-gray-500">
-            No appointments yet
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+            <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+                <p class="text-gray-500">
+
+                    Total Calls
+
+                </p>
+
+                <h2 class="text-4xl font-bold mt-2">
+
+                    {{ call_logs|length }}
+
+                </h2>
+
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+                <p class="text-gray-500">
+
+                    Successful Bookings
+
+                </p>
+
+                <h2 class="text-4xl font-bold mt-2 text-green-600">
+
+                    {{ successful_calls }}
+
+                </h2>
+
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+                <p class="text-gray-500">
+
+                    Missed Calls
+
+                </p>
+
+                <h2 class="text-4xl font-bold mt-2 text-red-500">
+
+                    {{ missed_calls }}
+
+                </h2>
+
+            </div>
+
         </div>
 
-        {% endif %}
+        <!-- CALL LOGS -->
+
+        <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
+
+            {% if call_logs %}
+
+            <div class="divide-y" id="callContainer">
+
+                {% for log in call_logs %}
+
+                <div class="p-6 call-row">
+
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+
+                        <!-- LEFT -->
+
+                        <div>
+
+                            <div class="flex items-center gap-3">
+
+                                <h2 class="font-bold text-xl">
+
+                                    {{ log.phone }}
+
+                                </h2>
+
+                                {% if log.status == "Booked" %}
+
+                                <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">
+
+                                    Booked
+
+                                </span>
+
+                                {% elif log.status == "Missed" %}
+
+                                <span class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-sm">
+
+                                    Missed
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-sm">
+
+                                    Pending
+
+                                </span>
+
+                                {% endif %}
+
+                            </div>
+
+                            <p class="text-gray-500 mt-2">
+
+                                ⏱ Duration:
+                                {{ log.duration }}
+
+                            </p>
+
+                            <p class="text-gray-500">
+
+                                📅 {{ log.date }}
+
+                            </p>
+
+                            <p class="text-gray-500">
+
+                                🤖 AI Summary:
+                                {{ log.summary }}
+                            </p>
+
+                        </div>
+
+                        <!-- RIGHT -->
+
+                        <div class="flex flex-wrap gap-3">
+
+                            {% if log.recording_url %}
+
+                            <a href="{{ log.recording_url }}"
+                               target="_blank"
+                               class="bg-black text-white px-4 py-2 rounded-xl">
+
+                                Play Recording
+
+                            </a>
+
+                            {% endif %}
+
+                            {% if log.transcript %}
+
+                            <button
+                                onclick="openTranscript(`{{ log.transcript }}`)"
+                                class="bg-blue-500 text-white px-4 py-2 rounded-xl"
+                            >
+
+                                View Transcript
+
+                            </button>
+
+                            {% endif %}
+
+                            <a href="https://wa.me/{{ log.phone }}"
+                               target="_blank"
+                               class="bg-green-500 text-white px-4 py-2 rounded-xl">
+
+                                WhatsApp
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% else %}
+
+            <div class="p-10 text-center text-gray-500">
+
+                No call logs yet
+
+            </div>
+
+            {% endif %}
+
+        </div>
 
     </div>
 
 </div>
 
+<!-- TRANSCRIPT MODAL -->
+
+<div id="transcriptModal"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-5">
+
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full">
+
+        <div class="flex justify-between items-center mb-4">
+
+            <h2 class="text-2xl font-bold">
+
+                Call Transcript
+
+            </h2>
+
+            <button onclick="closeTranscript()"
+                    class="text-red-500 text-xl">
+
+                ✕
+
+            </button>
+
+        </div>
+
+        <div id="transcriptText"
+             class="text-gray-700 whitespace-pre-wrap">
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- JAVASCRIPT -->
+
+<script>
+
+function openTranscript(text) {
+
+    document.getElementById(
+        "transcriptModal"
+    ).classList.remove(
+        "hidden"
+    )
+
+    document.getElementById(
+        "transcriptModal"
+    ).classList.add(
+        "flex"
+    )
+
+    document.getElementById(
+        "transcriptText"
+    ).innerText = text
+}
+
+function closeTranscript() {
+
+    document.getElementById(
+        "transcriptModal"
+    ).classList.add(
+        "hidden"
+    )
+}
+
+document.getElementById(
+    "search"
+).addEventListener(
+    "keyup",
+    function() {
+
+        let value = this.value.toLowerCase()
+
+        let rows = document.querySelectorAll(
+            ".call-row"
+        )
+
+        rows.forEach(row => {
+
+            row.style.display = row.innerText
+                .toLowerCase()
+                .includes(value)
+                ? ""
+                : "none"
+
+        })
+
+    }
+)
+
+</script>
+
 </body>
+
 </html>
