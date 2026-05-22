@@ -2,14 +2,15 @@ from flask import Flask, render_template, request, redirect, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from twilio.twiml.voice_response import VoiceResponse
 import os
 import requests
 
 app = Flask(__name__)
 
-# ====================================
+# =========================================
 # CONFIG
-# ====================================
+# =========================================
 
 app.secret_key = os.environ.get(
     "SECRET_KEY",
@@ -24,13 +25,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ====================================
-# BUSINESS MODEL
-# ====================================
+# =========================================
+# DATABASE MODELS
+# =========================================
 
 class Business(db.Model):
-
-    __tablename__ = "business"
 
     id = db.Column(
         db.Integer,
@@ -56,34 +55,13 @@ class Business(db.Model):
         db.String(100)
     )
 
-    plan = db.Column(
-        db.String(50),
-        default="free"
-    )
-
-    opening_time = db.Column(
-        db.String(50),
-        default="08:00"
-    )
-
-    closing_time = db.Column(
-        db.String(50),
-        default="17:00"
-    )
-
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow
     )
 
 
-# ====================================
-# APPOINTMENT MODEL
-# ====================================
-
-class Appointment(db.Model):
-
-    __tablename__ = "appointment"
+class Service(db.Model):
 
     id = db.Column(
         db.Integer,
@@ -91,13 +69,35 @@ class Appointment(db.Model):
     )
 
     business_id = db.Column(
+        db.Integer
+    )
+
+    name = db.Column(
+        db.String(200)
+    )
+
+    price = db.Column(
+        db.Integer
+    )
+
+    duration = db.Column(
+        db.Integer
+    )
+
+
+class Appointment(db.Model):
+
+    id = db.Column(
         db.Integer,
-        db.ForeignKey("business.id")
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer
     )
 
     customer_name = db.Column(
-        db.String(200),
-        nullable=False
+        db.String(200)
     )
 
     customer_phone = db.Column(
@@ -108,8 +108,18 @@ class Appointment(db.Model):
         db.String(200)
     )
 
+    amount = db.Column(
+        db.Integer,
+        default=0
+    )
+
     appointment_time = db.Column(
         db.String(100)
+    )
+
+    status = db.Column(
+        db.String(50),
+        default="confirmed"
     )
 
     created_at = db.Column(
@@ -117,10 +127,9 @@ class Appointment(db.Model):
         default=datetime.utcnow
     )
 
-
-# ====================================
+# =========================================
 # HOME
-# ====================================
+# =========================================
 
 @app.route("/")
 def home():
@@ -129,10 +138,9 @@ def home():
         "index.html"
     )
 
-
-# ====================================
+# =========================================
 # SIGNUP
-# ====================================
+# =========================================
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -154,16 +162,6 @@ def signup():
         business_phone = request.form.get(
             "business_phone"
         )
-
-        if not username or not password:
-
-            flash(
-                "Username and password required"
-            )
-
-            return redirect(
-                "/signup"
-            )
 
         existing_user = Business.query.filter_by(
             username=username
@@ -213,10 +211,9 @@ def signup():
         "signup.html"
     )
 
-
-# ====================================
+# =========================================
 # LOGIN
-# ====================================
+# =========================================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -235,23 +232,19 @@ def login():
             username=username
         ).first()
 
-        if business:
+        if business and check_password_hash(
+            business.password,
+            password
+        ):
 
-            password_correct = check_password_hash(
-                business.password,
-                password
+            session["business_id"] = business.id
+
+            return redirect(
+                "/dashboard"
             )
 
-            if password_correct:
-
-                session["business_id"] = business.id
-
-                return redirect(
-                    "/dashboard"
-                )
-
         flash(
-            "Invalid username or password"
+            "Invalid credentials"
         )
 
         return redirect(
@@ -262,10 +255,9 @@ def login():
         "login.html"
     )
 
-
-# ====================================
+# =========================================
 # DASHBOARD
-# ====================================
+# =========================================
 
 @app.route("/dashboard")
 def dashboard():
@@ -276,37 +268,23 @@ def dashboard():
             "/login"
         )
 
+    business_id = session["business_id"]
+
     business = Business.query.get(
-        session["business_id"]
+        business_id
     )
-
-    if not business:
-
-        session.clear()
-
-        return redirect(
-            "/login"
-        )
 
     appointments = Appointment.query.filter_by(
-        business_id=business.id
-    ).order_by(
-        Appointment.created_at.desc()
+        business_id=business_id
     ).all()
 
-    appointments_count = len(
-        appointments
+    services = Service.query.filter_by(
+        business_id=business_id
+    ).all()
+
+    total_revenue = sum(
+        a.amount for a in appointments
     )
-
-    revenue = appointments_count * 1500
-
-    services = [
-
-        "Haircut",
-        "Beard Trim",
-        "Facial"
-
-    ]
 
     return render_template(
 
@@ -314,55 +292,89 @@ def dashboard():
 
         business=business,
 
-        revenue=revenue,
-
-        appointments_count=appointments_count,
+        appointments=appointments,
 
         services=services,
 
-        appointments=appointments
+        revenue=total_revenue
 
     )
 
+# =========================================
+# ADD SERVICE
+# =========================================
 
-# ====================================
-# CREATE APPOINTMENT
-# ====================================
+@app.route("/add-service", methods=["POST"])
+def add_service():
 
-@app.route("/create-appointment", methods=["POST"])
-def create_appointment():
+    service = Service(
 
-    if "business_id" not in session:
+        business_id=session["business_id"],
 
-        return redirect(
-            "/login"
-        )
+        name=request.form.get("name"),
 
-    customer_name = request.form.get(
-        "customer_name"
+        price=request.form.get("price"),
+
+        duration=request.form.get("duration")
+
     )
 
-    customer_phone = request.form.get(
-        "customer_phone"
-    )
+    db.session.add(service)
 
-    service = request.form.get(
-        "service"
-    )
+    db.session.commit()
+
+    return redirect("/dashboard")
+
+# =========================================
+# ADD APPOINTMENT
+# =========================================
+
+@app.route("/add-appointment", methods=["POST"])
+def add_appointment():
+
+    business_id = session["business_id"]
 
     appointment_time = request.form.get(
         "appointment_time"
     )
 
+    existing = Appointment.query.filter_by(
+
+        business_id=business_id,
+
+        appointment_time=appointment_time
+
+    ).first()
+
+    if existing:
+
+        flash(
+            "Time slot already booked"
+        )
+
+        return redirect(
+            "/dashboard"
+        )
+
     appointment = Appointment(
 
-        business_id=session["business_id"],
+        business_id=business_id,
 
-        customer_name=customer_name,
+        customer_name=request.form.get(
+            "customer_name"
+        ),
 
-        customer_phone=customer_phone,
+        customer_phone=request.form.get(
+            "customer_phone"
+        ),
 
-        service=service,
+        service=request.form.get(
+            "service"
+        ),
+
+        amount=int(
+            request.form.get("amount")
+        ),
 
         appointment_time=appointment_time
 
@@ -378,10 +390,53 @@ def create_appointment():
         "/dashboard"
     )
 
+# =========================================
+# CUSTOMERS PAGE
+# =========================================
 
-# ====================================
+@app.route("/customers")
+def customers():
+
+    if "business_id" not in session:
+
+        return redirect(
+            "/login"
+        )
+
+    customers = Appointment.query.filter_by(
+        business_id=session["business_id"]
+    ).all()
+
+    return render_template(
+
+        "customers.html",
+
+        customers=customers
+
+    )
+
+# =========================================
+# AI VOICE RECEPTIONIST
+# =========================================
+
+@app.route("/voice", methods=["POST"])
+def voice():
+
+    response = VoiceResponse()
+
+    response.say(
+
+        "Hello. Welcome to Flow AI receptionist. How can I help you today?",
+
+        voice="alice"
+
+    )
+
+    return str(response)
+
+# =========================================
 # LOGOUT
-# ====================================
+# =========================================
 
 @app.route("/logout")
 def logout():
@@ -392,10 +447,9 @@ def logout():
         "/login"
     )
 
-
-# ====================================
+# =========================================
 # RESET DATABASE
-# ====================================
+# =========================================
 
 @app.route("/reset-database")
 def reset_database():
@@ -403,90 +457,40 @@ def reset_database():
     try:
 
         db.session.execute(
-            db.text("DROP SCHEMA public CASCADE")
+            db.text(
+                "DROP SCHEMA public CASCADE"
+            )
         )
 
         db.session.execute(
-            db.text("CREATE SCHEMA public")
+            db.text(
+                "CREATE SCHEMA public"
+            )
         )
 
         db.session.commit()
 
         db.create_all()
 
-        return "✅ DATABASE RESET SUCCESSFUL"
+        return "DATABASE RESET SUCCESSFUL"
 
     except Exception as e:
 
         db.session.rollback()
 
-        return f"ERROR: {str(e)}"
+        return str(e)
 
-
-# ====================================
-# ELEVENLABS TEST
-# ====================================
-
-@app.route("/voice-test")
-def voice_test():
-
-    api_key = os.environ.get(
-        "ELEVENLABS_API_KEY"
-    )
-
-    voice_id = os.environ.get(
-        "ELEVENLABS_VOICE_ID"
-    )
-
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-
-    headers = {
-
-        "xi-api-key": api_key,
-
-        "Content-Type": "application/json"
-
-    }
-
-    data = {
-
-        "text": "Habari. Karibu FlowAI. Ninaweza kusaidia biashara yako.",
-
-        "model_id": "eleven_multilingual_v2"
-
-    }
-
-    response = requests.post(
-
-        url,
-
-        json=data,
-
-        headers=headers
-
-    )
-
-    return f"""
-
-    <h2>Voice Test</h2>
-
-    <p>Status Code: {response.status_code}</p>
-
-    """
-
-
-# ====================================
+# =========================================
 # CREATE TABLES
-# ====================================
+# =========================================
 
 with app.app_context():
 
     db.create_all()
 
-
-# ====================================
+# =========================================
 # RUN APP
-# ====================================
+# =========================================
 
 if __name__ == "__main__":
 
