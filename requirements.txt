@@ -6,3 +6,4 @@ requests
 twilio
 gunicorn
 werkzeug
+elevenlabs
