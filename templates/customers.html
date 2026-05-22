@@ -12,30 +12,56 @@
     <!-- SIDEBAR -->
     <div class="w-64 bg-white h-screen shadow p-6">
 
-        <h1 class="text-xl font-bold mb-8">FlowAI</h1>
+        <h1 class="text-xl font-bold mb-8">
+            FlowAI
+        </h1>
 
-        <a href="/dashboard" class="block mb-4 text-gray-700 hover:text-black">Dashboard</a>
-        <a href="/payments" class="block mb-4 text-gray-700 hover:text-black">Payments</a>
-        <a href="/customers" class="block mb-4 font-bold text-blue-600">Customers</a>
-        <a href="/settings" class="block mb-4 text-gray-700 hover:text-black">Settings</a>
+        <a href="/dashboard"
+           class="block mb-4 text-gray-700">
+            Dashboard
+        </a>
 
-        <a href="/logout" class="block mt-10 text-red-500">Logout</a>
+        <a href="/customers"
+           class="block mb-4 font-bold text-blue-600">
+            Customers
+        </a>
+
+        <a href="/logout"
+           class="block mt-10 text-red-500">
+            Logout
+        </a>
 
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <div class="flex-1 p-8">
 
-        <!-- HEADER -->
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">Customers</h2>
+        <div class="bg-white rounded shadow p-5 mb-6">
 
-            <input id="search"
-                   placeholder="Search customers..."
-                   class="border p-2 rounded w-64">
+            <h3 class="text-gray-500">
+                Total Customers
+            </h3>
+
+            <p class="text-3xl font-bold">
+                {{ customers|length }}
+            </p>
+
         </div>
 
-        <!-- TABLE -->
+        <div class="flex justify-between mb-6">
+
+            <h2 class="text-2xl font-bold">
+                Customers
+            </h2>
+
+            <input
+                id="search"
+                placeholder="Search customers..."
+                class="border p-2 rounded w-64"
+            >
+
+        </div>
+
         <div class="bg-white rounded shadow overflow-hidden">
 
             {% if customers %}
@@ -43,21 +69,91 @@
             <table class="w-full text-left">
 
                 <thead class="bg-gray-50">
+
                     <tr>
-                        <th class="p-3">Phone</th>
-                        <th class="p-3">Service</th>
-                        <th class="p-3">Date</th>
+
+                        <th class="p-3">
+                            Customer
+                        </th>
+
+                        <th class="p-3">
+                            Phone
+                        </th>
+
+                        <th class="p-3">
+                            Service
+                        </th>
+
+                        <th class="p-3">
+                            Status
+                        </th>
+
+                        <th class="p-3">
+                            Date
+                        </th>
+
+                        <th class="p-3">
+                            Actions
+                        </th>
+
                     </tr>
+
                 </thead>
 
                 <tbody id="tableBody">
 
                     {% for c in customers %}
+
                     <tr class="border-t">
-                        <td class="p-3">{{ c.phone }}</td>
-                        <td class="p-3">{{ c.service if c.service else "—" }}</td>
-                        <td class="p-3 text-gray-500">{{ c.date }}</td>
+
+                        <td class="p-3 font-medium">
+                            {{ c.customer_name }}
+                        </td>
+
+                        <td class="p-3">
+                            {{ c.customer_phone }}
+                        </td>
+
+                        <td class="p-3">
+                            {{ c.service }}
+                        </td>
+
+                        <td class="p-3">
+
+                            {% if c.status == "confirmed" %}
+
+                            <span class="text-green-600 font-semibold">
+                                Confirmed
+                            </span>
+
+                            {% else %}
+
+                            <span class="text-yellow-600 font-semibold">
+                                Pending
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td class="p-3 text-gray-500">
+                            {{ c.appointment_time }}
+                        </td>
+
+                        <td class="p-3">
+
+                            <a
+                                href="https://wa.me/{{ c.customer_phone }}"
+                                target="_blank"
+                                class="bg-green-500 text-white px-3 py-1 rounded"
+                            >
+                                WhatsApp
+                            </a>
+
+                        </td>
+
                     </tr>
+
                     {% endfor %}
 
                 </tbody>
@@ -78,16 +174,33 @@
 
 </div>
 
-<!-- SEARCH SCRIPT -->
 <script>
-document.getElementById("search").addEventListener("keyup", function() {
-    let value = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#tableBody tr");
 
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
-    });
-});
+document.getElementById(
+    "search"
+).addEventListener(
+    "keyup",
+    function() {
+
+        let value = this.value.toLowerCase()
+
+        let rows = document.querySelectorAll(
+            "#tableBody tr"
+        )
+
+        rows.forEach(row => {
+
+            row.style.display = row.innerText
+                .toLowerCase()
+                .includes(value)
+                ? ""
+                : "none"
+
+        })
+
+    }
+)
+
 </script>
 
 </body>
