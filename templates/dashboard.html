@@ -1,204 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-    <title>FlowAI Dashboard</title>
-
-    <style>
-
-        body {
-
-            font-family: Arial;
-
-            background: #f4f4f4;
-
-            padding: 30px;
-
-        }
-
-        .header {
-
-            background: black;
-
-            color: white;
-
-            padding: 30px;
-
-            border-radius: 20px;
-
-            margin-bottom: 30px;
-
-        }
-
-        .stats-grid {
-
-            display: grid;
-
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
-            gap: 20px;
-
-            margin-bottom: 30px;
-
-        }
-
-        .stat-card {
-
-            background: white;
-
-            padding: 25px;
-
-            border-radius: 20px;
-
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-
-        }
-
-        .analytics-card {
-
-            background: white;
-
-            padding: 25px;
-
-            border-radius: 20px;
-
-            margin-bottom: 20px;
-
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-
-        }
-
-        .revenue-row {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            padding: 12px 0;
-
-            border-bottom: 1px solid #eee;
-
-        }
-
-        .card {
-
-            background: white;
-
-            padding: 25px;
-
-            border-radius: 20px;
-
-            margin-bottom: 20px;
-
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-
-        }
-
-        input, button {
-
-            width: 100%;
-
-            padding: 12px;
-
-            margin-top: 10px;
-
-            border-radius: 10px;
-
-            border: 1px solid #ddd;
-
-        }
-
-        button {
-
-            background: black;
-
-            color: white;
-
-            cursor: pointer;
-
-        }
-
-    </style>
-
+    <title>Dashboard — FlowAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-100">
 
-    <div class="header">
+<div class="p-8">
 
-        <h1>AI Flow receptionist</h1>
+    <div class="bg-black text-white rounded-2xl p-6 mb-6">
 
-        <p>AI Receptionist Dashboard</p>
+        <h1 class="text-4xl font-bold">
+            AI Flow Receptionist
+        </h1>
 
-    </div>
-
-    <div class="stats-grid">
-
-        <div class="stat-card">
-
-            <h3>Total Revenue</h3>
-
-            <h1>KES {{ total_revenue }}</h1>
-
-        </div>
-
-        <div class="stat-card">
-
-            <h3>Today's Revenue</h3>
-
-            <h1>KES {{ today_revenue }}</h1>
-
-        </div>
-
-        <div class="stat-card">
-
-            <h3>Monthly Revenue</h3>
-
-            <h1>KES {{ monthly_revenue }}</h1>
-
-        </div>
-
-        <div class="stat-card">
-
-            <h3>Appointments</h3>
-
-            <h1>{{ completed_appointments }}</h1>
-
-        </div>
+        <p class="text-gray-300 mt-2">
+            AI Receptionist Dashboard
+        </p>
 
     </div>
 
-    <div class="analytics-card">
+    <div class="grid grid-cols-3 gap-6 mb-6">
 
-        <h2>Top Performing Service</h2>
+        <div class="bg-white rounded-2xl p-6 shadow">
 
-        <h1>{{ top_service }}</h1>
+            <h3 class="text-gray-500">
+                Revenue
+            </h3>
 
-        <p>KES {{ top_service_amount }}</p>
+            <p class="text-3xl font-bold">
+                KES {{ revenue }}
+            </p>
+
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow">
+
+            <h3 class="text-gray-500">
+                Appointments
+            </h3>
+
+            <p class="text-3xl font-bold">
+                {{ appointments|length }}
+            </p>
+
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow">
+
+            <h3 class="text-gray-500">
+                Services
+            </h3>
+
+            <p class="text-3xl font-bold">
+                {{ services|length }}
+            </p>
+
+        </div>
 
     </div>
 
-    <div class="analytics-card">
+    <!-- SERVICES -->
 
-        <h2>Revenue Breakdown</h2>
+    <div class="bg-white rounded-2xl p-6 shadow mb-6">
 
-        {% for service, revenue in service_revenue.items() %}
-
-            <div class="revenue-row">
-
-                <span>{{ service }}</span>
-
-                <strong>KES {{ revenue }}</strong>
-
-            </div>
-
-        {% endfor %}
-
-    </div>
-
-    <div class="card">
-
-        <h2>Add Service</h2>
+        <h2 class="text-2xl font-bold mb-4">
+            Add Service
+        </h2>
 
         <form action="/add-service" method="POST">
 
@@ -206,36 +75,38 @@
                 type="text"
                 name="name"
                 placeholder="Service Name"
-                required
+                class="border p-2 rounded w-full mb-3"
             >
 
             <input
                 type="number"
                 name="price"
                 placeholder="Price"
-                required
+                class="border p-2 rounded w-full mb-3"
             >
 
             <input
                 type="number"
                 name="duration"
-                placeholder="Duration in minutes"
-                required
+                placeholder="Duration"
+                class="border p-2 rounded w-full mb-3"
             >
 
-            <button type="submit">
-
-                Add Service
-
+            <button class="bg-black text-white px-5 py-2 rounded">
+                Save Service
             </button>
 
         </form>
 
     </div>
 
-    <div class="card">
+    <!-- APPOINTMENTS -->
 
-        <h2>Book Appointment</h2>
+    <div class="bg-white rounded-2xl p-6 shadow">
+
+        <h2 class="text-2xl font-bold mb-4">
+            Book Appointment
+        </h2>
 
         <form action="/add-appointment" method="POST">
 
@@ -243,94 +114,45 @@
                 type="text"
                 name="customer_name"
                 placeholder="Customer Name"
-                required
+                class="border p-2 rounded w-full mb-3"
             >
 
             <input
                 type="text"
                 name="customer_phone"
-                placeholder="2547XXXXXXXX"
-                required
+                placeholder="Phone Number"
+                class="border p-2 rounded w-full mb-3"
             >
 
             <input
                 type="text"
-                name="service_name"
-                placeholder="Service Name"
-                required
+                name="service"
+                placeholder="Service"
+                class="border p-2 rounded w-full mb-3"
+            >
+
+            <input
+                type="number"
+                name="amount"
+                placeholder="Amount"
+                class="border p-2 rounded w-full mb-3"
             >
 
             <input
                 type="datetime-local"
                 name="appointment_time"
-                required
+                class="border p-2 rounded w-full mb-3"
             >
 
-            <button type="submit">
-
+            <button class="bg-black text-white px-5 py-2 rounded">
                 Book Appointment
-
             </button>
 
         </form>
 
     </div>
 
-    <div class="card">
-
-        <h2>Services</h2>
-
-        {% for service in services %}
-
-            <div class="revenue-row">
-
-                <span>
-
-                    {{ service.name }}
-
-                </span>
-
-                <strong>
-
-                    KES {{ service.price }}
-
-                </strong>
-
-            </div>
-
-        {% endfor %}
-
-    </div>
-
-    <div class="card">
-
-        <h2>Recent Bookings</h2>
-
-        {% for appointment in appointments %}
-
-            <div class="revenue-row">
-
-                <span>
-
-                    {{ appointment.customer_name }}
-
-                    -
-
-                    {{ appointment.service_name }}
-
-                </span>
-
-                <strong>
-
-                    {{ appointment.appointment_time }}
-
-                </strong>
-
-            </div>
-
-        {% endfor %}
-
-    </div>
+</div>
 
 </body>
 </html>
