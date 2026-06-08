@@ -418,11 +418,7 @@ def customers():
 # =========================================
 # AI VOICE RECEPTIONIST
 # =========================================
-=========================================
 
-WHATSAPP BOT
-
-=========================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
@@ -462,6 +458,13 @@ twiml = f"""
 <Message>{reply}</Message>
 </Response>
 """return Response(
+    twiml = f"""
+<Response>
+<Message>{reply}</Message>
+</Response>
+"""
+
+return Response(
     twiml,
     mimetype="text/xml"
 )
