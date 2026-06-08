@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, Response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -418,7 +418,53 @@ def customers():
 # =========================================
 # AI VOICE RECEPTIONIST
 # =========================================
+=========================================
 
+WHATSAPP BOT
+
+=========================================
+
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
+
+incoming_msg = request.form.get(
+    "Body",
+    ""
+).lower()
+
+if "hi" in incoming_msg or "hello" in incoming_msg:
+
+    reply = (
+        "Hello 👋 Welcome to FlowAI Receptionist."
+    )
+
+elif "pay" in incoming_msg:
+
+    reply = (
+        "Payment feature coming soon."
+    )
+
+elif "appointment" in incoming_msg:
+
+    reply = (
+        "Please visit your dashboard to book an appointment."
+    )
+
+else:
+
+    reply = (
+        "You said: " + incoming_msg
+    )
+
+twiml = f"""
+
+<Response>
+<Message>{reply}</Message>
+</Response>
+"""return Response(
+    twiml,
+    mimetype="text/xml"
+)
 @app.route("/voice", methods=["POST"])
 def voice():
 
