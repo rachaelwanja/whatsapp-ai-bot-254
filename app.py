@@ -425,14 +425,33 @@ def whatsapp():
 
 incoming_msg = request.form.get(
     "Body",
-    ""
-).lower()
+   @app.route("/whatsapp", methods=["POST"])
+def whatsapp():
 
-if "hi" in incoming_msg or "hello" in incoming_msg:
+    incoming_msg = request.form.get(
+        "Body",
+        ""
+    ).lower()
 
-    reply = (
-        "Hello 👋 Welcome to FlowAI Receptionist."
-    )
+    if "hi" in incoming_msg:
+
+        reply = "Hello 👋 Welcome to FlowAI Receptionist."
+
+    else:
+
+        reply = "You said: " + incoming_msg
+
+    twiml = f"""
+<Response>
+<Message>{reply}</Message>
+</Response>
+"""
+
+    return Response(
+        twiml,
+        mimetype="text/xml"
+    ) ""
+
 
 elif "pay" in incoming_msg:
 
