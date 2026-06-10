@@ -61,9 +61,9 @@ def get_access_token():
 
     data = response.json()
 
-return data.get(
-    "access_token"
-)
+    return data.get(
+        "access_token"
+    )
 
 def generate_password():
 
