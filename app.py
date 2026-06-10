@@ -474,7 +474,6 @@ def customers():
 # =========================================
 # WHATSAPP BOT
 # =========================================
-
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
@@ -483,13 +482,20 @@ def whatsapp():
         ""
     ).lower()
 
-    if "hi" in incoming_msg or "hello" in incoming_msg:
+    if "pay" in incoming_msg:
+
+        access_token = get_access_token()
+
+        reply = (
+            "M-Pesa payment request initiated."
+            if access_token
+            else
+            "Failed to connect to M-Pesa."
+        )
+
+    elif "hi" in incoming_msg or "hello" in incoming_msg:
 
         reply = "Hello 👋 Welcome to FlowAI Receptionist."
-
-    elif "pay" in incoming_msg:
-
-        reply = "Payment feature coming soon."
 
     elif "appointment" in incoming_msg:
 
@@ -509,8 +515,6 @@ def whatsapp():
         twiml,
         mimetype="text/xml"
     )
-
-    return str(response)
 
 # =========================================
 # LOGOUT
