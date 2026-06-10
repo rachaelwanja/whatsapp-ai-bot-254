@@ -61,9 +61,26 @@ def get_access_token():
 
     data = response.json()
 
-    return data.get(
-        "access_token"
+return data.get(
+    "access_token"
+)
+
+def generate_password():
+
+    timestamp = datetime.now().strftime(
+        "%Y%m%d%H%M%S"
     )
+
+    password = base64.b64encode(
+        (
+            SHORTCODE +
+            PASSKEY +
+            timestamp
+        ).encode()
+    ).decode()
+
+    return password, timestamp
+
 # =========================================
 # DATABASE MODELS
 # =========================================
