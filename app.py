@@ -24,7 +24,46 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+# =========================================
+# MPESA CONFIG
+# =========================================
 
+CONSUMER_KEY = os.getenv(
+    "MPESA_CONSUMER_KEY"
+)
+
+CONSUMER_SECRET = os.getenv(
+    "MPESA_CONSUMER_SECRET"
+)
+
+SHORTCODE = os.getenv(
+    "MPESA_SHORTCODE"
+)
+
+PASSKEY = os.getenv(
+    "MPESA_PASSKEY"
+)
+
+CALLBACK_URL = os.getenv(
+    "CALLBACK_URL"
+)
+def get_access_token():
+
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+
+    response = requests.get(
+        url,
+        auth=(
+            CONSUMER_KEY,
+            CONSUMER_SECRET
+        )
+    )
+
+    data = response.json()
+
+    return data.get(
+        "access_token"
+    )
 # =========================================
 # DATABASE MODELS
 # =========================================
