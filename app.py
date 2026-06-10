@@ -72,7 +72,7 @@ def get_access_token():
         print("JSON ERROR:", e)
         print("RAW RESPONSE:", response.text)
         return None
-    )
+    
 
 def generate_password():
 
