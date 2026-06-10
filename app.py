@@ -416,16 +416,10 @@ def customers():
     )
 
 # =========================================
-# AI VOICE RECEPTIONIST
+# WHATSAPP BOT
 # =========================================
 
-
 @app.route("/whatsapp", methods=["POST"])
-def whatsapp():
-
-incoming_msg = request.form.get(
-    "Body",
-   @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
     incoming_msg = request.form.get(
@@ -433,9 +427,17 @@ def whatsapp():
         ""
     ).lower()
 
-    if "hi" in incoming_msg:
+    if "hi" in incoming_msg or "hello" in incoming_msg:
 
         reply = "Hello 👋 Welcome to FlowAI Receptionist."
+
+    elif "pay" in incoming_msg:
+
+        reply = "Payment feature coming soon."
+
+    elif "appointment" in incoming_msg:
+
+        reply = "Please visit your dashboard to book an appointment."
 
     else:
 
@@ -450,54 +452,6 @@ def whatsapp():
     return Response(
         twiml,
         mimetype="text/xml"
-    ) ""
-
-
-elif "pay" in incoming_msg:
-
-    reply = (
-        "Payment feature coming soon."
-    )
-
-elif "appointment" in incoming_msg:
-
-    reply = (
-        "Please visit your dashboard to book an appointment."
-    )
-
-else:
-
-    reply = (
-        "You said: " + incoming_msg
-    )
-
-twiml = f"""
-
-<Response>
-<Message>{reply}</Message>
-</Response>
-"""return Response(
-    twiml = f"""
-<Response>
-<Message>{reply}</Message>
-</Response>
-"""
-
-return Response(
-    twiml,
-    mimetype="text/xml"
-)
-@app.route("/voice", methods=["POST"])
-def voice():
-
-    response = VoiceResponse()
-
-    response.say(
-
-        "Hello. Welcome to Flow AI receptionist. How can I help you today?",
-
-        voice="alice"
-
     )
 
     return str(response)
