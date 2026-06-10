@@ -59,10 +59,19 @@ def get_access_token():
         )
     )
 
-    data = response.json()
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
-    return data.get(
-        "access_token"
+    if response.status_code != 200:
+        return None
+
+    try:
+        data = response.json()
+        return data.get("access_token")
+    except Exception as e:
+        print("JSON ERROR:", e)
+        print("RAW RESPONSE:", response.text)
+        return None
     )
 
 def generate_password():
