@@ -90,41 +90,49 @@ def generate_password():
 
     return password, timestamp
 
+
+def stk_push(phone, amount):
+
+    access_token = get_access_token()
+
+    password, timestamp = generate_password()
+
+    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "BusinessShortCode": SHORTCODE,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": amount,
+        "PartyA": phone,
+        "PartyB": SHORTCODE,
+        "PhoneNumber": phone,
+        "CallBackURL": CALLBACK_URL,
+        "AccountReference": "FlowAI",
+        "TransactionDesc": "Payment"
+    }
+
+    response = requests.post(
+        url,
+        json=payload,
+        headers=headers
+    )
+
+    print("STK STATUS:", response.status_code)
+    print("STK RESPONSE:", response.text)
+
+    return response.json()
+
+
 # =========================================
 # DATABASE MODELS
 # =========================================
-
-class Business(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    username = db.Column(
-        db.String(200),
-        unique=True,
-        nullable=False
-    )
-
-    password = db.Column(
-        db.String(500),
-        nullable=False
-    )
-
-    business_name = db.Column(
-        db.String(200)
-    )
-
-    business_phone = db.Column(
-        db.String(100)
-    )
-
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
-
 
 class Service(db.Model):
 
@@ -491,16 +499,26 @@ def whatsapp():
         ""
     ).lower()
 
-    if "pay" in incoming_msg:
+    if incoming_msg.startswith("pay"):
 
-        access_token = get_access_token()
+    parts = incoming_msg.split()
 
-        reply = (
-            "M-Pesa payment request initiated."
-            if access_token
-            else
-            "Failed to connect to M-Pesa."
-        )
+    if len(parts) == 2:
+
+        amount = int(parts[1])
+
+        phone = "254115126566"
+
+try:
+    result = stk_push(phone, amount)
+    reply = "STK Push sent. Check your phone."
+except Exception as e:
+    print("STK ERROR:", e)
+    reply = "Payment failed."
+
+    else:
+
+        reply = "Use format: pay 100"
 
     elif "hi" in incoming_msg or "hello" in incoming_msg:
 
