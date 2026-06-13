@@ -499,64 +499,55 @@ def whatsapp():
         ""
     ).lower()
 
- if incoming_msg.startswith("pay"):
+    if incoming_msg.startswith("pay"):
 
-    parts = incoming_msg.split()
+        parts = incoming_msg.split()
 
-    if len(parts) == 2:
+        if len(parts) == 2:
 
-        amount = int(parts[1])
+            amount = int(parts[1])
 
-        if amount < 1:
+            if amount < 1:
+                reply = "Minimum amount is KES 1."
 
-            reply = "Minimum amount is KES 1."
+            else:
+                phone = "254115126566"
+
+                try:
+                    result = stk_push(phone, amount)
+                    print("STK RESULT:", result)
+
+                    reply = f"STK Push for KES {amount} sent. Check your phone."
+
+                except Exception as e:
+                    print("STK ERROR:", e)
+                    reply = "Payment failed."
 
         else:
+            reply = "Use format: pay 100"
 
-            phone = "254115126566"
+    elif "hi" in incoming_msg or "hello" in incoming_msg:
 
-            try:
+        reply = "Hello 👋 Welcome to FlowAI Receptionist."
 
-                result = stk_push(phone, amount)
+    elif "appointment" in incoming_msg:
 
-                print("STK RESULT:", result)
-
-                reply = f"STK Push for KES {amount} sent. Check your phone."
-
-            except Exception as e:
-
-                print("STK ERROR:", e)
-
-                reply = "Payment failed."
+        reply = "Please visit your dashboard to book an appointment."
 
     else:
 
-        reply = "Use format: pay 100"
+        reply = "You said: " + incoming_msg
 
-elif "hi" in incoming_msg or "hello" in incoming_msg:
-
-    reply = "Hello 👋 Welcome to FlowAI Receptionist."
-
-elif "appointment" in incoming_msg:
-
-    reply = "Please visit your dashboard to book an appointment."
-
-else:
-
-    reply = "You said: " + incoming_msg
-
-    reply = "You said: " + incoming_msg
-
-twiml = f"""
+    twiml = f"""
 <Response>
 <Message>{reply}</Message>
 </Response>
 """
 
-return Response(
-    twiml,
-    mimetype="text/xml"
-)
+    return Response(
+        twiml,
+        mimetype="text/xml"
+    )
 
 # =========================================
 # LOGOUT
