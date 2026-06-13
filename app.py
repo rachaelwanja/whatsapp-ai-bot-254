@@ -133,7 +133,34 @@ def stk_push(phone, amount):
 # =========================================
 # DATABASE MODELS
 # =========================================
+class Business(db.Model):
 
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    username = db.Column(
+        db.String(100),
+        unique=True
+    )
+
+    password = db.Column(
+        db.String(200)
+    )
+
+    business_name = db.Column(
+        db.String(200)
+    )
+
+    business_phone = db.Column(
+        db.String(50)
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 class Service(db.Model):
 
     id = db.Column(
