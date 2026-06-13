@@ -501,24 +501,29 @@ def whatsapp():
 
     if incoming_msg.startswith("pay"):
 
-    parts = incoming_msg.split()
+        parts = incoming_msg.split()
 
-    if len(parts) == 2:
+        if len(parts) == 2:
 
-        amount = int(parts[1])
+            amount = int(parts[1])
 
-        phone = "254115126566"
+            phone = "254115126566"
 
-try:
-    result = stk_push(phone, amount)
-    reply = "STK Push sent. Check your phone."
-except Exception as e:
-    print("STK ERROR:", e)
-    reply = "Payment failed."
+            try:
 
-    else:
+                result = stk_push(phone, amount)
 
-        reply = "Use format: pay 100"
+                reply = "STK Push sent. Check your phone."
+
+            except Exception as e:
+
+                print("STK ERROR:", e)
+
+                reply = "Payment failed."
+
+        else:
+
+            reply = "Use format: pay 100"
 
     elif "hi" in incoming_msg or "hello" in incoming_msg:
 
