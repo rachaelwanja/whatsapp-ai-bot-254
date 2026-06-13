@@ -499,7 +499,7 @@ def whatsapp():
         ""
     ).lower()
 
-    if incoming_msg.startswith("pay"):
+ if incoming_msg.startswith("pay"):
 
     parts = incoming_msg.split()
 
@@ -542,6 +542,8 @@ elif "appointment" in incoming_msg:
     reply = "Please visit your dashboard to book an appointment."
 
 else:
+
+    reply = "You said: " + incoming_msg
 
     reply = "You said: " + incoming_msg
 
