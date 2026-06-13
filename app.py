@@ -502,16 +502,42 @@ def customers():
     ).all()
 
     return render_template(
+    "customers.html",
+    customers=customers
+)
 
-        "customers.html",
+# =========================================
+# PAYMENTS PAGE
+# =========================================
 
-        customers=customers
+@app.route("/payments")
+def payments():
 
-    )
+    payments = Payment.query.order_by(
+        Payment.id.desc()
+    ).all()
+
+    output = ""
+
+    for payment in payments:
+
+        output += f"""
+        <p>
+        Receipt: {payment.receipt}<br>
+        Phone: {payment.phone}<br>
+        Amount: KES {payment.amount}<br>
+        Date: {payment.transaction_date}
+        </p>
+        <hr>
+        """
+
+    return output
+
 
 # =========================================
 # WHATSAPP BOT
 # =========================================
+
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
