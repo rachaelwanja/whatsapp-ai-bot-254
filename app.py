@@ -493,61 +493,28 @@ def customers():
 # =========================================
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
-
-    incoming_msg = request.form.get(
-        "Body",
-        ""
-    ).lower()
-
-    if incoming_msg.startswith("pay"):
-
-        parts = incoming_msg.split()
-
-        if len(parts) == 2:
-
-            amount = int(parts[1])
-
-            if amount < 1:
-                reply = "Minimum amount is KES 1."
-
-            else:
-                phone = "254115126566"
-
-                try:
-                    result = stk_push(phone, amount)
-                    print("STK RESULT:", result)
-
-                    reply = f"STK Push for KES {amount} sent. Check your phone."
-
-                except Exception as e:
-                    print("STK ERROR:", e)
-                    reply = "Payment failed."
-
-        else:
-            reply = "Use format: pay 100"
-
-    elif "hi" in incoming_msg or "hello" in incoming_msg:
-
-        reply = "Hello 👋 Welcome to FlowAI Receptionist."
-
-    elif "appointment" in incoming_msg:
-
-        reply = "Please visit your dashboard to book an appointment."
-
-    else:
-
-        reply = "You said: " + incoming_msg
-
-    twiml = f"""
-<Response>
-<Message>{reply}</Message>
-</Response>
-"""
-
+    
     return Response(
         twiml,
         mimetype="text/xml"
     )
+
+
+# =========================================
+# MPESA CALLBACK
+# =========================================
+
+@app.route("/mpesa-callback", methods=["POST"])
+def mpesa_callback():
+    data = request.json
+
+    print("MPESA CALLBACK:", data)
+
+    return {
+        "ResultCode": 0,
+        "ResultDesc": "Accepted"
+    }
+
 
 # =========================================
 # LOGOUT
@@ -555,6 +522,7 @@ def whatsapp():
 
 @app.route("/logout")
 def logout():
+    
 
     session.clear()
 
