@@ -352,7 +352,8 @@ def login():
         business = Business.query.filter_by(
             username=username
         ).first()
-
+print("USERNAME:", username)
+print("BUSINESS:", business)
         if business and check_password_hash(
             business.password,
             password
