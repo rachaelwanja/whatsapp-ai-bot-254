@@ -581,12 +581,40 @@ def whatsapp():
 # =========================================
 # MPESA CALLBACK
 # =========================================
-
 @app.route("/mpesa-callback", methods=["POST"])
 def mpesa_callback():
+
     data = request.json
 
     print("MPESA CALLBACK:", data)
+
+    try:
+
+        callback = data["Body"]["stkCallback"]
+
+        items = callback["CallbackMetadata"]["Item"]
+
+        values = {}
+
+        for item in items:
+
+            values[item["Name"]] = item.get("Value")
+
+        payment = Payment(
+            phone=str(values.get("PhoneNumber")),
+            amount=float(values.get("Amount")),
+            receipt=str(values.get("MpesaReceiptNumber")),
+            transaction_date=str(values.get("TransactionDate"))
+        )
+
+        db.session.add(payment)
+        db.session.commit()
+
+        print("PAYMENT SAVED")
+
+    except Exception as e:
+
+        print("SAVE ERROR:", e)
 
     return {
         "ResultCode": 0,
