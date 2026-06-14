@@ -577,67 +577,162 @@ def payments():
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.form.get(
-        "Body",
-        ""
-    ).lower()
+incoming_msg = request.form.get(
+    "Body",
+    ""
+).lower().strip()
 
-    if incoming_msg.startswith("pay"):
+# MAIN MENU
 
-        parts = incoming_msg.split()
+if incoming_msg in [
+    "hi",
+    "hello",
+    "hey",
+    "start",
+    "menu"
+]:
 
-        if len(parts) == 2:
+    reply = """
 
-            amount = int(parts[1])
+👋 Welcome to FlowAI Receptionist
 
-            if amount < 1:
+Choose an option:
 
-                reply = "Minimum amount is KES 1."
+1️⃣ Book Appointment
+2️⃣ Prices
+3️⃣ Location
+4️⃣ Opening Hours
 
-            else:
+💳 To make payment:
+pay 100
+"""
 
-                phone = "254115126566"
+# OPTION 1
 
-                try:
+elif incoming_msg == "1":
 
-                    result = stk_push(phone, amount)
+    reply = """
 
-                    print("STK RESULT:", result)
+📅 Appointment Booking
 
-                    reply = f"STK Push for KES {amount} sent. Check your phone."
+Please reply with:
 
-                except Exception as e:
+BOOK YourName
 
-                    print("STK ERROR:", e)
+Example:
+BOOK Rachel
+"""
 
-                    reply = "Payment failed."
+# OPTION 2
+
+elif incoming_msg == "2":
+
+    reply = """
+
+💰 Our Prices
+
+Haircut - KES 500
+Shaving - KES 200
+Beard Trim - KES 300
+"""
+
+# OPTION 3
+
+elif incoming_msg == "3":
+
+    reply = """
+
+📍 Our Location
+
+Kahawa West, Nairobi
+
+Google Maps:
+https://maps.google.com
+"""
+
+# OPTION 4
+
+elif incoming_msg == "4":
+
+    reply = """
+
+🕒 Opening Hours
+
+Monday - Saturday
+8:00 AM - 6:00 PM
+
+Sunday
+Closed
+"""
+
+# PAYMENT
+
+elif incoming_msg.startswith("pay"):
+
+    parts = incoming_msg.split()
+
+    if len(parts) == 2:
+
+        amount = int(parts[1])
+
+        if amount < 1:
+
+            reply = "Minimum amount is KES 1."
 
         else:
 
-            reply = "Use format: pay 100"
+            phone = "254115126566"
 
-    elif "hi" in incoming_msg or "hello" in incoming_msg:
+            try:
 
-        reply = "Hello 👋 Welcome to FlowAI Receptionist."
+                result = stk_push(phone, amount)
 
-    elif "appointment" in incoming_msg:
+                print("STK RESULT:", result)
 
-        reply = "Please visit your dashboard to book an appointment."
+                reply = f"STK Push for KES {amount} sent. Check your phone."
+
+            except Exception as e:
+
+                print("STK ERROR:", e)
+
+                reply = "Payment failed."
 
     else:
 
-        reply = "You said: " + incoming_msg
+        reply = "Use format: pay 100"
 
-    twiml = f"""
+elif incoming_msg.startswith("book"):
+
+    reply = """
+
+✅ Appointment request received.
+
+Our team will contact you shortly.
+"""
+
+else:
+
+    reply = """
+
+I didn't understand that.
+
+Reply:
+
+1 - Appointment
+2 - Prices
+3 - Location
+4 - Opening Hours
+"""
+
+twiml = f'''
+
 <Response>
 <Message>{reply}</Message>
 </Response>
-"""
-
-    return Response(
-        twiml,
-        mimetype="text/xml"
-    )
+'''return Response(
+    twiml,
+    mimetype="text/xml"
+)
 
 
 # =========================================
