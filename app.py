@@ -553,25 +553,20 @@ def customers():
 @app.route("/payments")
 def payments():
 
-    payments = Payment.query.order_by(
-        Payment.id.desc()
-    ).all()
+if "business_id" not in session:
 
-    output = ""
+    return redirect(
+        "/login"
+    )
 
-    for payment in payments:
+payments = Payment.query.order_by(
+    Payment.id.desc()
+).all()
 
-        output += f"""
-        <p>
-        Receipt: {payment.receipt}<br>
-        Phone: {payment.phone}<br>
-        Amount: KES {payment.amount}<br>
-        Date: {payment.transaction_date}
-        </p>
-        <hr>
-        """
-
-    return output
+return render_template(
+    "payments.html",
+    payments=payments
+)
 
 
 # =========================================
