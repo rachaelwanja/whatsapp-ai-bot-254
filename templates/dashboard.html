@@ -1,55 +1,103 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard — FlowAI</title>
+<!DOCTYPE html><html><head>
+    <title>FlowAI Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
+</head><body class="bg-gray-100"><!-- MOBILE NAV --><div class="md:hidden bg-black text-white p-4"><div class="flex justify-between items-center">
 
-<body class="bg-gray-100">
+    <h1 class="font-bold text-xl">
+        FlowAI
+    </h1>
 
-<div class="p-4 md:p-8">
+    <button
+        onclick="toggleMenu()"
+        class="text-2xl"
+    >
+        ☰
+    </button>
+
+</div>
+
+<div
+    id="mobileMenu"
+    class="hidden mt-4"
+>
+
+    <a href="/dashboard" class="block py-2">
+        Dashboard
+    </a>
+
+    <a href="/payments" class="block py-2">
+        Payments
+    </a>
+
+    <a href="/customers" class="block py-2">
+        Customers
+    </a>
+
+    <a href="/logout" class="block py-2 text-red-300">
+        Logout
+    </a>
+
+</div>
+
+</div><div class="flex min-h-screen"><!-- DESKTOP SIDEBAR -->
+
+<div class="w-64 bg-white shadow hidden md:block">
+
+    <div class="p-6 border-b">
+
+        <h1 class="text-2xl font-bold">
+            FlowAI
+        </h1>
+
+    </div>
+
+    <div class="p-4">
+
+        <a href="/dashboard"
+           class="block py-3 px-3 rounded bg-black text-white mb-2">
+           Dashboard
+        </a>
+
+        <a href="/payments"
+           class="block py-3 px-3 rounded hover:bg-gray-100 mb-2">
+           Payments
+        </a>
+
+        <a href="/customers"
+           class="block py-3 px-3 rounded hover:bg-gray-100 mb-2">
+           Customers
+        </a>
+
+        <a href="/logout"
+           class="block py-3 px-3 rounded text-red-600 hover:bg-red-50">
+           Logout
+        </a>
+
+    </div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="flex-1 p-6">
 
     <!-- HEADER -->
 
     <div class="bg-black text-white rounded-2xl p-6 mb-6">
 
-        <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold">
+            AI Flow Receptionist
+        </h1>
 
-            <div>
-
-                <h1 class="text-4xl font-bold">
-                    AI Flow Receptionist
-                </h1>
-
-                <p class="text-gray-300 mt-2">
-                    Welcome {{ business.business_name }}
-                </p>
-
-            </div>
-
-            <div class="flex gap-2">
-
-                <a href="/payments">
-                    <button class="bg-green-500 px-4 py-2 rounded">
-                        Payments
-                    </button>
-                </a>
-
-                <a href="/logout">
-                    <button class="bg-red-500 px-4 py-2 rounded">
-                        Logout
-                    </button>
-                </a>
-
-            </div>
-
-        </div>
+        <p class="text-gray-300 mt-2">
+            Welcome {{ business.business_name }} 👋
+        </p>
 
     </div>
 
     <!-- STATS -->
 
-    <div class="grid md:grid-cols-3 gap-6 mb-6">
+    <div class="grid md:grid-cols-4 gap-4 mb-6">
 
         <div class="bg-white rounded-2xl p-6 shadow">
 
@@ -57,7 +105,7 @@
                 Revenue
             </h3>
 
-            <p class="text-3xl font-bold">
+            <p class="text-3xl font-bold text-green-600">
                 KES {{ revenue }}
             </p>
 
@@ -87,6 +135,36 @@
 
         </div>
 
+        <div class="bg-white rounded-2xl p-6 shadow">
+
+            <h3 class="text-gray-500">
+                Customers
+            </h3>
+
+            <p class="text-3xl font-bold">
+                {{ customer_count }}
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- QUICK ACTIONS -->
+
+    <div class="flex gap-3 mb-6 flex-wrap">
+
+        <a href="/payments">
+            <button class="bg-green-600 text-white px-4 py-2 rounded">
+                View Payments
+            </button>
+        </a>
+
+        <a href="/logout">
+            <button class="bg-red-600 text-white px-4 py-2 rounded">
+                Logout
+            </button>
+        </a>
+
     </div>
 
     <!-- ADD SERVICE -->
@@ -99,30 +177,22 @@
 
         <form action="/add-service" method="POST">
 
-            <input
-                type="text"
-                name="name"
-                placeholder="Service Name"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="text"
+                   name="name"
+                   placeholder="Service Name"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="number"
-                name="price"
-                placeholder="Price"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="number"
+                   name="price"
+                   placeholder="Price"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="number"
-                name="duration"
-                placeholder="Duration (Minutes)"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="number"
+                   name="duration"
+                   placeholder="Duration (Minutes)"
+                   class="border p-3 rounded w-full mb-3">
 
-            <button
-                class="bg-black text-white px-5 py-2 rounded"
-            >
+            <button class="bg-black text-white px-5 py-3 rounded">
                 Save Service
             </button>
 
@@ -140,43 +210,31 @@
 
         <form action="/add-appointment" method="POST">
 
-            <input
-                type="text"
-                name="customer_name"
-                placeholder="Customer Name"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="text"
+                   name="customer_name"
+                   placeholder="Customer Name"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="text"
-                name="customer_phone"
-                placeholder="Phone Number"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="text"
+                   name="customer_phone"
+                   placeholder="Phone Number"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="text"
-                name="service"
-                placeholder="Service"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="text"
+                   name="service"
+                   placeholder="Service"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="number"
-                name="amount"
-                placeholder="Amount"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="number"
+                   name="amount"
+                   placeholder="Amount"
+                   class="border p-3 rounded w-full mb-3">
 
-            <input
-                type="datetime-local"
-                name="appointment_time"
-                class="border p-2 rounded w-full mb-3"
-            >
+            <input type="datetime-local"
+                   name="appointment_time"
+                   class="border p-3 rounded w-full mb-3">
 
-            <button
-                class="bg-black text-white px-5 py-2 rounded"
-            >
+            <button class="bg-black text-white px-5 py-3 rounded">
                 Book Appointment
             </button>
 
@@ -186,7 +244,7 @@
 
     <!-- RECENT APPOINTMENTS -->
 
-    <div class="bg-white rounded-2xl p-6 shadow">
+    <div class="bg-white rounded-2xl p-6 shadow mb-6">
 
         <h2 class="text-2xl font-bold mb-4">
             Recent Appointments
@@ -196,21 +254,39 @@
 
         <div class="border-b py-3">
 
-            <p>
-                <strong>{{ appointment.customer_name }}</strong>
-            </p>
+            <strong>{{ appointment.customer_name }}</strong><br>
 
-            <p>
-                {{ appointment.customer_phone }}
-            </p>
+            {{ appointment.customer_phone }}<br>
 
-            <p>
-                {{ appointment.service }}
-            </p>
+            {{ appointment.service }}<br>
 
-            <p>
-                KES {{ appointment.amount }}
-            </p>
+            KES {{ appointment.amount }}
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <!-- RECENT PAYMENTS -->
+
+    <div class="bg-white rounded-2xl p-6 shadow">
+
+        <h2 class="text-2xl font-bold mb-4">
+            Recent Payments
+        </h2>
+
+        {% for payment in payments %}
+
+        <div class="border-b py-3">
+
+            <strong>{{ payment.receipt }}</strong><br>
+
+            {{ payment.phone }}<br>
+
+            <span class="text-green-600 font-bold">
+                KES {{ payment.amount }}
+            </span>
 
         </div>
 
@@ -220,5 +296,20 @@
 
 </div>
 
-</body>
+</div><script>
+
+function toggleMenu() {
+
+    let menu =
+        document.getElementById(
+            "mobileMenu"
+        );
+
+    menu.classList.toggle(
+        "hidden"
+    );
+
+}
+
+</script></body>
 </html>
