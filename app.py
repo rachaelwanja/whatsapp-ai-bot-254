@@ -387,10 +387,7 @@ def login():
 def dashboard():
 
     if "business_id" not in session:
-
-        return redirect(
-            "/login"
-        )
+        return redirect("/login")
 
     business_id = session["business_id"]
 
@@ -406,22 +403,26 @@ def dashboard():
         business_id=business_id
     ).all()
 
+    payments = Payment.query.order_by(
+        Payment.id.desc()
+    ).limit(5).all()
+
     total_revenue = sum(
         a.amount for a in appointments
     )
 
+    customer_count = len(
+        set(a.customer_phone for a in appointments)
+    )
+
     return render_template(
-
         "dashboard.html",
-
         business=business,
-
         appointments=appointments,
-
         services=services,
-
-        revenue=total_revenue
-
+        payments=payments,
+        revenue=total_revenue,
+        customer_count=customer_count
     )
 
 # =========================================
