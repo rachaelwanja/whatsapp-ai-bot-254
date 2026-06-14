@@ -569,50 +569,43 @@ def payments():
         payments=payments
     )
 
-
-# =========================================
-# WHATSAPP BOT
-# =========================================
-
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-incoming_msg = request.form.get(
-    "Body",
-    ""
-).lower().strip()
+    incoming_msg = request.form.get(
+        "Body",
+        ""
+    ).lower().strip()
 
-# MAIN MENU
+    # MAIN MENU
 
-if incoming_msg in [
-    "hi",
-    "hello",
-    "hey",
-    "start",
-    "menu"
-]:
+    if incoming_msg in [
+        "hi",
+        "hello",
+        "hey",
+        "start",
+        "menu"
+    ]:
 
-    reply = """
-
+        reply = """
 👋 Welcome to FlowAI Receptionist
 
 Choose an option:
-"""
 
-1️⃣ Book Appointment
-2️⃣ Prices
-3️⃣ Location
-4️⃣ Opening Hours
+1. Book Appointment
+2. Prices
+3. Location
+4. Opening Hours
 
 💳 To make payment:
 pay 100
 """
-# OPTION 1
 
-elif incoming_msg == "1":
+    # OPTION 1
 
-    reply = """
+    elif incoming_msg == "1":
 
+        reply = """
 📅 Appointment Booking
 
 Please reply with:
@@ -623,12 +616,11 @@ Example:
 BOOK Rachel
 """
 
-# OPTION 2
+    # OPTION 2
 
-elif incoming_msg == "2":
+    elif incoming_msg == "2":
 
-    reply = """
-
+        reply = """
 💰 Our Prices
 
 Haircut - KES 500
@@ -636,12 +628,11 @@ Shaving - KES 200
 Beard Trim - KES 300
 """
 
-# OPTION 3
+    # OPTION 3
 
-elif incoming_msg == "3":
+    elif incoming_msg == "3":
 
-    reply = """
-
+        reply = """
 📍 Our Location
 
 Kahawa West, Nairobi
@@ -650,12 +641,11 @@ Google Maps:
 https://maps.google.com
 """
 
-# OPTION 4
+    # OPTION 4
 
-elif incoming_msg == "4":
+    elif incoming_msg == "4":
 
-    reply = """
-
+        reply = """
 🕒 Opening Hours
 
 Monday - Saturday
@@ -665,55 +655,53 @@ Sunday
 Closed
 """
 
-# PAYMENT
+    # PAYMENT
 
-elif incoming_msg.startswith("pay"):
+    elif incoming_msg.startswith("pay"):
 
-    parts = incoming_msg.split()
+        parts = incoming_msg.split()
 
-    if len(parts) == 2:
+        if len(parts) == 2:
 
-        amount = int(parts[1])
+            amount = int(parts[1])
 
-        if amount < 1:
+            if amount < 1:
 
-            reply = "Minimum amount is KES 1."
+                reply = "Minimum amount is KES 1."
+
+            else:
+
+                phone = "254115126566"
+
+                try:
+
+                    result = stk_push(phone, amount)
+
+                    print("STK RESULT:", result)
+
+                    reply = f"STK Push for KES {amount} sent. Check your phone."
+
+                except Exception as e:
+
+                    print("STK ERROR:", e)
+
+                    reply = "Payment failed."
 
         else:
 
-            phone = "254115126566"
+            reply = "Use format: pay 100"
 
-            try:
+    elif incoming_msg.startswith("book"):
 
-                result = stk_push(phone, amount)
-
-                print("STK RESULT:", result)
-
-                reply = f"STK Push for KES {amount} sent. Check your phone."
-
-            except Exception as e:
-
-                print("STK ERROR:", e)
-
-                reply = "Payment failed."
-
-    else:
-
-        reply = "Use format: pay 100"
-
-elif incoming_msg.startswith("book"):
-
-    reply = """
-
+        reply = """
 ✅ Appointment request received.
 
 Our team will contact you shortly.
 """
 
-else:
+    else:
 
-    reply = """
-
+        reply = """
 I didn't understand that.
 
 Reply:
@@ -724,15 +712,21 @@ Reply:
 4 - Opening Hours
 """
 
-twiml = f'''
-
+    twiml = f"""
 <Response>
 <Message>{reply}</Message>
 </Response>
-'''return Response(
-    twiml,
-    mimetype="text/xml"
-)
+"""
+
+    return Response(
+        twiml,
+        mimetype="text/xml"
+    )
+# =========================================
+# WHATSAPP BOT
+# =========================================
+
+
 
 
 # =========================================
