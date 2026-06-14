@@ -597,6 +597,7 @@ if incoming_msg in [
 👋 Welcome to FlowAI Receptionist
 
 Choose an option:
+"""
 
 1️⃣ Book Appointment
 2️⃣ Prices
