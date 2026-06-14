@@ -448,7 +448,17 @@ def add_service():
     db.session.commit()
 
     return redirect("/dashboard")
+@app.route("/debug-users")
+def debug_users():
 
+    businesses = Business.query.all()
+
+    output = ""
+
+    for b in businesses:
+        output += f"{b.id} - {b.username}<br>"
+
+    return output
 # =========================================
 # ADD APPOINTMENT
 # =========================================
