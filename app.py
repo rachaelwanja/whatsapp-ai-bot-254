@@ -553,20 +553,20 @@ def customers():
 @app.route("/payments")
 def payments():
 
-if "business_id" not in session:
+    if "business_id" not in session:
 
-    return redirect(
-        "/login"
+        return redirect(
+            "/login"
+        )
+
+    payments = Payment.query.order_by(
+        Payment.id.desc()
+    ).all()
+
+    return render_template(
+        "payments.html",
+        payments=payments
     )
-
-payments = Payment.query.order_by(
-    Payment.id.desc()
-).all()
-
-return render_template(
-    "payments.html",
-    payments=payments
-)
 
 
 # =========================================
