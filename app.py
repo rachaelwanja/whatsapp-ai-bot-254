@@ -606,7 +606,6 @@ Choose an option:
 💳 To make payment:
 pay 100
 """
-
 # OPTION 1
 
 elif incoming_msg == "1":
