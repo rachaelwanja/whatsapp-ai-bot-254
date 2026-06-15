@@ -579,7 +579,7 @@ def whatsapp():
 
     # MAIN MENU
 
-    elif incoming_msg in [
+    if incoming_msg in [
         "hi",
         "hello",
         "hey",
@@ -694,51 +694,84 @@ How can I help you today?
 
     # PAYMENT
 
-    elif incoming_msg.startswith("pay"):
+   elif incoming_msg.startswith("pay"):
 
-        parts = incoming_msg.split()
+parts = incoming_msg.split()
 
-        if len(parts) == 2:
+if len(parts) == 2:
 
-            amount = int(parts[1])
+    try:
 
-            if amount < 1:
+        amount = int(parts[1])
 
-                reply = "Minimum amount is KES 1."
+        if amount < 1:
 
-            else:
-
-                phone = "254115126566"
-
-                try:
-
-                    result = stk_push(phone, amount)
-
-                    print("STK RESULT:", result)
-
-                    reply = f"STK Push for KES {amount} sent. Check your phone."
-
-                except Exception as e:
-
-                    print("STK ERROR:", e)
-
-                    reply = "Payment failed."
+            reply = "Minimum amount is KES 1."
 
         else:
 
-            reply = "Use format: pay 100"
+            phone = "254115126566"
 
-    elif incoming_msg.startswith("book"):
+            try:
 
-        reply = """
-✅ Appointment request received.
+                result = stk_push(phone, amount)
 
-Our team will contact you shortly.
+                print("STK RESULT:", result)
+
+                reply = f"📱 M-Pesa payment request for KES {amount} sent. Please check your phone."
+
+            except Exception as e:
+
+                print("STK ERROR:", e)
+
+                reply = "Payment failed. Please try again."
+
+    except:
+
+        reply = "Use format: pay 100"
+
+else:
+
+    reply = "Use format: pay 100"
+
+elif incoming_msg.startswith("book"):
+
+reply = """
+
+Thank you for choosing Rachel Beauty Salon.
+
+Your appointment request has been received.
+
+Our team will contact you shortly to confirm your booking.
 """
 
-    else:
+elif incoming_msg == "yes":
 
-        reply = """
+reply = """
+
+Great!
+
+To book an appointment, please reply with your full name.
+"""
+
+else:
+
+reply = """
+
+Sorry, I didn't understand that.
+
+Please choose:
+
+1 - Book Appointment
+2 - Prices
+3 - Location
+4 - Opening Hours
+
+Or type:
+prices
+location
+hours
+""" 
 I didn't understand that.
 
 Reply:
