@@ -718,10 +718,10 @@ elif incoming_msg.startswith("pay"):
                 reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
         except:
-            reply = "Use format: pay 100"
+    reply = "Use format: pay 100"
 
-    else:
-        reply = "Use format: pay 100"
+else:
+    reply = "Use format: pay 100"
 
 elif incoming_msg.startswith("book"):
 
