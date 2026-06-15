@@ -610,53 +610,86 @@ pay 100
 How can I help you today?
 """
 
-    # OPTION 1
+    OPTION 1
 
-    elif incoming_msg == "1":
+elif incoming_msg in [
+"1",
+"appointment",
+"book",
+"booking"
+]:
 
-        reply = """
+reply = """
+
 📅 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
 
-    # OPTION 2
+OPTION 2
 
-    elif incoming_msg == "2":
+elif incoming_msg in [
+"2",
+"price",
+"prices",
+"pricing",
+"cost"
+]:
 
-        reply = """
-💰 Our Prices
+reply = """
 
-Haircut - KES 500
-Shaving - KES 200
-Beard Trim - KES 300
+💰 Here's our current price list:
+
+✂️ Haircut — KES 500
+🪒 Shaving — KES 200
+🧔 Beard Trim — KES 300
+
+Would you like to book an appointment?
+Reply YES.
 """
 
-    # OPTION 3
+OPTION 3
 
-    elif incoming_msg == "3":
+elif incoming_msg in [
+"3",
+"location",
+"address",
+"where are you",
+"where are you located"
+]:
 
-        reply = """
-📍 Our Location
+reply = """
 
-Kahawa West, Nairobi
+📍 We're located in Kahawa West, Nairobi.
+
+Need directions?
 
 Google Maps:
 https://maps.google.com
+
+Reply BOOK to schedule a visit.
 """
 
-    # OPTION 4
+OPTION 4
 
-    elif incoming_msg == "4":
+elif incoming_msg in [
+"4",
+"hours",
+"opening hours",
+"working hours",
+"open"
+]:
 
-        reply = """
-🕒 Opening Hours
+reply = """
+
+🕒 Our opening hours:
 
 Monday - Saturday
 8:00 AM - 6:00 PM
 
-Sunday
-Closed
+We're closed on Sundays.
+
+How can I help you today?
 """
 
     # PAYMENT
