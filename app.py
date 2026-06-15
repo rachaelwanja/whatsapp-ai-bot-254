@@ -697,47 +697,31 @@ We're closed on Sundays.
 How can I help you today?
 """
 
-    # PAYMENT
+# PAYMENT
 
-   elif incoming_msg.startswith("pay"):
+elif incoming_msg.startswith("pay"):
 
-parts = incoming_msg.split()
+    parts = incoming_msg.split()
 
-if len(parts) == 2:
+    if len(parts) == 2:
 
-    try:
+        try:
+            amount = int(parts[1])
 
-        amount = int(parts[1])
-
-        if amount < 1:
-
-            reply = "Minimum amount is KES 1."
-
-        else:
-
-            phone = "254115126566"
-
-            try:
+            if amount < 1:
+                reply = "Minimum amount is KES 1."
+            else:
+                phone = "254115126566"
 
                 result = stk_push(phone, amount)
 
-                print("STK RESULT:", result)
+                reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
-                reply = f"📱 M-Pesa payment request for KES {amount} sent. Please check your phone."
+        except:
+            reply = "Use format: pay 100"
 
-            except Exception as e:
-
-                print("STK ERROR:", e)
-
-                reply = "Payment failed. Please try again."
-
-    except:
-
+    else:
         reply = "Use format: pay 100"
-
-else:
-
-    reply = "Use format: pay 100"
 
 elif incoming_msg.startswith("book"):
 
