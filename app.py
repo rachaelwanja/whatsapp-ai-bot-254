@@ -580,14 +580,14 @@ def whatsapp():
     # MAIN MENU
 
    if incoming_msg in [
-    "hi",
-    "hello",
-    "hey",
-    "start",
-    "menu"
-]:
+        "hi",
+        "hello",
+        "hey",
+        "start",
+        "menu"
+    ]:
 
-    reply = """
+        reply = """
 👋 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help 😊
