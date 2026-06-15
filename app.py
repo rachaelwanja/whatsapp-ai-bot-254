@@ -610,16 +610,21 @@ pay 100
 How can I help you today?
 """
 
-   # OPTION 1
+  # OPTION 1
 
 elif incoming_msg in [
-"1",
-"appointment",
-"book",
-"booking"
+    "1",
+    "appointment",
+    "book",
+    "booking"
 ]:
 
-reply = """
+    reply = """
+
+📅 Great! I'd be happy to help you book an appointment.
+
+May I have your full name?
+"""
 
 📅 Great! I'd be happy to help you book an appointment.
 
