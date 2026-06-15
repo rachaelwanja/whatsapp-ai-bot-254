@@ -741,8 +741,7 @@ else:
 
 elif incoming_msg.startswith("book"):
 
-reply = """
-
+    reply = """
 Thank you for choosing Rachel Beauty Salon.
 
 Your appointment request has been received.
@@ -752,8 +751,7 @@ Our team will contact you shortly to confirm your booking.
 
 elif incoming_msg == "yes":
 
-reply = """
-
+    reply = """
 Great!
 
 To book an appointment, please reply with your full name.
@@ -761,8 +759,7 @@ To book an appointment, please reply with your full name.
 
 else:
 
-reply = """
-
+    reply = """
 Sorry, I didn't understand that.
 
 Please choose:
@@ -776,23 +773,11 @@ Or type:
 prices
 location
 hours
-""" 
-else:
-
-    reply = """
-Sorry, I didn't understand that.
-
-Please choose:
-
-1 - Book Appointment
-2 - Prices
-3 - Location
-4 - Opening Hours
 """
 
 twiml = f"""
 <Response>
-<Message>{reply}</Message>
+    <Message>{reply}</Message>
 </Response>
 """
 
@@ -800,16 +785,15 @@ return Response(
     twiml,
     mimetype="text/xml"
 )
+
 # =========================================
 # WHATSAPP BOT
 # =========================================
 
-
-
-
 # =========================================
 # MPESA CALLBACK
 # =========================================
+
 @app.route("/mpesa-callback", methods=["POST"])
 def mpesa_callback():
 
@@ -826,7 +810,6 @@ def mpesa_callback():
         values = {}
 
         for item in items:
-
             values[item["Name"]] = item.get("Value")
 
         payment = Payment(
@@ -850,20 +833,16 @@ def mpesa_callback():
         "ResultDesc": "Accepted"
     }
 
-
 # =========================================
 # LOGOUT
 # =========================================
 
 @app.route("/logout")
 def logout():
-    
 
     session.clear()
 
-    return redirect(
-        "/login"
-    )
+    return redirect("/login")
 
 # =========================================
 # RESET DATABASE
@@ -875,15 +854,11 @@ def reset_database():
     try:
 
         db.session.execute(
-            db.text(
-                "DROP SCHEMA public CASCADE"
-            )
+            db.text("DROP SCHEMA public CASCADE")
         )
 
         db.session.execute(
-            db.text(
-                "CREATE SCHEMA public"
-            )
+            db.text("CREATE SCHEMA public")
         )
 
         db.session.commit()
