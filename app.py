@@ -772,26 +772,29 @@ prices
 location
 hours
 """ 
-I didn't understand that.
+else:
 
-Reply:
+    reply = """
+Sorry, I didn't understand that.
 
-1 - Appointment
+Please choose:
+
+1 - Book Appointment
 2 - Prices
 3 - Location
 4 - Opening Hours
 """
 
-    twiml = f"""
+twiml = f"""
 <Response>
 <Message>{reply}</Message>
 </Response>
 """
 
-    return Response(
-        twiml,
-        mimetype="text/xml"
-    )
+return Response(
+    twiml,
+    mimetype="text/xml"
+)
 # =========================================
 # WHATSAPP BOT
 # =========================================
