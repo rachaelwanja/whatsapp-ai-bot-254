@@ -588,32 +588,36 @@ def whatsapp():
     ]:
 
         reply = """
-👋 Welcome to FlowAI Receptionist
+👋 Hi! Welcome to Rachel Beauty Salon.
 
-Choose an option:
+I'm here to help 😊
 
-1. Book Appointment
-2. Prices
-3. Location
-4. Opening Hours
+Please choose an option:
 
-💳 To make payment:
+1. Book an appointment
+2. View our prices
+3. Get our location
+4. Opening hours
+
+You can also type:
+prices
+location
+hours
+
+📱 To make an M-Pesa payment:
 pay 100
+
+How can I help you today?
 """
 
     # OPTION 1
 
     elif incoming_msg == "1":
 
-        reply = """
-📅 Appointment Booking
+    reply = """
+📅 Great! I'd be happy to help you book an appointment.
 
-Please reply with:
-
-BOOK YourName
-
-Example:
-BOOK Rachel
+May I have your full name?
 """
 
     # OPTION 2
