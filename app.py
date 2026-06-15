@@ -620,16 +620,11 @@ elif incoming_msg in [
 ]:
 
     reply = """
-
 📅 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
 
-📅 Great! I'd be happy to help you book an appointment.
-
-May I have your full name?
-"""
 
 # OPTION 2
 
