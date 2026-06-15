@@ -568,7 +568,6 @@ def payments():
         "payments.html",
         payments=payments
     )
-
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
@@ -579,7 +578,7 @@ def whatsapp():
 
     # MAIN MENU
 
-   if incoming_msg in [
+    if incoming_msg in [
         "hi",
         "hello",
         "hey",
@@ -588,9 +587,9 @@ def whatsapp():
     ]:
 
         reply = """
-👋 Hi! Welcome to Rachel Beauty Salon.
+Hi! Welcome to Rachel Beauty Salon.
 
-I'm here to help 😊
+I'm here to help.
 
 Please choose an option:
 
@@ -604,12 +603,11 @@ prices
 location
 hours
 
-📱 To make an M-Pesa payment:
+To make an M-Pesa payment:
 pay 100
 
 How can I help you today?
 """
-
     # OPTION 1
 
 elif incoming_msg in [
