@@ -614,7 +614,7 @@ How can I help you today?
 
     elif incoming_msg == "1":
 
-    reply = """
+        reply = """
 📅 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
