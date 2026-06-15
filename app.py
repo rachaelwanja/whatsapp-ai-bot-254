@@ -579,15 +579,15 @@ def whatsapp():
 
     # MAIN MENU
 
-    if incoming_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "start",
-        "menu"
-    ]:
+   if incoming_msg in [
+    "hi",
+    "hello",
+    "hey",
+    "start",
+    "menu"
+]:
 
-        reply = """
+    reply = """
 👋 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help 😊
@@ -610,7 +610,7 @@ pay 100
 How can I help you today?
 """
 
-  # OPTION 1
+    # OPTION 1
 
 elif incoming_msg in [
     "1",
@@ -620,10 +620,10 @@ elif incoming_msg in [
 ]:
 
     reply = """
-📅 Great! I'd be happy to help you book an appointment.
+Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
-"""
+""" 
 
 
 # OPTION 2
