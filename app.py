@@ -692,7 +692,7 @@ Our opening hours:
 Monday - Saturday
 8:00 AM - 6:00 PM
 
-We're closed on Sundays.
+We are closed on Sundays.
 
 How can I help you today?
 """
