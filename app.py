@@ -679,16 +679,15 @@ Reply BOOK to schedule a visit.
 # OPTION 4
 
 elif incoming_msg in [
-"4",
-"hours",
-"opening hours",
-"working hours",
-"open"
+    "4",
+    "hours",
+    "opening hours",
+    "working hours",
+    "open"
 ]:
 
-reply = """
-
-🕒 Our opening hours:
+    reply = """
+Our opening hours:
 
 Monday - Saturday
 8:00 AM - 6:00 PM
