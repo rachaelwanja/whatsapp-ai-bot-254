@@ -628,20 +628,19 @@ May I have your full name?
 # OPTION 2
 
 elif incoming_msg in [
-"2",
-"price",
-"prices",
-"pricing",
-"cost"
+    "2",
+    "price",
+    "prices",
+    "pricing",
+    "cost"
 ]:
 
-reply = """
+    reply = """
+Here's our current price list:
 
-💰 Here's our current price list:
-
-✂️ Haircut — KES 500
-🪒 Shaving — KES 200
-🧔 Beard Trim — KES 300
+Haircut - KES 500
+Shaving - KES 200
+Beard Trim - KES 300
 
 Would you like to book an appointment?
 Reply YES.
