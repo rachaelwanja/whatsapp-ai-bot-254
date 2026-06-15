@@ -579,7 +579,7 @@ def whatsapp():
 
     # MAIN MENU
 
-    if incoming_msg in [
+    elif incoming_msg in [
         "hi",
         "hello",
         "hey",
