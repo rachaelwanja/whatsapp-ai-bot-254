@@ -649,16 +649,24 @@ Reply YES.
 # OPTION 3
 
 elif incoming_msg in [
-"3",
-"location",
-"address",
-"where are you",
-"where are you located"
+    "3",
+    "location",
+    "address",
+    "where are you",
+    "where are you located"
 ]:
 
-reply = """
+    reply = """
 
 📍 We're located in Kahawa West, Nairobi.
+
+Need directions?
+
+Google Maps:
+https://maps.google.com
+
+Reply BOOK to schedule a visit.
+"""
 
 Need directions?
 
