@@ -610,7 +610,7 @@ pay 100
 How can I help you today?
 """
 
-    OPTION 1
+   # OPTION 1
 
 elif incoming_msg in [
 "1",
@@ -626,7 +626,7 @@ reply = """
 May I have your full name?
 """
 
-OPTION 2
+# OPTION 2
 
 elif incoming_msg in [
 "2",
@@ -648,7 +648,7 @@ Would you like to book an appointment?
 Reply YES.
 """
 
-OPTION 3
+# OPTION 3
 
 elif incoming_msg in [
 "3",
@@ -670,7 +670,7 @@ https://maps.google.com
 Reply BOOK to schedule a visit.
 """
 
-OPTION 4
+# OPTION 4
 
 elif incoming_msg in [
 "4",
