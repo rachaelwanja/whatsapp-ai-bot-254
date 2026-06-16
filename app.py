@@ -128,7 +128,33 @@ def stk_push(phone, amount):
     print("STK RESPONSE:", response.text)
 
     return response.json()
+    
+# =========================================
+# OPENROUTER AI
+# =========================================
 
+def ask_ai(message):
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "openai/gpt-4o-mini",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": message
+                }
+            ]
+        }
+    )
+
+    print(response.text)
+
+    return response.json()["choices"][0]["message"]["content"]
 
 # =========================================
 # DATABASE MODELS
@@ -742,13 +768,23 @@ Our team will contact you shortly to confirm your booking.
 
     elif incoming_msg == "yes":
 
-        reply = """
+    reply = """
 Great!
 
 To book an appointment, please reply with your full name.
 """
 
-    else:
+elif incoming_msg.startswith("ai"):
+
+    user_message = incoming_msg.replace(
+        "ai",
+        "",
+        1
+    ).strip()
+
+    reply = ask_ai(user_message)
+
+else:
 
         reply = """
 Sorry, I didn't understand that.
