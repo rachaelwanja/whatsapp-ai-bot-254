@@ -726,6 +726,7 @@ elif incoming_msg.startswith("pay"):
 
 
 # BOOKING
+
 elif incoming_msg.startswith("book"):
 
     reply = """
