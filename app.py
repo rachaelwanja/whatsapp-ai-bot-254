@@ -595,29 +595,30 @@ def payments():
         payments=payments
     ) 
     
-# =========================================
-# WHATSAPP BOT
-# =========================================
+=========================================
+WHATSAPP BOT
+=========================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.form.get(
-        "Body",
-        ""
-    ).lower().strip()
+incoming_msg = request.form.get(
+    "Body",
+    ""
+).lower().strip()
 
-    # MAIN MENU
+# MAIN MENU
 
-    if incoming_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "start",
-        "menu"
-    ]:
+if incoming_msg in [
+    "hi",
+    "hello",
+    "hey",
+    "start",
+    "menu"
+]:
 
-        reply = """
+    reply = """
+
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
@@ -640,32 +641,34 @@ pay 100
 How can I help you today?
 """
 
-    # OPTION 1
+# OPTION 1
 
-    elif incoming_msg in [
-        "1",
-        "appointment",
-        "book",
-        "booking"
-    ]:
+elif incoming_msg in [
+    "1",
+    "appointment",
+    "book",
+    "booking"
+]:
 
-        reply = """
+    reply = """
+
 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
 
-    # OPTION 2
+# OPTION 2
 
-    elif incoming_msg in [
-        "2",
-        "price",
-        "prices",
-        "pricing",
-        "cost"
-    ]:
+elif incoming_msg in [
+    "2",
+    "price",
+    "prices",
+    "pricing",
+    "cost"
+]:
 
-        reply = """
+    reply = """
+
 Here's our current price list:
 
 Haircut - KES 500
@@ -677,17 +680,18 @@ Would you like to book an appointment?
 Reply YES.
 """
 
-    # OPTION 3
+# OPTION 3
 
-    elif incoming_msg in [
-        "3",
-        "location",
-        "address",
-        "where are you",
-        "where are you located"
-    ]:
+elif incoming_msg in [
+    "3",
+    "location",
+    "address",
+    "where are you",
+    "where are you located"
+]:
 
-        reply = """
+    reply = """
+
 📍 We're located in Kahawa West, Nairobi.
 
 Need directions?
@@ -698,17 +702,18 @@ https://maps.google.com
 Reply BOOK to schedule a visit.
 """
 
-    # OPTION 4
+# OPTION 4
 
-    elif incoming_msg in [
-        "4",
-        "hours",
-        "opening hours",
-        "working hours",
-        "open"
-    ]:
+elif incoming_msg in [
+    "4",
+    "hours",
+    "opening hours",
+    "working hours",
+    "open"
+]:
 
-        reply = """
+    reply = """
+
 Our opening hours:
 
 Monday - Saturday
@@ -719,46 +724,47 @@ We are closed on Sundays.
 How can I help you today?
 """
 
-    # PAYMENT
+# PAYMENT
 
-    elif incoming_msg.startswith("pay"):
+elif incoming_msg.startswith("pay"):
 
-        parts = incoming_msg.split()
+    parts = incoming_msg.split()
 
-        if len(parts) == 2:
+    if len(parts) == 2:
 
-            try:
+        try:
 
-                amount = int(parts[1])
+            amount = int(parts[1])
 
-                if amount < 1:
+            if amount < 1:
 
-                    reply = "Minimum amount is KES 1."
+                reply = "Minimum amount is KES 1."
 
-                else:
+            else:
 
-                    phone = "254115126566"
+                phone = "254115126566"
 
-                    stk_push(
-                        phone,
-                        amount
-                    )
+                stk_push(
+                    phone,
+                    amount
+                )
 
-                    reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
+                reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
-            except Exception:
-
-                reply = "Use format: pay 100"
-
-        else:
+        except Exception:
 
             reply = "Use format: pay 100"
 
-    # BOOKING
+    else:
 
-    elif incoming_msg.startswith("book"):
+        reply = "Use format: pay 100"
 
-        reply = """
+# BOOKING
+
+elif incoming_msg.startswith("book"):
+
+    reply = """
+
 Thank you for choosing Rachel Beauty Salon.
 
 Your appointment request has been received.
@@ -766,42 +772,42 @@ Your appointment request has been received.
 Our team will contact you shortly to confirm your booking.
 """
 
-    elif incoming_msg == "yes":
+elif incoming_msg == "yes":
 
-        reply = """
+    reply = """
+
 Great!
 
 To book an appointment, please reply with your full name.
 """
 
-    # AI COMMAND
+# AI COMMAND
 
-    elif incoming_msg.startswith("ai"):
+elif incoming_msg.startswith("ai"):
 
-        user_message = incoming_msg.replace(
-            "ai",
-            "",
-            1
-        ).strip()
+    user_message = incoming_msg.replace(
+        "ai",
+        "",
+        1
+    ).strip()
 
-        reply = ask_ai(user_message)
+    reply = ask_ai(user_message)
 
-    # DEFAULT → AI HANDLES EVERYTHING ELSE
+# DEFAULT -> AI
 
-    else:
+else:
 
-        reply = ask_ai(incoming_msg)
+    reply = ask_ai(incoming_msg)
 
-    twiml = f"""
+twiml = f"""
+
 <Response>
     <Message>{reply}</Message>
 </Response>
-"""
-
-    return Response(
-        twiml,
-        mimetype="text/xml"
-    )
+"""return Response(
+    twiml,
+    mimetype="text/xml"
+)
                     
 
 # =========================================
