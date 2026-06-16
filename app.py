@@ -710,6 +710,7 @@ elif incoming_msg.startswith("pay"):
 
             if amount < 1:
                 reply = "Minimum amount is KES 1."
+
             else:
                 phone = "254115126566"
 
@@ -718,10 +719,13 @@ elif incoming_msg.startswith("pay"):
                 reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
         except:
-    reply = "Use format: pay 100"
+            reply = "Use format: pay 100"
 
-else:
-    reply = "Use format: pay 100"
+    else:
+        reply = "Use format: pay 100"
+
+
+# BOOKING
 
 elif incoming_msg.startswith("book"):
 
@@ -733,6 +737,7 @@ Your appointment request has been received.
 Our team will contact you shortly to confirm your booking.
 """
 
+
 elif incoming_msg == "yes":
 
     reply = """
@@ -740,6 +745,7 @@ Great!
 
 To book an appointment, please reply with your full name.
 """
+
 
 else:
 
