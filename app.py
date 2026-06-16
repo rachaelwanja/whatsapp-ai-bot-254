@@ -8,6 +8,8 @@ import requests
 import base64
 app = Flask(__name__)
 
+booking_states = {}
+
 # =========================================
 # CONFIG
 # =========================================
@@ -607,9 +609,77 @@ def whatsapp():
         ""
     ).lower().strip()
 
-    # MAIN MENU
+    sender = request.form.get("From")
 
-    if incoming_msg in [
+    reply = ""
+
+    # ==========================
+    # BOOKING STATE TRACKING
+    # ==========================
+
+    if sender in booking_states:
+
+        state = booking_states[sender]
+
+        if state["step"] == "name":
+
+            state["name"] = incoming_msg.title()
+            state["step"] = "service"
+
+            reply = """
+What service would you like?
+
+1. Haircut
+2. Shaving
+3. Beard Trim
+"""
+
+        elif state["step"] == "service":
+
+            state["service"] = incoming_msg
+            state["step"] = "date"
+
+            reply = """
+Please enter your preferred appointment date.
+
+Example:
+20 June 2026
+"""
+
+        elif state["step"] == "date":
+
+            state["date"] = incoming_msg
+            state["step"] = "time"
+
+            reply = """
+Please enter your preferred time.
+
+Example:
+10:00 AM
+"""
+
+        elif state["step"] == "time":
+
+            state["time"] = incoming_msg
+
+            reply = f"""
+Booking received.
+
+Name: {state['name']}
+Service: {state['service']}
+Date: {state['date']}
+Time: {state['time']}
+
+Our team will contact you shortly.
+"""
+
+            del booking_states[sender]
+
+    # ==========================
+    # MAIN MENU
+    # ==========================
+
+    elif incoming_msg in [
         "hi",
         "hello",
         "hey",
@@ -640,7 +710,9 @@ pay 100
 How can I help you today?
 """
 
-    # OPTION 1
+    # ==========================
+    # BOOK APPOINTMENT
+    # ==========================
 
     elif incoming_msg in [
         "1",
@@ -649,13 +721,19 @@ How can I help you today?
         "booking"
     ]:
 
+        booking_states[sender] = {
+            "step": "name"
+        }
+
         reply = """
 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
 
-    # OPTION 2
+    # ==========================
+    # PRICES
+    # ==========================
 
     elif incoming_msg in [
         "2",
@@ -677,20 +755,18 @@ Would you like to book an appointment?
 Reply YES.
 """
 
-    # OPTION 3
+    # ==========================
+    # LOCATION
+    # ==========================
 
     elif incoming_msg in [
         "3",
         "location",
-        "address",
-        "where are you",
-        "where are you located"
+        "address"
     ]:
 
         reply = """
 📍 We're located in Kahawa West, Nairobi.
-
-Need directions?
 
 Google Maps:
 https://maps.google.com
@@ -698,7 +774,9 @@ https://maps.google.com
 Reply BOOK to schedule a visit.
 """
 
-    # OPTION 4
+    # ==========================
+    # HOURS
+    # ==========================
 
     elif incoming_msg in [
         "4",
@@ -714,12 +792,28 @@ Our opening hours:
 Monday - Saturday
 8:00 AM - 6:00 PM
 
-We are closed on Sundays.
-
-How can I help you today?
+Closed on Sundays.
 """
 
-    # PAYMENT
+    # ==========================
+    # YES
+    # ==========================
+
+    elif incoming_msg == "yes":
+
+        booking_states[sender] = {
+            "step": "name"
+        }
+
+        reply = """
+Great!
+
+Please enter your full name.
+"""
+
+    # ==========================
+    # MPESA
+    # ==========================
 
     elif incoming_msg.startswith("pay"):
 
@@ -744,7 +838,10 @@ How can I help you today?
                         amount
                     )
 
-                    reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
+                    reply = (
+                        f"M-Pesa payment request for "
+                        f"KES {amount} sent."
+                    )
 
             except Exception:
 
@@ -754,39 +851,9 @@ How can I help you today?
 
             reply = "Use format: pay 100"
 
-    # BOOKING
-
-    elif incoming_msg.startswith("book"):
-
-        reply = """
-Thank you for choosing Rachel Beauty Salon.
-
-Your appointment request has been received.
-
-Our team will contact you shortly to confirm your booking.
-"""
-
-    elif incoming_msg == "yes":
-
-        reply = """
-Great!
-
-To book an appointment, please reply with your full name.
-"""
-
-    # AI COMMAND
-
-    elif incoming_msg.startswith("ai"):
-
-        user_message = incoming_msg.replace(
-            "ai",
-            "",
-            1
-        ).strip()
-
-        reply = ask_ai(user_message)
-
-    # DEFAULT AI
+    # ==========================
+    # AI FALLBACK
+    # ==========================
 
     else:
 
