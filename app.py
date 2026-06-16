@@ -575,23 +575,22 @@ def payments():
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-incoming_msg = request.form.get(
-    "Body",
-    ""
-).lower().strip()
+    incoming_msg = request.form.get(
+        "Body",
+        ""
+    ).lower().strip()
 
-# MAIN MENU
+    # MAIN MENU
 
-if incoming_msg in [
-    "hi",
-    "hello",
-    "hey",
-    "start",
-    "menu"
-]:
+    if incoming_msg in [
+        "hi",
+        "hello",
+        "hey",
+        "start",
+        "menu"
+    ]:
 
-    reply = """
-
+        reply = """
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
