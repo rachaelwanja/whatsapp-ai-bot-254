@@ -567,16 +567,20 @@ def payments():
     return render_template(
         "payments.html",
         payments=payments
-    )
+    ) 
+# =========================================
+# WHATSAPP BOT
+# =========================================
+
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.form.get(
-        "Body",
-        ""
-    ).lower().strip()
+incoming_msg = request.form.get(
+    "Body",
+    ""
+).lower().strip()
 
-    # MAIN MENU
+# MAIN MENU
 
 if incoming_msg in [
     "hi",
@@ -587,6 +591,7 @@ if incoming_msg in [
 ]:
 
     reply = """
+
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
@@ -619,11 +624,11 @@ elif incoming_msg in [
 ]:
 
     reply = """
+
 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
-
 
 # OPTION 2
 
@@ -636,6 +641,7 @@ elif incoming_msg in [
 ]:
 
     reply = """
+
 Here's our current price list:
 
 Haircut - KES 500
@@ -643,6 +649,7 @@ Shaving - KES 200
 Beard Trim - KES 300
 
 Would you like to book an appointment?
+
 Reply YES.
 """
 
@@ -657,6 +664,7 @@ elif incoming_msg in [
 ]:
 
     reply = """
+
 📍 We're located in Kahawa West, Nairobi.
 
 Need directions?
@@ -666,7 +674,6 @@ https://maps.google.com
 
 Reply BOOK to schedule a visit.
 """
-
 
 # OPTION 4
 
@@ -679,6 +686,7 @@ elif incoming_msg in [
 ]:
 
     reply = """
+
 Our opening hours:
 
 Monday - Saturday
@@ -698,30 +706,35 @@ elif incoming_msg.startswith("pay"):
     if len(parts) == 2:
 
         try:
+
             amount = int(parts[1])
 
             if amount < 1:
+
                 reply = "Minimum amount is KES 1."
 
             else:
+
                 phone = "254115126566"
 
-                result = stk_push(phone, amount)
+                stk_push(phone, amount)
 
                 reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
         except Exception:
+
             reply = "Use format: pay 100"
 
     else:
-        reply = "Use format: pay 100"
 
+        reply = "Use format: pay 100"
 
 # BOOKING
 
 elif incoming_msg.startswith("book"):
 
     reply = """
+
 Thank you for choosing Rachel Beauty Salon.
 
 Your appointment request has been received.
@@ -732,6 +745,7 @@ Our team will contact you shortly to confirm your booking.
 elif incoming_msg == "yes":
 
     reply = """
+
 Great!
 
 To book an appointment, please reply with your full name.
@@ -740,6 +754,7 @@ To book an appointment, please reply with your full name.
 else:
 
     reply = """
+
 Sorry, I didn't understand that.
 
 Please choose:
@@ -756,20 +771,14 @@ hours
 """
 
 twiml = f"""
+
 <Response>
     <Message>{reply}</Message>
 </Response>
-"""
-
-return Response(
+"""return Response(
     twiml,
     mimetype="text/xml"
-)
-
-
-# =========================================
-# WHATSAPP BOT
-# =========================================
+)        
 
 # =========================================
 # MPESA CALLBACK
