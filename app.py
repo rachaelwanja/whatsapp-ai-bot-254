@@ -739,7 +739,7 @@ How can I help you today?
 
                     phone = "254115126566"
 
-                    result = stk_push(
+                    stk_push(
                         phone,
                         amount
                     )
@@ -768,23 +768,27 @@ Our team will contact you shortly to confirm your booking.
 
     elif incoming_msg == "yes":
 
-    reply = """
+        reply = """
 Great!
 
 To book an appointment, please reply with your full name.
 """
 
-elif incoming_msg.startswith("ai"):
+    # AI
 
-    user_message = incoming_msg.replace(
-        "ai",
-        "",
-        1
-    ).strip()
+    elif incoming_msg.startswith("ai"):
 
-    reply = ask_ai(user_message)
+        user_message = incoming_msg.replace(
+            "ai",
+            "",
+            1
+        ).strip()
 
-else:
+        reply = ask_ai(user_message)
+
+    # DEFAULT
+
+    else:
 
         reply = """
 Sorry, I didn't understand that.
@@ -811,7 +815,8 @@ hours
     return Response(
         twiml,
         mimetype="text/xml"
-    )    
+    )
+                    
 
 # =========================================
 # MPESA CALLBACK
