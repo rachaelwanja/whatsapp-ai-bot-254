@@ -774,7 +774,7 @@ Great!
 To book an appointment, please reply with your full name.
 """
 
-    # AI
+    # AI COMMAND
 
     elif incoming_msg.startswith("ai"):
 
@@ -786,25 +786,11 @@ To book an appointment, please reply with your full name.
 
         reply = ask_ai(user_message)
 
-    # DEFAULT
+    # DEFAULT → AI HANDLES EVERYTHING ELSE
 
     else:
 
-        reply = """
-Sorry, I didn't understand that.
-
-Please choose:
-
-1 - Book Appointment
-2 - Prices
-3 - Location
-4 - Opening Hours
-
-Or type:
-prices
-location
-hours
-"""
+        reply = ask_ai(incoming_msg)
 
     twiml = f"""
 <Response>
