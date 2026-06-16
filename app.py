@@ -718,7 +718,7 @@ elif incoming_msg.startswith("pay"):
 
                 reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
-        except:
+        except Exception:
             reply = "Use format: pay 100"
 
     else:
