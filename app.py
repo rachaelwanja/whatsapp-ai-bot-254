@@ -590,7 +590,6 @@ def whatsapp():
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
-"""
 
 Please choose an option:
 
