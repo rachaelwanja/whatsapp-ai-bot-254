@@ -746,7 +746,6 @@ Great!
 To book an appointment, please reply with your full name.
 """
 
-
 else:
 
     reply = """
@@ -764,6 +763,7 @@ prices
 location
 hours
 """
+
 
 twiml = f"""
 <Response>
