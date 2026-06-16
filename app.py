@@ -578,7 +578,7 @@ def whatsapp():
 
     # MAIN MENU
 
-if incoming_msg in [
+    if incoming_msg in [
     "hi",
     "hello",
     "hey",
@@ -668,13 +668,6 @@ https://maps.google.com
 Reply BOOK to schedule a visit.
 """
 
-Need directions?
-
-Google Maps:
-https://maps.google.com
-
-Reply BOOK to schedule a visit.
-"""
 
 # OPTION 4
 
