@@ -594,10 +594,9 @@ def payments():
         "payments.html",
         payments=payments
     ) 
-    
-=========================================
-WHATSAPP BOT
-=========================================
+# =========================================
+# WHATSAPP BOT
+# =========================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
