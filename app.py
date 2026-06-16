@@ -586,7 +586,7 @@ def whatsapp():
     "menu"
 ]:
 
-    reply = """
+reply = """
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
