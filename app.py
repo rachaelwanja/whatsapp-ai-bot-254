@@ -726,7 +726,6 @@ elif incoming_msg.startswith("pay"):
 
 
 # BOOKING
-
 elif incoming_msg.startswith("book"):
 
     reply = """
@@ -736,7 +735,6 @@ Your appointment request has been received.
 
 Our team will contact you shortly to confirm your booking.
 """
-
 
 elif incoming_msg == "yes":
 
@@ -764,7 +762,6 @@ location
 hours
 """
 
-
 twiml = f"""
 <Response>
     <Message>{reply}</Message>
@@ -775,6 +772,7 @@ return Response(
     twiml,
     mimetype="text/xml"
 )
+
 
 # =========================================
 # WHATSAPP BOT
