@@ -586,10 +586,11 @@ def whatsapp():
     "menu"
 ]:
 
-reply = """
+    reply = """
 Hi! Welcome to Rachel Beauty Salon.
 
 I'm here to help.
+"""
 
 Please choose an option:
 
@@ -657,7 +658,6 @@ elif incoming_msg in [
 ]:
 
     reply = """
-
 📍 We're located in Kahawa West, Nairobi.
 
 Need directions?
