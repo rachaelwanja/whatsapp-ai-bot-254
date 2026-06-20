@@ -7,6 +7,12 @@ import os
 import requests
 import base64
 from models import db, Business, Appointment
+from services import (
+    get_access_token,
+    generate_password,
+    stk_push,
+    ask_ai
+)
 app = Flask(__name__)
 
 booking_states = {}
