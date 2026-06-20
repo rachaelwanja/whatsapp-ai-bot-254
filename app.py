@@ -223,19 +223,23 @@ class Appointment(db.Model):
 
     customer_name = db.Column(
         db.String(200)
-    
+    )
+
     customer_phone = db.Column(
         db.String(100)
     )
 
     service = db.Column(
-        d
+        db.String(200)
+    )
 
     amount = db.Column(
         db.Integer,
         default=0
     )
-     db.String(100)
+
+    appointment_time = db.Column(
+        db.String(100)
     )
 
     status = db.Column(
@@ -247,28 +251,7 @@ class Appointment(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
-class Payment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    phone = db.Column(
-        db.String(20),
-        nullable=False
-    )
-
-    amount = db.Column(
-        db.Float,
-        nullable=False
-    )
-
-    receipt = db.Column(
-        db.String(50),
-        nullable=False
-    )
-
-    transaction_date = db.Column(
-        db.String(20),
-        nullable=False
-    )
+    
 # =========================================
 # HOME
 # =========================================
