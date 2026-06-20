@@ -646,91 +646,41 @@ def payments():
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-    incoming_msg = request.form.get(
-        "Body",
-        ""
-    ).lower().strip()
+incoming_msg = request.form.get(
+    "Body",
+    ""
+).lower().strip()
 
-    sender = request.form.get("From")
+business = Business.query.first()
 
-    reply = ""
+if not business:
+    reply = "No business has been configured yet."
 
-    # ==========================
-    # BOOKING STATE TRACKING
-    # ==========================
+# =========================================
+# BOOKING STATE
+# =========================================
 
-    if sender in booking_states:
+elif incoming_msg in booking_states:
 
-        state = booking_states[sender]
+    state = booking_states[incoming_msg]
 
-        if state["step"] == "name":
+    reply = ask_ai(incoming_msg)
 
-            state["name"] = incoming_msg.title()
-            state["step"] = "service"
+# =========================================
+# MAIN MENU
+# =========================================
 
-            reply = """
-What service would you like?
+elif incoming_msg in [
+    "hi",
+    "hello",
+    "hey",
+    "start",
+    "menu"
+]:
 
-1. Haircut
-2. Shaving
-3. Beard Trim
-"""
+    reply = f"""
 
-        elif state["step"] == "service":
-
-            state["service"] = incoming_msg
-            state["step"] = "date"
-
-            reply = """
-Please enter your preferred appointment date.
-
-Example:
-20 June 2026
-"""
-
-        elif state["step"] == "date":
-
-            state["date"] = incoming_msg
-            state["step"] = "time"
-
-            reply = """
-Please enter your preferred time.
-
-Example:
-10:00 AM
-"""
-
-        elif state["step"] == "time":
-
-            state["time"] = incoming_msg
-
-            reply = f"""
-Booking received.
-
-Name: {state['name']}
-Service: {state['service']}
-Date: {state['date']}
-Time: {state['time']}
-
-Our team will contact you shortly.
-"""
-
-            del booking_states[sender]
-
-    # ==========================
-    # MAIN MENU
-    # ==========================
-
-    elif incoming_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "start",
-        "menu"
-    ]:
-
-        reply = """
-Hi! Welcome to Rachel Beauty Salon.
+Hi! Welcome to {business.business_name}.
 
 I'm here to help.
 
@@ -752,40 +702,42 @@ pay 100
 How can I help you today?
 """
 
-    # ==========================
-    # BOOK APPOINTMENT
-    # ==========================
+# =========================================
+# OPTION 1
+# =========================================
 
-    elif incoming_msg in [
-        "1",
-        "appointment",
-        "book",
-        "booking"
-    ]:
+elif incoming_msg in [
+    "1",
+    "appointment",
+    "book",
+    "booking"
+]:
 
-        booking_states[sender] = {
-            "step": "name"
-        }
+    booking_states[incoming_msg] = {
+        "step": "name"
+    }
 
-        reply = """
+    reply = """
+
 Great! I'd be happy to help you book an appointment.
 
 May I have your full name?
 """
 
-    # ==========================
-    # PRICES
-    # ==========================
+# =========================================
+# OPTION 2
+# =========================================
 
-    elif incoming_msg in [
-        "2",
-        "price",
-        "prices",
-        "pricing",
-        "cost"
-    ]:
+elif incoming_msg in [
+    "2",
+    "price",
+    "prices",
+    "pricing",
+    "cost"
+]:
 
-        reply = """
+    reply = """
+
 Here's our current price list:
 
 Haircut - KES 500
@@ -797,120 +749,122 @@ Would you like to book an appointment?
 Reply YES.
 """
 
-    # ==========================
-    # LOCATION
-    # ==========================
+# =========================================
+# OPTION 3
+# =========================================
 
-    elif incoming_msg in [
-        "3",
-        "location",
-        "address"
-    ]:
+elif incoming_msg in [
+    "3",
+    "location",
+    "address",
+    "where are you",
+    "where are you located"
+]:
 
-        reply = """
-📍 We're located in Kahawa West, Nairobi.
+    reply = f"""
 
-Google Maps:
-https://maps.google.com
+📍 {business.location}
 
 Reply BOOK to schedule a visit.
 """
 
-    # ==========================
-    # HOURS
-    # ==========================
+# =========================================
+# OPTION 4
+# =========================================
 
-    elif incoming_msg in [
-        "4",
-        "hours",
-        "opening hours",
-        "working hours",
-        "open"
-    ]:
+elif incoming_msg in [
+    "4",
+    "hours",
+    "opening hours",
+    "working hours",
+    "open"
+]:
 
-        reply = """
+    reply = f"""
+
 Our opening hours:
 
-Monday - Saturday
-8:00 AM - 6:00 PM
+{business.opening_hours}
 
-Closed on Sundays.
+How can I help you today?
 """
 
-    # ==========================
-    # YES
-    # ==========================
+# =========================================
+# PAYMENT
+# =========================================
 
-    elif incoming_msg == "yes":
+elif incoming_msg.startswith("pay"):
 
-        booking_states[sender] = {
-            "step": "name"
-        }
+    parts = incoming_msg.split()
 
-        reply = """
-Great!
+    if len(parts) == 2:
 
-Please enter your full name.
-"""
+        try:
 
-    # ==========================
-    # MPESA
-    # ==========================
+            amount = int(parts[1])
 
-    elif incoming_msg.startswith("pay"):
+            if amount < 1:
 
-        parts = incoming_msg.split()
+                reply = "Minimum amount is KES 1."
 
-        if len(parts) == 2:
+            else:
 
-            try:
+                result = stk_push(
+                    "254115126566",
+                    amount
+                )
 
-                amount = int(parts[1])
+                reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
 
-                if amount < 1:
-
-                    reply = "Minimum amount is KES 1."
-
-                else:
-
-                    phone = "254115126566"
-
-                    stk_push(
-                        phone,
-                        amount
-                    )
-
-                    reply = (
-                        f"M-Pesa payment request for "
-                        f"KES {amount} sent."
-                    )
-
-            except Exception:
-
-                reply = "Use format: pay 100"
-
-        else:
+        except Exception:
 
             reply = "Use format: pay 100"
 
-    # ==========================
-    # AI FALLBACK
-    # ==========================
-
     else:
 
-        reply = ask_ai(incoming_msg)
+        reply = "Use format: pay 100"
 
-    twiml = f"""
+# =========================================
+# BOOK
+# =========================================
+
+elif incoming_msg.startswith("book"):
+
+    reply = """
+
+Thank you for choosing us.
+
+Your appointment request has been received.
+
+Our team will contact you shortly.
+"""
+
+elif incoming_msg == "yes":
+
+    reply = """
+
+Great!
+
+To book an appointment, please reply with your full name.
+"""
+
+# =========================================
+# OPENAI
+# =========================================
+
+else:
+
+    reply = ask_ai(incoming_msg)
+
+twiml = f"""
+
 <Response>
     <Message>{reply}</Message>
 </Response>
-"""
-
-    return Response(
-        twiml,
-        mimetype="text/xml"
-    )
+"""return Response(
+    twiml,
+    mimetype="text/xml"
+)
                     
 
 # =========================================
