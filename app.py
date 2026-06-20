@@ -163,54 +163,52 @@ def ask_ai(message):
 # =========================================
 class Business(db.Model):
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+id = db.Column(
+    db.Integer,
+    primary_key=True
+)
 
-    username = db.Column(
-        db.String(100),
-        unique=True
-    )
+username = db.Column(
+    db.String(100),
+    unique=True
+)
 
-    password = db.Column(
-        db.String(200)
-    )
+password = db.Column(
+    db.String(200)
+)
 
-    business_name = db.Column(
-        db.String(200)
-    )
+business_name = db.Column(
+    db.String(200)
+)
 
-    business_phone = db.Column(
-        db.String(50)
-    )
+business_type = db.Column(
+    db.String(100),
+    default="General"
+)
 
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
-class Service(db.Model):
+business_phone = db.Column(
+    db.String(50)
+)
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+location = db.Column(
+    db.String(300),
+    default=""
+)
 
-    business_id = db.Column(
-        db.Integer
-    )
+opening_hours = db.Column(
+    db.String(300),
+    default=""
+)
 
-    name = db.Column(
-        db.String(200)
-    )
+ai_prompt = db.Column(
+    db.Text,
+    default=""
+)
 
-    price = db.Column(
-        db.Integer
-    )
-
-    duration = db.Column(
-        db.Integer
-    )
+created_at = db.Column(
+    db.DateTime,
+    default=datetime.utcnow
+)
 
 
 class Appointment(db.Model):
@@ -359,7 +357,40 @@ def signup():
     return render_template(
         "signup.html"
     )
+@app.route("/migrate-business")
+def migrate_business():
 
+    try:
+
+        db.session.execute(db.text("""
+            ALTER TABLE business
+            ADD COLUMN IF NOT EXISTS business_type VARCHAR(100) DEFAULT 'General'
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE business
+            ADD COLUMN IF NOT EXISTS location VARCHAR(300) DEFAULT ''
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE business
+            ADD COLUMN IF NOT EXISTS opening_hours VARCHAR(300) DEFAULT ''
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE business
+            ADD COLUMN IF NOT EXISTS ai_prompt TEXT DEFAULT ''
+        """))
+
+        db.session.commit()
+
+        return "Business migration successful"
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        return str(e)
 # =========================================
 # LOGIN
 # =========================================
