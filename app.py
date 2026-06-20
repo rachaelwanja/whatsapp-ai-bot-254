@@ -6,6 +6,7 @@ from twilio.twiml.voice_response import VoiceResponse
 import os
 import requests
 import base64
+from models import db, Business, Appointment
 app = Flask(__name__)
 
 booking_states = {}
@@ -25,7 +26,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
 # =========================================
 # MPESA CONFIG
 # =========================================
