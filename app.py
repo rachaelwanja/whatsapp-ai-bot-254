@@ -646,269 +646,172 @@ def payments():
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
 
-incoming_msg = request.form.get(
-    "Body",
-    ""
-).lower().strip()
+    incoming_msg = request.form.get(
+        "Body",
+        ""
+    ).strip().lower()
 
-business = Business.query.first()
+    # Get the business
+    business = Business.query.first()
 
-if not business:
-    reply = "No business has been configured yet."
+    if not business:
+        twiml = """
+<Response>
+    <Message>No business has been configured yet.</Message>
+</Response>
+"""
+        return Response(
+            twiml,
+            mimetype="text/xml"
+        )
 
-# =========================================
-# BOOKING STATE
-# =========================================
+    # -------------------------------
+    # MAIN MENU
+    # -------------------------------
 
-elif incoming_msg in booking_states:
+    if incoming_msg in [
+        "hi",
+        "hello",
+        "hey",
+        "start",
+        "menu"
+    ]:
 
-    state = booking_states[incoming_msg]
+        reply = f"""
+Welcome to {business.business_name} 👋
 
-    reply = ask_ai(incoming_msg)
-
-# =========================================
-# MAIN MENU
-# =========================================
-
-elif incoming_msg in [
-    "hi",
-    "hello",
-    "hey",
-    "start",
-    "menu"
-]:
-
-    reply = f"""
-
-Hi! Welcome to {business.business_name}.
-
-I'm here to help.
+Business Type:
+{business.business_type}
 
 Please choose an option:
 
-1. Book an appointment
-2. View our prices
-3. Get our location
-4. Opening hours
+1. Book Appointment
+2. Services & Prices
+3. Location
+4. Opening Hours
 
-You can also type:
-prices
-location
-hours
-
-To make an M-Pesa payment:
-pay 100
-
-How can I help you today?
+Or ask me anything.
 """
 
-# =========================================
-# OPTION 1
-# =========================================
+    # -------------------------------
+    # BOOK APPOINTMENT
+    # -------------------------------
 
-elif incoming_msg in [
-    "1",
-    "appointment",
-    "book",
-    "booking"
-]:
+    elif incoming_msg in [
+        "1",
+        "book",
+        "booking",
+        "appointment"
+    ]:
 
-    booking_states[incoming_msg] = {
-        "step": "name"
-    }
+        reply = """
+Great 😊
 
-    reply = """
+Please tell me:
 
-Great! I'd be happy to help you book an appointment.
-
-May I have your full name?
+• Your name
+• Service
+• Preferred date
+• Preferred time
 """
 
-# =========================================
-# OPTION 2
-# =========================================
+    # -------------------------------
+    # SERVICES
+    # -------------------------------
 
-elif incoming_msg in [
-    "2",
-    "price",
-    "prices",
-    "pricing",
-    "cost"
-]:
+    elif incoming_msg in [
+        "2",
+        "prices",
+        "services"
+    ]:
 
-    reply = """
+        services = Service.query.filter_by(
+            business_id=business.id
+        ).all()
 
-Here's our current price list:
+        if services:
 
-Haircut - KES 500
-Shaving - KES 200
-Beard Trim - KES 300
+            reply = "Our Services:\n\n"
 
-Would you like to book an appointment?
+            for service in services:
 
-Reply YES.
-"""
-
-# =========================================
-# OPTION 3
-# =========================================
-
-elif incoming_msg in [
-    "3",
-    "location",
-    "address",
-    "where are you",
-    "where are you located"
-]:
-
-    reply = f"""
-
-📍 {business.location}
-
-Reply BOOK to schedule a visit.
-"""
-
-# =========================================
-# OPTION 4
-# =========================================
-
-elif incoming_msg in [
-    "4",
-    "hours",
-    "opening hours",
-    "working hours",
-    "open"
-]:
-
-    reply = f"""
-
-Our opening hours:
-
-{business.opening_hours}
-
-How can I help you today?
-"""
-
-# =========================================
-# PAYMENT
-# =========================================
-
-elif incoming_msg.startswith("pay"):
-
-    parts = incoming_msg.split()
-
-    if len(parts) == 2:
-
-        try:
-
-            amount = int(parts[1])
-
-            if amount < 1:
-
-                reply = "Minimum amount is KES 1."
-
-            else:
-
-                result = stk_push(
-                    "254115126566",
-                    amount
+                reply += (
+                    f"• {service.name}"
+                    f" - KES {service.price}\n"
                 )
 
-                reply = f"M-Pesa payment request for KES {amount} sent. Please check your phone."
+        else:
 
-        except Exception:
+            reply = "No services have been added yet."
 
-            reply = "Use format: pay 100"
+    # -------------------------------
+    # LOCATION
+    # -------------------------------
+
+    elif incoming_msg in [
+        "3",
+        "location",
+        "address"
+    ]:
+
+        reply = f"""
+📍 {business.location}
+"""
+
+    # -------------------------------
+    # OPENING HOURS
+    # -------------------------------
+
+    elif incoming_msg in [
+        "4",
+        "hours",
+        "opening hours"
+    ]:
+
+        reply = f"""
+🕒 {business.opening_hours}
+"""
+
+    # -------------------------------
+    # AI
+    # -------------------------------
 
     else:
 
-        reply = "Use format: pay 100"
+        prompt = f"""
+You are the AI receptionist for:
 
-# =========================================
-# BOOK
-# =========================================
+Business Name:
+{business.business_name}
 
-elif incoming_msg.startswith("book"):
+Business Type:
+{business.business_type}
 
-    reply = """
+Location:
+{business.location}
 
-Thank you for choosing us.
+Opening Hours:
+{business.opening_hours}
 
-Your appointment request has been received.
+Instructions:
+{business.ai_prompt}
 
-Our team will contact you shortly.
+Customer Message:
+{incoming_msg}
 """
 
-elif incoming_msg == "yes":
+        reply = ask_ai(prompt)
 
-    reply = """
-
-Great!
-
-To book an appointment, please reply with your full name.
-"""
-
-# =========================================
-# OPENAI
-# =========================================
-
-else:
-
-    reply = ask_ai(incoming_msg)
-
-twiml = f"""
-
+    twiml = f"""
 <Response>
     <Message>{reply}</Message>
 </Response>
-"""return Response(
-    twiml,
-    mimetype="text/xml"
-)
-                    
+"""
 
-# =========================================
-# MPESA CALLBACK
-# =========================================
-
-@app.route("/mpesa-callback", methods=["POST"])
-def mpesa_callback():
-
-    data = request.json
-
-    print("MPESA CALLBACK:", data)
-
-    try:
-
-        callback = data["Body"]["stkCallback"]
-
-        items = callback["CallbackMetadata"]["Item"]
-
-        values = {}
-
-        for item in items:
-            values[item["Name"]] = item.get("Value")
-
-        payment = Payment(
-            phone=str(values.get("PhoneNumber")),
-            amount=float(values.get("Amount")),
-            receipt=str(values.get("MpesaReceiptNumber")),
-            transaction_date=str(values.get("TransactionDate"))
-        )
-
-        db.session.add(payment)
-        db.session.commit()
-
-        print("PAYMENT SAVED")
-
-    except Exception as e:
-
-        print("SAVE ERROR:", e)
-
-    return {
-        "ResultCode": 0,
-        "ResultDesc": "Accepted"
-    }
+    return Response(
+        twiml,
+        mimetype="text/xml"
+    )
 
 # =========================================
 # LOGOUT
