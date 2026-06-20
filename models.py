@@ -1,6 +1,12 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+db = SQLAlchemy()
+
 # =========================================
 # DATABASE MODELS
 # =========================================
+
 class Business(db.Model):
 
     id = db.Column(
@@ -49,6 +55,7 @@ class Business(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
 
 class Appointment(db.Model):
 
