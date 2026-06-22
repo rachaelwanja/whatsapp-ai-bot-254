@@ -196,14 +196,17 @@ def login():
         business = Business.query.filter_by(
             username=username
         ).first()
+        
+ print("Entered password:", password)
 
-        print("USERNAME:", username)
-        print("BUSINESS:", business)
+ if business:
+    print("Stored hash:", business.password)
+    print("Password match:", check_password_hash(business.password, password))
 
-        if business and check_password_hash(
-            business.password,
-            password
-        ):
+ if business and check_password_hash(
+    business.password,
+    password
+):
 
             session["business_id"] = business.id
 
