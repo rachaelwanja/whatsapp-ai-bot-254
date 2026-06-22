@@ -96,6 +96,8 @@ def signup():
         existing_user = Business.query.filter_by(
             username=username
         ).first()
+        print("SIGNUP USERNAME:", username)
+        print("EXISTING USER:", existing_user)
 
         if existing_user:
 
