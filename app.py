@@ -226,38 +226,46 @@ def login():
         "login.html"
     )
     
-@app.route("/business-settings", methods=["GET", "POST"])
-def business_settings():
-
-    if "business_id" not in session:
-        return redirect("/login")
-
-    business = Business.query.get(session["business_id"])
+@app.route("/login", methods=["GET", "POST"])
+def login():
 
     if request.method == "POST":
 
-        business.business_name = request.form.get("business_name")
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        business.business_type = request.form.get("business_type")
+        business = Business.query.filter_by(
+            username=username
+        ).first()
 
-        business.business_phone = request.form.get("business_phone")
+        print("USERNAME:", username)
+        print("BUSINESS:", business)
+        print("ENTERED PASSWORD:", password)
 
-        business.location = request.form.get("location")
+        if business:
+            print("STORED HASH:", business.password)
+            print(
+                "PASSWORD MATCH:",
+                check_password_hash(
+                    business.password,
+                    password
+                )
+            )
 
-        business.opening_hours = request.form.get("opening_hours")
+        if business and check_password_hash(
+            business.password,
+            password
+        ):
 
-        business.ai_prompt = request.form.get("ai_prompt")
+            session["business_id"] = business.id
 
-        db.session.commit()
+            return redirect("/dashboard")
 
-        flash("Business settings updated.")
+        flash("Invalid credentials")
 
-        return redirect("/business-settings")
+        return redirect("/login")
 
-    return render_template(
-        "business_settings.html",
-        business=business
-    )
+    return render_template("login.html")
     
 # =========================================
 # DASHBOARD
