@@ -78,6 +78,14 @@ def debug_businesses():
         output += f"{b.id} | {b.username}<br>"
 
     return output
+
+@app.route("/delete-businesses")
+def delete_businesses():
+
+    Business.query.delete()
+    db.session.commit()
+
+    return "All businesses deleted!"
     
 # =========================================
 # SIGNUP
