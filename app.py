@@ -6,7 +6,7 @@ from twilio.twiml.voice_response import VoiceResponse
 import os
 import requests
 import base64
-from models import db, Business, Appointment
+from models import db, Business, Appointment, Service, Payment
 from services import (
     get_access_token,
     generate_password,
@@ -67,7 +67,18 @@ def home():
     return render_template(
         "index.html"
     )
+@app.route("/debug-businesses")
+def debug_businesses():
 
+    businesses = Business.query.all()
+
+    output = ""
+
+    for b in businesses:
+        output += f"{b.id} | {b.username}<br>"
+
+    return output
+    
 # =========================================
 # SIGNUP
 # =========================================
