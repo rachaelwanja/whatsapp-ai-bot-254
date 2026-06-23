@@ -249,6 +249,16 @@ def dashboard():
         business_id=business_id
     ).all()
 
+    services = Service.query.filter_by(
+        business_id=business_id
+    ).all()
+
+    payments = Payment.query.filter_by(
+        business_id=business_id
+    ).order_by(
+        Payment.id.desc()
+    ).limit(5).all()
+
     total_revenue = sum(
         a.amount for a in appointments
     )
