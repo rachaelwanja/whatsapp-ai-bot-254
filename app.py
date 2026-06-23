@@ -176,55 +176,6 @@ def migrate_business():
         db.session.rollback()
 
         return str(e)
-# =========================================
-# LOGIN
-# =========================================
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-
-    if request.method == "POST":
-
-        username = request.form.get(
-            "username"
-        )
-
-        password = request.form.get(
-            "password"
-        )
-
-        business = Business.query.filter_by(
-            username=username
-        ).first()
-        
- print("Entered password:", password)
-
- if business:
-    print("Stored hash:", business.password)
-    print("Password match:", check_password_hash(business.password, password))
-
- if business and check_password_hash(
-    business.password,
-    password
-):
-
-            session["business_id"] = business.id
-
-            return redirect(
-                "/dashboard"
-            )
-
-        flash(
-            "Invalid credentials"
-        )
-
-        return redirect(
-            "/login"
-        )
-
-    return render_template(
-        "login.html"
-    )
     
 @app.route("/login", methods=["GET", "POST"])
 def login():
