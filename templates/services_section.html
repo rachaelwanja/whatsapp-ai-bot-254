@@ -12,35 +12,73 @@
 
     </div>
 
-    <form action="/add-service" method="POST" class="grid md:grid-cols-4 gap-3 mb-6">
+    <form action="/add-service" method="POST" class="grid md:grid-cols-2 gap-4 mb-8">
+
+    <input
+        type="text"
+        name="name"
+        placeholder="Service Name"
+        class="border rounded-lg p-3"
+        required>
+
+    <select
+        name="category"
+        class="border rounded-lg p-3">
+
+        <option>Hair</option>
+        <option>Barber</option>
+        <option>Beauty</option>
+        <option>Spa</option>
+        <option>Massage</option>
+        <option>Medical</option>
+        <option>Consultation</option>
+        <option>Other</option>
+
+    </select>
+
+    <input
+        type="number"
+        name="price"
+        placeholder="Price"
+        class="border rounded-lg p-3">
+
+    <input
+        type="text"
+        name="duration"
+        placeholder="30 mins"
+        class="border rounded-lg p-3">
+
+    <input
+        type="number"
+        name="deposit"
+        placeholder="Deposit (Optional)"
+        class="border rounded-lg p-3">
+
+    <input
+        type="text"
+        name="image"
+        placeholder="Image URL"
+        class="border rounded-lg p-3">
+
+    <label class="flex items-center gap-2">
 
         <input
-            type="text"
-            name="name"
-            placeholder="Service Name"
-            class="border rounded-lg p-3"
-            required>
+            type="checkbox"
+            name="available"
+            checked>
 
-        <input
-            type="number"
-            name="price"
-            placeholder="Price"
-            class="border rounded-lg p-3"
-            required>
+        Available
 
-        <input
-            type="text"
-            name="duration"
-            placeholder="30 mins"
-            class="border rounded-lg p-3"
-            required>
+    </label>
 
-        <button
-            class="bg-black text-white rounded-lg">
-            Add Service
-        </button>
+    <button
+        class="bg-black text-white rounded-lg p-3 md:col-span-2">
 
-    </form>
+        Add Service
+
+    </button>
+
+</form>
 
     <table class="w-full">
 
