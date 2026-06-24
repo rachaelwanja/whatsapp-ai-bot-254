@@ -98,6 +98,7 @@ class Appointment(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+    
 class Service(db.Model):
 
     id = db.Column(
@@ -113,6 +114,11 @@ class Service(db.Model):
         db.String(200)
     )
 
+    category = db.Column(
+        db.String(100),
+        default="General"
+    )
+
     price = db.Column(
         db.Integer,
         default=0
@@ -121,6 +127,21 @@ class Service(db.Model):
     duration = db.Column(
         db.String(100),
         default="30 mins"
+    )
+
+    image = db.Column(
+        db.String(500),
+        default=""
+    )
+
+    deposit = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    available = db.Column(
+        db.Boolean,
+        default=True
     )
 
     created_at = db.Column(
