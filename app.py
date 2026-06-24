@@ -684,7 +684,42 @@ def reset_database():
         db.session.rollback()
 
         return str(e)
+        
+@app.route("/migrate-service")
+def migrate_service():
 
+    try:
+
+        db.session.execute(db.text("""
+            ALTER TABLE service
+            ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General'
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE service
+            ADD COLUMN IF NOT EXISTS deposit INTEGER DEFAULT 0
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE service
+            ADD COLUMN IF NOT EXISTS image VARCHAR(500) DEFAULT ''
+        """))
+
+        db.session.execute(db.text("""
+            ALTER TABLE service
+            ADD COLUMN IF NOT EXISTS available BOOLEAN DEFAULT TRUE
+        """))
+
+        db.session.commit()
+
+        return "Service migration successful"
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        return str(e)
+        
 # =========================================
 # CREATE TABLES
 # =========================================
