@@ -276,7 +276,56 @@ def dashboard():
         revenue=total_revenue,
         customer_count=customer_count
     )
+    
+@app.route("/business-settings", methods=["GET", "POST"])
+def business_settings():
 
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    if request.method == "POST":
+
+        business.business_name = request.form.get(
+            "business_name"
+        )
+
+        business.business_type = request.form.get(
+            "business_type"
+        )
+
+        business.business_phone = request.form.get(
+            "business_phone"
+        )
+
+        business.location = request.form.get(
+            "location"
+        )
+
+        business.opening_hours = request.form.get(
+            "opening_hours"
+        )
+
+        business.ai_prompt = request.form.get(
+            "ai_prompt"
+        )
+
+        db.session.commit()
+
+        flash("Business settings saved!")
+
+        return redirect(
+            "/business-settings"
+        )
+
+    return render_template(
+        "business_settings.html",
+        business=business
+    )
+    
 # =========================================
 # ADD SERVICE
 # =========================================
