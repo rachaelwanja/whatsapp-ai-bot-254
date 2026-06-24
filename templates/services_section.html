@@ -1,9 +1,87 @@
 <div class="bg-white rounded-2xl shadow p-6 mb-6">
-    <h2 class="text-2xl font-bold">
-        Services
-    </h2>
 
-    <p class="text-gray-500 mt-2">
-        Coming next...
-    </p>
+    <div class="flex justify-between items-center mb-5">
+
+        <h2 class="text-2xl font-bold">
+            Services
+        </h2>
+
+        <span class="text-gray-500">
+            {{ services|length }} Services
+        </span>
+
+    </div>
+
+    <form action="/add-service" method="POST" class="grid md:grid-cols-4 gap-3 mb-6">
+
+        <input
+            type="text"
+            name="name"
+            placeholder="Service Name"
+            class="border rounded-lg p-3"
+            required>
+
+        <input
+            type="number"
+            name="price"
+            placeholder="Price"
+            class="border rounded-lg p-3"
+            required>
+
+        <input
+            type="text"
+            name="duration"
+            placeholder="30 mins"
+            class="border rounded-lg p-3"
+            required>
+
+        <button
+            class="bg-black text-white rounded-lg">
+            Add Service
+        </button>
+
+    </form>
+
+    <table class="w-full">
+
+        <thead>
+
+            <tr class="border-b">
+
+                <th class="text-left p-3">Service</th>
+
+                <th class="text-left p-3">Price</th>
+
+                <th class="text-left p-3">Duration</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for service in services %}
+
+        <tr class="border-b hover:bg-gray-50">
+
+            <td class="p-3">
+                {{ service.name }}
+            </td>
+
+            <td class="p-3">
+                KES {{ service.price }}
+            </td>
+
+            <td class="p-3">
+                {{ service.duration }}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
 </div>
