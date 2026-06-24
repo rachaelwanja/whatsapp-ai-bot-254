@@ -333,15 +333,26 @@ def business_settings():
 @app.route("/add-service", methods=["POST"])
 def add_service():
 
+    if "business_id" not in session:
+        return redirect("/login")
+
     service = Service(
 
         business_id=session["business_id"],
 
-        name=request.form.get("name"),
+        name=request.form["name"],
 
-        price=request.form.get("price"),
+        category=request.form["category"],
 
-        duration=request.form.get("duration")
+        price=request.form["price"],
+
+        duration=request.form["duration"],
+
+        deposit=request.form.get("deposit", 0),
+
+        image=request.form.get("image", ""),
+
+        available="available" in request.form
 
     )
 
@@ -350,17 +361,7 @@ def add_service():
     db.session.commit()
 
     return redirect("/dashboard")
-@app.route("/debug-users")
-def debug_users():
-
-    businesses = Business.query.all()
-
-    output = ""
-
-    for b in businesses:
-        output += f"{b.id} - {b.username}<br>"
-
-    return output
+    
 # =========================================
 # ADD APPOINTMENT
 # =========================================
