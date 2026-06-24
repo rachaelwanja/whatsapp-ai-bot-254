@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Edit Service</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-3xl mx-auto p-8">
+
+    <div class="bg-white rounded-3xl shadow-lg p-8">
+
+        <h1 class="text-3xl font-bold mb-6">
+            ✏️ Edit Service
+        </h1>
+
+        <form method="POST">
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Service Name
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    value="{{ service.name }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Category
+                </label>
+
+                <input
+                    type="text"
+                    name="category"
+                    value="{{ service.category }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Price (KES)
+                </label>
+
+                <input
+                    type="number"
+                    name="price"
+                    value="{{ service.price }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Duration
+                </label>
+
+                <input
+                    type="text"
+                    name="duration"
+                    value="{{ service.duration }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Deposit
+                </label>
+
+                <input
+                    type="number"
+                    name="deposit"
+                    value="{{ service.deposit }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-4">
+
+                <label class="font-semibold">
+                    Image URL
+                </label>
+
+                <input
+                    type="text"
+                    name="image"
+                    value="{{ service.image }}"
+                    class="w-full border rounded-xl p-3 mt-2">
+
+            </div>
+
+            <div class="mb-6">
+
+                <label class="flex items-center gap-3">
+
+                    <input
+                        type="checkbox"
+                        name="available"
+                        {% if service.available %}checked{% endif %}>
+
+                    Available
+
+                </label>
+
+            </div>
+
+            <div class="flex gap-4">
+
+                <button
+                    class="bg-black text-white px-6 py-3 rounded-xl">
+
+                    💾 Save Changes
+
+                </button>
+
+                <a
+                    href="/services"
+                    class="bg-gray-300 px-6 py-3 rounded-xl">
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
