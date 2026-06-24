@@ -187,7 +187,27 @@ def migrate_business():
         db.session.rollback()
 
         return str(e)
-    
+        
+@app.route("/services")
+def services():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business_id = session["business_id"]
+
+    business = Business.query.get(business_id)
+
+    services = Service.query.filter_by(
+        business_id=business_id
+    ).all()
+
+    return render_template(
+        "services.html",
+        business=business,
+        services=services
+    )
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
