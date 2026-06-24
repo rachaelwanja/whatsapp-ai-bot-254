@@ -1,172 +1,281 @@
+```html
 <!DOCTYPE html>
 <html>
+
 <head>
 
-    <title>Services — FlowAI</title>
+    <title>FlowAI Services</title>
 
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+          content="width=device-width, initial-scale=1">
 
     <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
 
-<body class="bg-gray-100 pb-24">
+<body class="bg-gray-100">
 
-<!-- TOP BAR -->
-<div class="sticky top-0 bg-white shadow-sm z-40 px-5 py-4 flex justify-between items-center">
+<div class="flex min-h-screen">
 
-    <div>
+    {% include "sidebar.html" %}
 
-        <h1 class="text-2xl font-bold">
-            Services
-        </h1>
+    <div class="flex-1 p-8">
 
-        <p class="text-gray-500 text-sm">
-            Manage business services
-        </p>
+        <!-- HEADER -->
 
-    </div>
+        <div class="flex justify-between items-center mb-8">
 
-    <a href="/dashboard"
-       class="bg-black text-white px-4 py-2 rounded-xl">
-        Dashboard
-    </a>
-
-</div>
-
-<!-- MAIN -->
-<div class="p-5">
-
-    <!-- ADD SERVICE -->
-    <div class="bg-white rounded-3xl shadow-lg p-6 mb-6">
-
-        <h2 class="text-xl font-bold mb-4">
-            Add New Service
-        </h2>
-
-        <form action="/add-service"
-      method="POST">
-              class="space-y-4">
-
-            <!-- NAME -->
             <div>
 
-                <label class="block mb-2 text-sm font-semibold">
-                    Service Name
-                </label>
+                <h1 class="text-4xl font-bold">
+                    💇 Services
+                </h1>
 
-                <input type="text"
-                       name="name"
-                       placeholder="Haircut"
-                       required
-                       class="w-full border rounded-2xl px-4 py-3">
+                <p class="text-gray-500 mt-2">
+                    Create and manage all your business services.
+                </p>
 
             </div>
 
-            <!-- PRICE -->
-            <div>
+            <a href="/dashboard"
+               class="bg-black text-white px-5 py-3 rounded-xl">
 
-                <label class="block mb-2 text-sm font-semibold">
-                    Price (KES)
-                </label>
+                Dashboard
 
-                <input type="number"
-                       name="price"
-                       placeholder="1000"
-                       required
-                       class="w-full border rounded-2xl px-4 py-3">
-
-            </div>
-
-            <!-- DURATION -->
-            <div>
-
-                <label class="block mb-2 text-sm font-semibold">
-                    Duration (minutes)
-                </label>
-
-                <input type="number"
-                       name="duration"
-                       placeholder="60"
-                       required
-                       class="w-full border rounded-2xl px-4 py-3">
-
-            </div>
-
-            <!-- BUTTON -->
-            <button type="submit"
-                    class="w-full bg-black text-white py-3 rounded-2xl font-semibold">
-
-                Add Service
-
-            </button>
-
-        </form>
-
-    </div>
-
-    <!-- SERVICES LIST -->
-    <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
-
-        <div class="p-5 border-b">
-
-            <h2 class="text-xl font-bold">
-                Business Services
-            </h2>
+            </a>
 
         </div>
 
-        {% if services %}
+        <!-- ADD SERVICE -->
 
-        <div class="divide-y">
+        <div class="bg-white rounded-3xl shadow-lg p-8 mb-8">
 
-            {% for service in services %}
+            <h2 class="text-2xl font-bold mb-6">
 
-            <div class="p-5 flex justify-between items-center">
+                Add New Service
 
-                <div>
+            </h2>
 
-                    <h3 class="font-bold text-lg">
-                        {{ service.name }}
-                    </h3>
+            <form
+                action="/add-service"
+                method="POST"
+                class="grid md:grid-cols-2 gap-5">
 
-                    <p class="text-gray-500 text-sm mt-1">
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Service Name"
+                    required
+                    class="border rounded-xl p-3">
 
-                        KES {{ service.price }}
-                        •
-                        {{ service.duration }} mins
+                <select
+                    name="category"
+                    class="border rounded-xl p-3">
 
-                    </p>
+                    <option>Hair</option>
+                    <option>Barber</option>
+                    <option>Beauty</option>
+                    <option>Spa</option>
+                    <option>Massage</option>
+                    <option>Medical</option>
+                    <option>Consultation</option>
+                    <option>Other</option>
+
+                </select>
+
+                <input
+                    type="number"
+                    name="price"
+                    placeholder="Price (KES)"
+                    required
+                    class="border rounded-xl p-3">
+
+                <input
+                    type="text"
+                    name="duration"
+                    placeholder="30 mins"
+                    required
+                    class="border rounded-xl p-3">
+
+                <input
+                    type="number"
+                    name="deposit"
+                    placeholder="Deposit (Optional)"
+                    class="border rounded-xl p-3">
+
+                <input
+                    type="text"
+                    name="image"
+                    placeholder="Image URL"
+                    class="border rounded-xl p-3">
+
+                <div class="flex items-center gap-3">
+
+                    <input
+                        type="checkbox"
+                        name="available"
+                        checked>
+
+                    <label>
+
+                        Available
+
+                    </label>
 
                 </div>
 
-                <!-- STATUS -->
-                {% if service.active %}
+                <button
+                    class="bg-black text-white rounded-xl p-3 md:col-span-2">
 
-                <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">
-                    Active
+                    Add Service
+
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- SERVICES -->
+
+        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+        {% for service in services %}
+
+        <div class="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden">
+
+            {% if service.image %}
+
+            <img
+                src="{{ service.image }}"
+                class="w-full h-56 object-cover">
+
+            {% else %}
+
+            <div class="h-56 bg-gray-200 flex items-center justify-center text-7xl">
+
+                💇
+
+            </div>
+
+            {% endif %}
+
+            <div class="p-6">
+
+                <h2 class="text-2xl font-bold">
+
+                    {{ service.name }}
+
+                </h2>
+
+                <p class="text-gray-500 mt-1">
+
+                    {{ service.category }}
+
+                </p>
+
+                <div class="mt-5 space-y-2">
+
+                    <div>
+
+                        💰
+
+                        <span class="font-bold text-green-600">
+
+                            KES {{ service.price }}
+
+                        </span>
+
+                    </div>
+
+                    <div>
+
+                        ⏱
+
+                        {{ service.duration }}
+
+                    </div>
+
+                    <div>
+
+                        Deposit
+
+                        <strong>
+
+                            KES {{ service.deposit }}
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                {% if service.available %}
+
+                <span class="inline-block mt-5 bg-green-100 text-green-700 px-3 py-1 rounded-full">
+
+                    🟢 Available
+
                 </span>
 
                 {% else %}
 
-                <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm">
-                    Inactive
+                <span class="inline-block mt-5 bg-red-100 text-red-700 px-3 py-1 rounded-full">
+
+                    🔴 Unavailable
+
                 </span>
 
                 {% endif %}
 
-            </div>
+                <div class="flex gap-3 mt-6">
 
-            {% endfor %}
+                    <a
+                        href="/edit-service/{{ service.id }}"
+                        class="flex-1 bg-blue-600 text-white text-center py-2 rounded-xl">
+
+                        ✏️ Edit
+
+                    </a>
+
+                    <a
+                        href="/delete-service/{{ service.id }}"
+                        class="flex-1 bg-red-600 text-white text-center py-2 rounded-xl">
+
+                        🗑 Delete
+
+                    </a>
+
+                </div>
+
+            </div>
 
         </div>
 
-        {% else %}
+        {% endfor %}
 
-        <div class="p-6 text-gray-500">
+        </div>
 
-            No services added yet
+        {% if not services %}
+
+        <div class="bg-white rounded-3xl shadow-lg p-12 text-center mt-8">
+
+            <div class="text-6xl mb-4">
+
+                💼
+
+            </div>
+
+            <h2 class="text-2xl font-bold">
+
+                No Services Yet
+
+            </h2>
+
+            <p class="text-gray-500 mt-2">
+
+                Add your first service using the form above.
+
+            </p>
 
         </div>
 
@@ -176,65 +285,7 @@
 
 </div>
 
-<!-- MOBILE NAV -->
-<div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl flex justify-around py-3">
-
-    <a href="/dashboard"
-       class="flex flex-col items-center text-gray-500">
-
-        <span class="text-xl">📊</span>
-
-        <span class="text-xs">
-            Dashboard
-        </span>
-
-    </a>
-
-    <a href="/payments"
-       class="flex flex-col items-center text-gray-500">
-
-        <span class="text-xl">💰</span>
-
-        <span class="text-xs">
-            Payments
-        </span>
-
-    </a>
-
-    <a href="/customers"
-       class="flex flex-col items-center text-gray-500">
-
-        <span class="text-xl">👥</span>
-
-        <span class="text-xs">
-            Customers
-        </span>
-
-    </a>
-
-    <a href="/services"
-       class="flex flex-col items-center text-black">
-
-        <span class="text-xl">✂️</span>
-
-        <span class="text-xs font-semibold">
-            Services
-        </span>
-
-    </a>
-
-    <a href="/settings"
-       class="flex flex-col items-center text-gray-500">
-
-        <span class="text-xl">⚙️</span>
-
-        <span class="text-xs">
-            Settings
-        </span>
-
-    </a>
-
-</div>
-
 </body>
+
 </html>
+```
