@@ -1,1 +1,51 @@
+<div class="grid md:grid-cols-4 gap-5 mb-8">
 
+    <div class="bg-white rounded-2xl shadow p-6">
+
+        <p class="text-gray-500">
+            Revenue
+        </p>
+
+        <h2 class="text-4xl font-bold text-green-600 mt-2">
+            KES {{ revenue }}
+        </h2>
+
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+
+        <p class="text-gray-500">
+            Appointments
+        </p>
+
+        <h2 class="text-4xl font-bold mt-2">
+            {{ appointments|length }}
+        </h2>
+
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+
+        <p class="text-gray-500">
+            Services
+        </p>
+
+        <h2 class="text-4xl font-bold mt-2">
+            {{ services|length }}
+        </h2>
+
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+
+        <p class="text-gray-500">
+            Customers
+        </p>
+
+        <h2 class="text-4xl font-bold mt-2">
+            {{ customer_count }}
+        </h2>
+
+    </div>
+
+</div>
