@@ -129,14 +129,14 @@ class Service(db.Model):
         default="30 mins"
     )
 
-    image = db.Column(
-        db.String(500),
-        default=""
-    )
-
     deposit = db.Column(
         db.Integer,
         default=0
+    )
+
+    image = db.Column(
+        db.String(500),
+        default=""
     )
 
     available = db.Column(
