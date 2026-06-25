@@ -422,6 +422,41 @@ def add_service():
     if "business_id" not in session:
         return redirect("/login")
 
+    # -----------------------------
+    # Upload image
+    # -----------------------------
+
+    image_name = ""
+
+    image = request.files.get("image")
+
+    if image and image.filename != "":
+
+        filename = secure_filename(
+            image.filename
+        )
+
+        extension = filename.rsplit(
+            ".", 1
+        )[1].lower()
+
+        image_name = (
+            str(uuid.uuid4())
+            + "."
+            + extension
+        )
+
+        image.save(
+            os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                image_name
+            )
+        )
+
+    # -----------------------------
+    # Save service
+    # -----------------------------
+
     service = Service(
 
         business_id=session["business_id"],
@@ -430,13 +465,15 @@ def add_service():
 
         category=request.form["category"],
 
-        price=request.form["price"],
+        price=int(request.form["price"]),
 
         duration=request.form["duration"],
 
-        deposit=request.form.get("deposit", 0),
+        deposit=int(
+            request.form.get("deposit", 0)
+        ),
 
-        image=request.form.get("image", ""),
+        image=image_name,
 
         available="available" in request.form
 
@@ -446,7 +483,13 @@ def add_service():
 
     db.session.commit()
 
-    return redirect("/dashboard")
+    flash(
+        "Service added successfully!"
+    )
+
+    return redirect("/services")
+```
+
     
 # =========================================
 # ADD APPOINTMENT
