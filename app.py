@@ -212,6 +212,77 @@ def services():
         business=business,
         services=services
     )
+    # =========================================
+# BUSINESS SETTINGS
+# =========================================
+
+@app.route("/business-settings")
+def business_settings():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    return render_template(
+        "business_settings.html",
+        business=business
+    )
+    
+# =========================================
+# WHATSAPP AI
+# =========================================
+
+@app.route("/whatsapp-ai")
+def whatsapp_ai():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    return render_template(
+        "whatsapp_ai.html",
+        business=business
+    )
+    
+# =========================================
+# ANALYTICS
+# =========================================
+
+@app.route("/analytics")
+def analytics():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    appointments = Appointment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    services = Service.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    payments = Payment.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    return render_template(
+        "analytics.html",
+        business=business,
+        appointments=appointments,
+        services=services,
+        payments=payments
+    )
     
 # =========================================
 # EDIT SERVICE
