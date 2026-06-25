@@ -4,6 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from twilio.twiml.voice_response import VoiceResponse
 import os
+import uuid
+
+from werkzeug.utils import secure_filename
 import requests
 import base64
 from models import db, Business, Appointment, Service, Payment
@@ -13,7 +16,7 @@ from services import (
     stk_push,
     ask_ai
 )
-app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 booking_states = {}
 
