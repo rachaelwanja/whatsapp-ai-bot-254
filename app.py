@@ -16,6 +16,8 @@ from services import (
     stk_push,
     ask_ai
 )
+app = Flask(__name__)
+
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 booking_states = {}
