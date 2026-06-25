@@ -145,11 +145,11 @@
 
             {% if service.image %}
 
-            <img
-                src="{{ service.image }}"
-                class="w-full h-56 object-cover">
+<img
+    src="{{ url_for('static', filename='uploads/' + service.image) }}"
+    class="w-full h-56 object-cover">
 
-            {% else %}
+{% else %}
 
             <div class="h-56 bg-gray-200 flex items-center justify-center text-7xl">
 
