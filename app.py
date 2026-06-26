@@ -158,6 +158,21 @@ def signup():
     return render_template(
         "signup.html"
     )
+
+@app.route("/users")
+def users():
+
+    businesses = Business.query.all()
+
+    for b in businesses:
+        print(
+            b.id,
+            b.username,
+            b.business_name
+        )
+
+    return "Check Render logs"
+    
 @app.route("/migrate-business")
 def migrate_business():
 
