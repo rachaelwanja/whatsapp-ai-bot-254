@@ -212,24 +212,6 @@ def services():
         business=business,
         services=services
     )
-    # =========================================
-# BUSINESS SETTINGS
-# =========================================
-
-@app.route("/business-settings")
-def business_settings():
-
-    if "business_id" not in session:
-        return redirect("/login")
-
-    business = Business.query.get(
-        session["business_id"]
-    )
-
-    return render_template(
-        "business_settings.html",
-        business=business
-    )
     
 # =========================================
 # WHATSAPP AI
