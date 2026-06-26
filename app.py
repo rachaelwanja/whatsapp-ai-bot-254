@@ -66,7 +66,7 @@ CALLBACK_URL = os.getenv(
 # HOME
 # =========================================
 
-@app.route("/")
+ap@p.route("/")
 def home():
 
     return render_template(
