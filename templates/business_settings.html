@@ -1,109 +1,148 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>Business Settings</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
-<body>
 
-<h1>Business Settings</h1>
+<body class="bg-gray-100">
 
-<a href="/dashboard">← Dashboard</a>
+<div class="flex min-h-screen">
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <p style="color:green;">
+    {% include "sidebar.html" %}
+
+    <div class="flex-1 p-8">
+
+        <!-- Header -->
+
+        <div class="flex justify-between items-center mb-8">
+
+            <div>
+
+                <h1 class="text-4xl font-bold">
+                    ⚙️ Business Settings
+                </h1>
+
+                <p class="text-gray-500 mt-2">
+                    Configure your business information for your AI receptionist.
+                </p>
+
+            </div>
+
+            <a href="/dashboard"
+               class="bg-black text-white px-5 py-3 rounded-xl">
+
+                Dashboard
+
+            </a>
+
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+
+        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6">
+
             {{ messages[0] }}
-        </p>
-    {% endif %}
-{% endwith %}
 
-<form method="POST">
+        </div>
 
-    <h2>Business Information</h2>
+        {% endif %}
+        {% endwith %}
 
-    <label>Business Name</label><br>
-    <input
-        type="text"
-        name="business_name"
-        value="{{ business.business_name or '' }}"
-    >
+        <div class="bg-white rounded-3xl shadow-lg p-8">
 
-    <br><br>
+            <h2 class="text-2xl font-bold mb-6">
 
-    <label>Business Type</label><br>
+                Business Information
 
-    <select name="business_type">
+            </h2>
 
-        <option value="General"
-        {% if business.business_type=="General" %}selected{% endif %}>
-        General
-        </option>
+            <form method="POST"
+                  class="grid md:grid-cols-2 gap-5">
 
-        <option value="Salon"
-        {% if business.business_type=="Salon" %}selected{% endif %}>
-        Salon
-        </option>
+                <input
+                    type="text"
+                    name="business_name"
+                    placeholder="Business Name"
+                    value="{{ business.business_name or '' }}"
+                    class="border rounded-xl p-3">
 
-        <option value="Clinic"
-        {% if business.business_type=="Clinic" %}selected{% endif %}>
-        Clinic
-        </option>
+                <select
+                    name="business_type"
+                    class="border rounded-xl p-3">
 
-        <option value="Restaurant"
-        {% if business.business_type=="Restaurant" %}selected{% endif %}>
-        Restaurant
-        </option>
+                    <option value="General"
+                    {% if business.business_type=="General" %}selected{% endif %}>
+                    General
+                    </option>
 
-    </select>
+                    <option value="Salon"
+                    {% if business.business_type=="Salon" %}selected{% endif %}>
+                    Salon
+                    </option>
 
-    <br><br>
+                    <option value="Restaurant"
+                    {% if business.business_type=="Restaurant" %}selected{% endif %}>
+                    Restaurant
+                    </option>
 
-    <label>Phone Number</label><br>
+                    <option value="Clinic"
+                    {% if business.business_type=="Clinic" %}selected{% endif %}>
+                    Clinic
+                    </option>
 
-    <input
-        type="text"
-        name="business_phone"
-        value="{{ business.business_phone or '' }}"
-    >
+                </select>
 
-    <br><br>
+                <input
+                    type="text"
+                    name="business_phone"
+                    placeholder="Phone Number"
+                    value="{{ business.business_phone or '' }}"
+                    class="border rounded-xl p-3">
 
-    <label>Location</label><br>
+                <input
+                    type="text"
+                    name="location"
+                    placeholder="Location"
+                    value="{{ business.location or '' }}"
+                    class="border rounded-xl p-3">
 
-    <input
-        type="text"
-        name="location"
-        value="{{ business.location or '' }}"
-    >
+                <input
+                    type="text"
+                    name="opening_hours"
+                    placeholder="Mon–Fri 8am–6pm"
+                    value="{{ business.opening_hours or '' }}"
+                    class="border rounded-xl p-3 md:col-span-2">
 
-    <br><br>
+                <textarea
+                    name="ai_prompt"
+                    rows="8"
+                    placeholder="Describe how your AI receptionist should behave..."
+                    class="border rounded-xl p-3 md:col-span-2">{{ business.ai_prompt or '' }}</textarea>
 
-    <label>Opening Hours</label><br>
+                <button
+                    class="bg-black text-white rounded-xl p-3 md:col-span-2">
 
-    <input
-        type="text"
-        name="opening_hours"
-        placeholder="Mon-Fri 8am-6pm"
-        value="{{ business.opening_hours or '' }}"
-    >
+                    Save Settings
 
-    <br><br>
+                </button>
 
-    <label>AI Prompt</label><br>
+            </form>
 
-    <textarea
-        name="ai_prompt"
-        rows="6"
-        cols="60"
-    >{{ business.ai_prompt or '' }}</textarea>
+        </div>
 
-    <br><br>
+    </div>
 
-    <button type="submit">
-        Save Settings
-    </button>
-
-</form>
+</div>
 
 </body>
+
 </html>
