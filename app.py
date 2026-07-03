@@ -830,26 +830,28 @@ Please tell me:
     # AI
     # -------------------------------
 
-    else:
-services = Service.query.filter_by(
-    business_id=business.id
-).all()
+        else:
 
-services_text = ""
+        services = Service.query.filter_by(
+            business_id=business.id
+        ).all()
 
-if services:
+        services_text = ""
 
-    for service in services:
+        if services:
 
-        services_text += (
-            f"- {service.name}: "
-            f"KES {service.price} "
-            f"({service.duration})\n"
-        )
+            for service in services:
 
-else:
+                services_text += (
+                    f"- {service.name}: "
+                    f"KES {service.price} "
+                    f"({service.duration})\n"
+                )
 
-    services_text = "No services configured."
+        else:
+
+            services_text = "No services configured."
+
         prompt = f"""
 You are the official AI receptionist for this business.
 
