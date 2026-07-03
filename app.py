@@ -709,11 +709,13 @@ def whatsapp():
     business = Business.query.first()
 
     if not business:
+
         twiml = """
 <Response>
     <Message>No business has been configured yet.</Message>
 </Response>
 """
+
         return Response(
             twiml,
             mimetype="text/xml"
@@ -790,8 +792,8 @@ Please tell me:
             for service in services:
 
                 reply += (
-                    f"• {service.name}"
-                    f" - KES {service.price}\n"
+                    f"• {service.name} - "
+                    f"KES {service.price}\n"
                 )
 
         else:
@@ -827,10 +829,10 @@ Please tell me:
 """
 
     # -------------------------------
-    # AI
+    # AI RECEPTIONIST
     # -------------------------------
 
-   else:
+    else:
 
         services = Service.query.filter_by(
             business_id=business.id
@@ -878,8 +880,8 @@ Instructions:
 Rules:
 
 - Only recommend services listed above.
-- Never invent prices.
 - Never invent services.
+- Never invent prices.
 - If you don't know something, politely say so.
 - Keep replies friendly, professional, and concise.
 - Encourage customers to book an appointment when appropriate.
