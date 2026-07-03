@@ -831,9 +831,27 @@ Please tell me:
     # -------------------------------
 
     else:
+services = Service.query.filter_by(
+    business_id=business.id
+).all()
 
+services_text = ""
+
+if services:
+
+    for service in services:
+
+        services_text += (
+            f"- {service.name}: "
+            f"KES {service.price} "
+            f"({service.duration})\n"
+        )
+
+else:
+
+    services_text = "No services configured."
         prompt = f"""
-You are the AI receptionist for:
+You are the official AI receptionist for this business.
 
 Business Name:
 {business.business_name}
@@ -847,10 +865,25 @@ Location:
 Opening Hours:
 {business.opening_hours}
 
+Available Services:
+
+{services_text}
+
 Instructions:
+
 {business.ai_prompt}
 
+Rules:
+
+- Only recommend services listed above.
+- Never invent prices.
+- Never invent services.
+- If you don't know something, politely say so.
+- Keep replies friendly, professional, and concise.
+- Encourage customers to book an appointment when appropriate.
+
 Customer Message:
+
 {incoming_msg}
 """
 
