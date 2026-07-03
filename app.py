@@ -830,7 +830,7 @@ Please tell me:
     # AI
     # -------------------------------
 
-        else:
+   else:
 
         services = Service.query.filter_by(
             business_id=business.id
