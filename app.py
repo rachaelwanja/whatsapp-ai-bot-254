@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from twilio.twiml.voice_response import VoiceResponse
+from twilio.twiml.messaging_response import MessagingResponse
 import os
 import uuid
 
@@ -893,16 +894,13 @@ Customer Message:
 
         reply = ask_ai(prompt)
 
-    twiml = f"""
-<Response>
-    <Message>{reply}</Message>
-</Response>
-"""
+response = MessagingResponse()
+response.message(reply)
 
-    return Response(
-        twiml,
-        mimetype="text/xml"
-    )
+return Response(
+    str(response),
+    mimetype="text/xml"
+)
 
 # =========================================
 # LOGOUT
