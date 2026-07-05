@@ -855,7 +855,7 @@ Please tell me:
 
             services_text = "No services configured."
 
-        prompt = f"""
+                prompt = f"""
 You are the official AI receptionist for this business.
 
 Business Name:
@@ -892,7 +892,7 @@ Customer Message:
 {incoming_msg}
 """
 
-                reply = ask_ai(prompt)
+        reply = ask_ai(prompt)
 
     response = MessagingResponse()
     response.message(reply)
