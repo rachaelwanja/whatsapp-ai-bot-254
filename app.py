@@ -892,15 +892,15 @@ Customer Message:
 {incoming_msg}
 """
 
-        reply = ask_ai(prompt)
+                reply = ask_ai(prompt)
 
-response = MessagingResponse()
-response.message(reply)
+    response = MessagingResponse()
+    response.message(reply)
 
-return Response(
-    str(response),
-    mimetype="text/xml"
-)
+    return Response(
+        str(response),
+        mimetype="text/xml"
+    )
 
 # =========================================
 # LOGOUT
