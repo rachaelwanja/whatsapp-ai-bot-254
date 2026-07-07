@@ -85,7 +85,7 @@ def login():
 
             session["business_id"] = business.id
 
-            return "LOGIN SUCCESS"
+            return redirect("/dashboard")
 
         flash("Invalid credentials")
         return redirect("/login")
