@@ -47,3 +47,44 @@ def signup():
         return redirect("/login")
 
     return render_template("signup.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        business = Business.query.filter_by(
+            username=username
+        ).first()
+
+        print("USERNAME:", username)
+        print("BUSINESS:", business)
+        print("ENTERED PASSWORD:", password)
+
+        if business:
+            print("STORED HASH:", business.password)
+            print(
+                "PASSWORD MATCH:",
+                check_password_hash(
+                    business.password,
+                    password
+                )
+            )
+
+        if business and check_password_hash(
+            business.password,
+            password
+        ):
+
+            session["business_id"] = business.id
+
+            return redirect("/dashboard")
+
+        flash("Invalid credentials")
+
+        return redirect("/login")
+
+    return render_template("login.html")
