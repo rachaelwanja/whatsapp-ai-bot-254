@@ -84,81 +84,6 @@ def debug_businesses():
         output += f"{b.id} | {b.username}<br>"
 
     return output
-    
-# =========================================
-# SIGNUP
-# =========================================
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-
-    if request.method == "POST":
-
-        username = request.form.get(
-            "username"
-        )
-
-        password = request.form.get(
-            "password"
-        )
-
-        business_name = request.form.get(
-            "business_name"
-        )
-
-        business_phone = request.form.get(
-            "business_phone"
-        )
-
-        existing_user = Business.query.filter_by(
-            username=username
-        ).first()
-        print("SIGNUP USERNAME:", username)
-        print("EXISTING USER:", existing_user)
-
-        if existing_user:
-
-            flash(
-                "Account already exists"
-            )
-
-            return redirect(
-                "/signup"
-            )
-
-        hashed_password = generate_password_hash(
-            password
-        )
-
-        new_business = Business(
-
-            username=username,
-
-            password=hashed_password,
-
-            business_name=business_name,
-
-            business_phone=business_phone
-
-        )
-
-        db.session.add(
-            new_business
-        )
-
-        db.session.commit()
-
-        flash(
-            "Signup successful"
-        )
-
-        return redirect(
-            "/login"
-        )
-
-    return render_template(
-        "signup.html"
-    )
 
 @app.route("/users")
 def users():
@@ -342,47 +267,6 @@ def delete_service(id):
     flash("Service deleted successfully!")
 
     return redirect("/services")
-    
-@app.route("/login", methods=["GET", "POST"])
-def login():
-
-    if request.method == "POST":
-
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        business = Business.query.filter_by(
-            username=username
-        ).first()
-
-        print("USERNAME:", username)
-        print("BUSINESS:", business)
-        print("ENTERED PASSWORD:", password)
-
-        if business:
-            print("STORED HASH:", business.password)
-            print(
-                "PASSWORD MATCH:",
-                check_password_hash(
-                    business.password,
-                    password
-                )
-            )
-
-        if business and check_password_hash(
-            business.password,
-            password
-        ):
-
-            session["business_id"] = business.id
-
-            return redirect("/dashboard")
-
-        flash("Invalid credentials")
-
-        return redirect("/login")
-
-    return render_template("login.html")
     
 # =========================================
 # DASHBOARD
