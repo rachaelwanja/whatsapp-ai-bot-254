@@ -6,7 +6,7 @@ from twilio.twiml.voice_response import VoiceResponse
 from twilio.twiml.messaging_response import MessagingResponse
 import os
 import uuid
-
+from routes.auth import auth
 from werkzeug.utils import secure_filename
 import requests
 import base64
@@ -18,7 +18,7 @@ from services import (
     ask_ai
 )
 app = Flask(__name__)
-
+app.register_blueprint(auth)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 booking_states = {}
