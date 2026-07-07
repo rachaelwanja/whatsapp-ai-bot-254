@@ -91,3 +91,14 @@ def login():
         return redirect("/login")
 
     return render_template("login.html")
+
+# =========================================
+# LOGOUT
+# =========================================
+
+@auth.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/login")
