@@ -48,7 +48,11 @@ def signup():
 
     return render_template("signup.html")
 
-@app.route("/login", methods=["GET", "POST"])
+# =========================================
+# LOGIN
+# =========================================
+
+@auth.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
@@ -84,7 +88,6 @@ def login():
             return redirect("/dashboard")
 
         flash("Invalid credentials")
-
         return redirect("/login")
 
     return render_template("login.html")
