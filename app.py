@@ -706,25 +706,24 @@ def whatsapp():
         ""
     ).strip().lower()
 
-    # Get the business
+    # Get business
     business = Business.query.first()
 
     if not business:
 
-        twiml = """
-<Response>
-    <Message>No business has been configured yet.</Message>
-</Response>
-"""
+        response = MessagingResponse()
+        response.message(
+            "No business has been configured yet."
+        )
 
         return Response(
-            twiml,
+            str(response),
             mimetype="text/xml"
         )
 
-    # -------------------------------
+    # -----------------------------------
     # MAIN MENU
-    # -------------------------------
+    # -----------------------------------
 
     if incoming_msg in [
         "hi",
@@ -750,9 +749,9 @@ Please choose an option:
 Or ask me anything.
 """
 
-    # -------------------------------
+    # -----------------------------------
     # BOOK APPOINTMENT
-    # -------------------------------
+    # -----------------------------------
 
     elif incoming_msg in [
         "1",
@@ -772,14 +771,14 @@ Please tell me:
 • Preferred time
 """
 
-    # -------------------------------
+    # -----------------------------------
     # SERVICES
-    # -------------------------------
+    # -----------------------------------
 
     elif incoming_msg in [
         "2",
-        "prices",
-        "services"
+        "services",
+        "prices"
     ]:
 
         services = Service.query.filter_by(
@@ -793,17 +792,17 @@ Please tell me:
             for service in services:
 
                 reply += (
-                    f"• {service.name} - "
-                    f"KES {service.price}\n"
+                    f"• {service.name}"
+                    f" - KES {service.price}\n"
                 )
 
         else:
 
             reply = "No services have been added yet."
 
-    # -------------------------------
+    # -----------------------------------
     # LOCATION
-    # -------------------------------
+    # -----------------------------------
 
     elif incoming_msg in [
         "3",
@@ -811,13 +810,11 @@ Please tell me:
         "address"
     ]:
 
-        reply = f"""
-📍 {business.location}
-"""
+        reply = f"📍 {business.location}"
 
-    # -------------------------------
+    # -----------------------------------
     # OPENING HOURS
-    # -------------------------------
+    # -----------------------------------
 
     elif incoming_msg in [
         "4",
@@ -825,13 +822,11 @@ Please tell me:
         "opening hours"
     ]:
 
-        reply = f"""
-🕒 {business.opening_hours}
-"""
+        reply = f"🕒 {business.opening_hours}"
 
-    # -------------------------------
+    # -----------------------------------
     # AI RECEPTIONIST
-    # -------------------------------
+    # -----------------------------------
 
     else:
 
@@ -839,23 +834,20 @@ Please tell me:
             business_id=business.id
         ).all()
 
-        services_text = ""
-
         if services:
 
-            for service in services:
-
-                services_text += (
-                    f"- {service.name}: "
-                    f"KES {service.price} "
-                    f"({service.duration})\n"
-                )
+            services_text = "\n".join(
+                [
+                    f"- {s.name}: KES {s.price} ({s.duration})"
+                    for s in services
+                ]
+            )
 
         else:
 
             services_text = "No services configured."
 
-                prompt = f"""
+        prompt = f"""
 You are the official AI receptionist for this business.
 
 Business Name:
@@ -883,9 +875,9 @@ Rules:
 - Only recommend services listed above.
 - Never invent services.
 - Never invent prices.
-- If you don't know something, politely say so.
-- Keep replies friendly, professional, and concise.
-- Encourage customers to book an appointment when appropriate.
+- Keep replies short.
+- Be friendly and professional.
+- Encourage customers to book appointments.
 
 Customer Message:
 
