@@ -9,6 +9,7 @@ from flask import (
 )
 
 from models import (
+    db,
     Business,
     Service
 )
@@ -112,3 +113,43 @@ def add_service():
     )
 
     return redirect("/services")
+
+# =========================================
+# EDIT SERVICE
+# =========================================
+
+@services.route("/edit-service/<int:id>", methods=["GET", "POST"])
+def edit_service(id):
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    service = Service.query.filter_by(
+        id=id,
+        business_id=session["business_id"]
+    ).first_or_404()
+
+    if request.method == "POST":
+
+        service.name = request.form["name"]
+        service.category = request.form["category"]
+        service.price = request.form["price"]
+        service.duration = request.form["duration"]
+        service.deposit = request.form["deposit"]
+
+        service.available = (
+            "available" in request.form
+        )
+
+        db.session.commit()
+
+        flash(
+            "Service updated successfully!"
+        )
+
+        return redirect("/services")
+
+    return render_template(
+        "edit_service.html",
+        service=service
+    )
