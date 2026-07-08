@@ -4,22 +4,35 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from twilio.twiml.voice_response import VoiceResponse
 from twilio.twiml.messaging_response import MessagingResponse
+
 import os
 import uuid
-from routes.auth import auth
-from werkzeug.utils import secure_filename
 import requests
 import base64
+
+from werkzeug.utils import secure_filename
+
 from models import db, Business, Appointment, Service, Payment
+
 from services import (
     get_access_token,
     generate_password,
     stk_push,
     ask_ai
 )
+
+# =========================================
+# BLUEPRINTS
+# =========================================
+
+from routes.auth import auth
+from routes.dashboard import dashboard
+
+# =========================================
+# CREATE APP
+# =========================================
+
 app = Flask(__name__)
-app.register_blueprint(auth)
-app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 booking_states = {}
 
@@ -38,7 +51,17 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config["UPLOAD_FOLDER"] = "static/uploads"
+
 db.init_app(app)
+
+# =========================================
+# REGISTER BLUEPRINTS
+# =========================================
+
+app.register_blueprint(auth)
+app.register_blueprint(dashboard)
+
 # =========================================
 # MPESA CONFIG
 # =========================================
