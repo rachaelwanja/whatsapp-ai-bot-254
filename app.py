@@ -29,6 +29,7 @@ from routes.auth import auth
 from routes.dashboard import dashboard
 from routes.services import services
 from routes.appointments import appointments
+from routes.customers import customers
 
 # =========================================
 # CREATE APP
@@ -65,6 +66,7 @@ app.register_blueprint(auth)
 app.register_blueprint(dashboard)
 app.register_blueprint(services)
 app.register_blueprint(appointments)
+app.register_blueprint(customers)
 
 # =========================================
 # MPESA CONFIG
