@@ -3,6 +3,8 @@ from flask import (
     render_template,
     redirect,
     session
+    flash,
+    current_app
 )
 
 from models import (
