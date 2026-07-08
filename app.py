@@ -64,6 +64,7 @@ db.init_app(app)
 app.register_blueprint(auth)
 app.register_blueprint(dashboard)
 app.register_blueprint(services)
+app.register_blueprint(appointments)
 
 # =========================================
 # MPESA CONFIG
