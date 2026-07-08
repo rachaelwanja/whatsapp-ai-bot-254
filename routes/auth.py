@@ -68,17 +68,17 @@ def login():
         print("BUSINESS:", business)
         print("ENTERED PASSWORD:", password)
 
-        if business:
-            print("STORED HASH:", business.password)
-            print(
-                "PASSWORD MATCH:",
-                check_password_hash(
-                    business.password,
-                    password
-                )
-            )
+    if business:
+    print("STORED HASH:", business.password)
+    print(
+        "PASSWORD MATCH:",
+        check_password_hash(
+            business.password,
+            password
+        )
+    )
 
-        if business and check_password_hash(
+ if business and check_password_hash(
     business.password,
     password
 ):
@@ -90,8 +90,8 @@ def login():
 
     return redirect("/dashboard")
 
-        flash("Invalid credentials")
-        return redirect("/login")
+flash("Invalid credentials")
+return redirect("/login")
 
     return render_template("login.html")
 
