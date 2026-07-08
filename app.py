@@ -30,6 +30,7 @@ from routes.dashboard import dashboard
 from routes.services import services
 from routes.appointments import appointments
 from routes.customers import customers
+from routes.payments import payments
 
 # =========================================
 # CREATE APP
@@ -67,6 +68,7 @@ app.register_blueprint(dashboard)
 app.register_blueprint(services)
 app.register_blueprint(appointments)
 app.register_blueprint(customers)
+app.register_blueprint(payments)
 
 # =========================================
 # MPESA CONFIG
