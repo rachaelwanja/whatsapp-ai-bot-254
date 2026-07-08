@@ -153,3 +153,25 @@ def edit_service(id):
         "edit_service.html",
         service=service
     )
+    
+# =========================================
+# DELETE SERVICE
+# =========================================
+
+@services.route("/delete-service/<int:id>")
+def delete_service(id):
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    service = Service.query.filter_by(
+        id=id,
+        business_id=session["business_id"]
+    ).first_or_404()
+
+    db.session.delete(service)
+    db.session.commit()
+
+    flash("Service deleted successfully!")
+
+    return redirect("/services")
