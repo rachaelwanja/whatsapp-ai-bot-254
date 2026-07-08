@@ -217,28 +217,6 @@ def analytics():
         services=services,
         payments=payments
     )
-
-# =========================================
-# PAYMENTS PAGE
-# =========================================
-
-@app.route("/payments")
-def payments():
-
-    if "business_id" not in session:
-
-        return redirect(
-            "/login"
-        )
-
-    payments = Payment.query.order_by(
-        Payment.id.desc()
-    ).all()
-
-    return render_template(
-        "payments.html",
-        payments=payments
-    ) 
     
 # =========================================
 # WHATSAPP BOT
