@@ -3,9 +3,9 @@ from flask import Blueprint, render_template, redirect, session
 from models import Business, Appointment, Service, Payment
 
 dashboard = Blueprint("dashboard", __name__)
-    
+
 @dashboard.route("/dashboard")
-def dashboard():
+def dashboard_page():
 
     print("=== DASHBOARD ROUTE STARTED ===")
 
@@ -60,4 +60,3 @@ def dashboard():
         revenue=total_revenue,
         customer_count=customer_count
     )
-    
