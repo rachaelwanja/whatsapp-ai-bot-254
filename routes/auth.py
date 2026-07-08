@@ -79,13 +79,16 @@ def login():
             )
 
         if business and check_password_hash(
-            business.password,
-            password
-        ):
+    business.password,
+    password
+):
 
-            session["business_id"] = business.id
+    session["business_id"] = business.id
 
-            return redirect("/dashboard")
+    print("LOGIN SUCCESS")
+    print("SESSION:", session["business_id"])
+
+    return redirect("/dashboard")
 
         flash("Invalid credentials")
         return redirect("/login")
