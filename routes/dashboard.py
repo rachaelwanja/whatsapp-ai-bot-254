@@ -7,6 +7,10 @@ from models import (
     Payment
 )
 
+# =========================================
+# BLUEPRINT
+# =========================================
+
 dashboard = Blueprint(
     "dashboard",
     __name__
