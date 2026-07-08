@@ -28,6 +28,7 @@ from services import (
 from routes.auth import auth
 from routes.dashboard import dashboard
 from routes.services import services
+from routes.appointments import appointments
 
 # =========================================
 # CREATE APP
