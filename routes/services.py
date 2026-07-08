@@ -1,8 +1,9 @@
 from flask import (
     Blueprint,
     render_template,
+    request,
     redirect,
-    session
+    session,
     flash,
     current_app
 )
