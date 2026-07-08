@@ -217,28 +217,6 @@ def analytics():
     )
 
 # =========================================
-# CUSTOMERS PAGE
-# =========================================
-
-@app.route("/customers")
-def customers():
-
-    if "business_id" not in session:
-
-        return redirect(
-            "/login"
-        )
-
-    customers = Appointment.query.filter_by(
-        business_id=session["business_id"]
-    ).all()
-
-    return render_template(
-    "customers.html",
-    customers=customers
-)
-
-# =========================================
 # PAYMENTS PAGE
 # =========================================
 
