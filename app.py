@@ -233,135 +233,30 @@ def whatsapp():
     # -----------------------------------
 
     if incoming_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "start",
-        "menu"
-    ]:
+    "hi",
+    "hello",
+    "hey",
+    "start",
+    "menu"
+]:
 
-        reply = f"""
-Welcome to {business.business_name} 👋
+    services = Service.query.filter_by(
+        business_id=business.id
+    ).all()
 
-Business Type:
-{business.business_type}
+    if services:
 
-Please choose an option:
-
-1. Book Appointment
-2. Services & Prices
-3. Location
-4. Opening Hours
-
-Or ask me anything.
-"""
-
-    # -----------------------------------
-    # BOOK APPOINTMENT
-    # -----------------------------------
-
-    elif incoming_msg in [
-        "1",
-        "book",
-        "booking",
-        "appointment"
-    ]:
-
-        reply = """
-Great 😊
-
-Please tell me:
-
-• Your name
-• Service
-• Preferred date
-• Preferred time
-"""
-
-    # -----------------------------------
-    # SERVICES
-    # -----------------------------------
-
-    elif incoming_msg in [
-        "2",
-        "services",
-        "prices"
-    ]:
-
-        services = Service.query.filter_by(
-            business_id=business.id
-        ).all()
-
-        if services:
-
-            reply = "Our Services:\n\n"
-
-            for service in services:
-
-                reply += (
-                    f"• {service.name}"
-                    f" - KES {service.price}\n"
-                )
-
-        else:
-
-            reply = "No services have been added yet."
-
-    # -----------------------------------
-    # LOCATION
-    # -----------------------------------
-
-    elif incoming_msg in [
-        "3",
-        "location",
-        "address"
-    ]:
-
-        reply = f"📍 {business.location}"
-
-    # -----------------------------------
-    # OPENING HOURS
-    # -----------------------------------
-
-    elif incoming_msg in [
-        "4",
-        "hours",
-        "opening hours"
-    ]:
-
-        reply = f"🕒 {business.opening_hours}"
-
-    # -----------------------------------
-    # AI RECEPTIONIST
-    # -----------------------------------
+        services_text = "\n".join([
+            f"- {s.name}: KES {s.price} ({s.duration})"
+            for s in services
+        ])
 
     else:
 
-        services = Service.query.filter_by(
-            business_id=business.id
-        ).all()
+        services_text = "No services configured."
 
-        if services:
-
-            services_text = "\n".join(
-                [
-                    f"- {s.name}: KES {s.price} ({s.duration})"
-                    for s in services
-                ]
-            )
-
-        else:
-
-            services_text = "No services configured."
-
-        prompt = f"""
+    prompt = f"""
 You are the official AI receptionist for this business.
-
-Your job is to chat naturally with customers over WhatsApp exactly like a professional receptionist.
-
-=========================
-BUSINESS INFORMATION
-=========================
 
 Business Name:
 {business.business_name}
@@ -375,49 +270,34 @@ Location:
 Opening Hours:
 {business.opening_hours}
 
-=========================
-AVAILABLE SERVICES
-=========================
+Available Services:
 
 {services_text}
 
-=========================
-BUSINESS INSTRUCTIONS
-=========================
+Instructions:
 
 {business.ai_prompt}
 
-=========================
-YOUR RESPONSIBILITIES
-=========================
+The customer has just started the conversation.
 
-- Welcome customers warmly.
-- Be friendly, professional and conversational.
-- Reply naturally like a real receptionist.
-- Answer questions about services, prices, location and opening hours.
-- Recommend only services listed above.
-- Never invent services.
-- Never invent prices.
-- Never invent business information.
-- Encourage customers to make a booking naturally.
-- Keep replies under 100 words.
-- Use emojis naturally but don't overuse them.
-- Ask only ONE follow-up question at a time.
-- If you already know information from the customer, don't ask for it again.
-- Never show numbered menus unless the customer asks for one.
-- Never tell the customer you are an AI unless they ask.
-- If you don't know something, politely say so instead of guessing.
+Welcome them warmly.
 
-=========================
-CUSTOMER MESSAGE
-=========================
+Introduce yourself as the receptionist.
 
-{incoming_msg}
+Briefly explain that you can help with:
 
-Respond as the business receptionist.
+• Appointments
+• Services
+• Prices
+• Location
+• Opening hours
+
+Do NOT show a numbered menu.
+
+Keep your reply friendly and under 80 words.
 """
 
-        reply = ask_ai(prompt)
+    reply = ask_ai(prompt)
 
     response = MessagingResponse()
     response.message(reply)
