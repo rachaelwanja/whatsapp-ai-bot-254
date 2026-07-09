@@ -298,8 +298,6 @@ Keep your reply friendly and under 80 words.
 
     reply = ask_ai(prompt)
 
-    reply = ask_ai(prompt)
-
     response = MessagingResponse()
 
     response.message(reply)
