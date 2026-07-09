@@ -352,7 +352,7 @@ Please tell me:
 
         else:
 
-    services_text = "No services configured."
+            services_text = "No services configured."
 
         prompt = f"""
 You are the official AI receptionist for this business.
