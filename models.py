@@ -186,3 +186,40 @@ class Payment(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+# =========================================
+# CONVERSATIONS
+# =========================================
+
+class Conversation(db.Model):
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id"),
+        nullable=False
+    )
+
+    customer_phone = db.Column(
+        db.String(30),
+        nullable=False
+    )
+
+    role = db.Column(
+        db.String(20),
+        nullable=False
+    )
+
+    message = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
