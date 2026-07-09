@@ -20,3 +20,5 @@ whatsapp = Blueprint(
     "whatsapp",
     __name__
 )
+
+@whatsapp.route("/whatsapp-ai")
