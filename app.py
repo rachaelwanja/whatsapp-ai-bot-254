@@ -229,33 +229,38 @@ def whatsapp():
         )
 
     # -----------------------------------
-    # MAIN MENU
+    # WELCOME MESSAGE
     # -----------------------------------
-if incoming_msg in [
-    "hi",
-    "hello",
-    "hey",
-    "start",
-    "menu"
-]:
 
-    services = Service.query.filter_by(
-        business_id=business.id
-    ).all()
+    if incoming_msg in [
+        "hi",
+        "hello",
+        "hey",
+        "start",
+        "menu"
+    ]:
 
-    if services:
+        services = Service.query.filter_by(
+            business_id=business.id
+        ).all()
 
-        services_text = "\n".join([
-            f"- {s.name}: KES {s.price} ({s.duration})"
-            for s in services
-        ])
+        if services:
 
-    else:
+            services_text = "\n".join(
+                [
+                    f"- {s.name}: KES {s.price} ({s.duration})"
+                    for s in services
+                ]
+            )
 
-        services_text = "No services configured."
+        else:
 
-    prompt = f"""
+            services_text = "No services configured."
+
+        prompt = f"""
 You are the official AI receptionist for this business.
+
+Your job is to chat naturally with customers over WhatsApp exactly like a professional receptionist.
 
 Business Name:
 {business.business_name}
@@ -273,7 +278,7 @@ Available Services:
 
 {services_text}
 
-Instructions:
+Additional Instructions:
 
 {business.ai_prompt}
 
@@ -281,31 +286,30 @@ The customer has just started the conversation.
 
 Welcome them warmly.
 
-Introduce yourself as the receptionist.
+Introduce yourself as the business receptionist.
 
-Briefly explain that you can help with:
-
-• Appointments
-• Services
-• Prices
-• Location
-• Opening hours
+Explain that you can help with:
+- Appointments
+- Services
+- Prices
+- Location
+- Opening hours
 
 Do NOT show a numbered menu.
 
-Keep your reply friendly and under 80 words.
+Keep your reply friendly, natural and under 80 words.
 """
 
-    reply = ask_ai(prompt)
+        reply = ask_ai(prompt)
 
-    response = MessagingResponse()
+        response = MessagingResponse()
 
-    response.message(reply)
+        response.message(reply)
 
-    return Response(
-        str(response),
-        mimetype="text/xml"
-    )
+        return Response(
+            str(response),
+            mimetype="text/xml"
+        )
 
 # =========================================
 # RESET DATABASE
