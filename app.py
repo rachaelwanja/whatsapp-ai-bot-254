@@ -352,9 +352,9 @@ Please tell me:
 
         else:
 
-            services_text = "No services configured."
+    services_text = "No services configured."
 
-prompt = f"""
+        prompt = f"""
 You are the official AI receptionist for this business.
 
 Your job is to chat naturally with customers over WhatsApp exactly like a professional receptionist.
@@ -418,6 +418,7 @@ Respond as the business receptionist.
 """
 
         reply = ask_ai(prompt)
+
     response = MessagingResponse()
     response.message(reply)
 
