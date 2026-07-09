@@ -118,7 +118,7 @@ def stk_push(phone, amount):
 # OPENROUTER AI
 # =========================================
 
-def ask_ai(message):
+def ask_ai(messages):
 
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -128,15 +128,12 @@ def ask_ai(message):
         },
         json={
             "model": "openai/gpt-4o-mini",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ]
+            "messages": messages
         }
     )
 
     print(response.text)
 
-    return response.json()["choices"][0]["message"]["content"]
+    data = response.json()
+
+    return data["choices"][0]["message"]["content"]
