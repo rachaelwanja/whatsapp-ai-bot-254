@@ -418,7 +418,6 @@ Respond as the business receptionist.
 """
 
         reply = ask_ai(prompt)
-
     response = MessagingResponse()
     response.message(reply)
 
