@@ -299,8 +299,10 @@ Do NOT show a numbered menu.
 
 Keep your reply friendly, natural and under 80 words.
 """
-print("========== SERVICES SENT TO AI ==========")
-print(services_text)
+
+        print("========== SERVICES SENT TO AI ==========")
+        print(services_text)
+
         reply = ask_ai(prompt)
 
         response = MessagingResponse()
