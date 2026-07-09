@@ -354,7 +354,7 @@ Please tell me:
 
             services_text = "No services configured."
 
-      prompt = f"""
+prompt = f"""
 You are the official AI receptionist for this business.
 
 Your job is to chat naturally with customers over WhatsApp exactly like a professional receptionist.
