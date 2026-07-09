@@ -339,21 +339,21 @@ Reply as the business receptionist.
     # ASK AI
     # =====================================
 
-        messages = [
-            {
-                "role": "system",
-                "content": prompt
-            },
-            {
-                "role": "user",
-                "content": incoming_msg
-            }
-        ]
+    messages = [
+        {
+            "role": "system",
+            "content": prompt
+        },
+        {
+            "role": "user",
+            "content": incoming_msg
+        }
+    ]
 
-        reply = ask_ai(messages)
+    reply = ask_ai(messages)
 
-        print("========== AI REPLY ==========")
-        print(reply)
+    print("========== AI REPLY ==========")
+    print(reply)
 
         # =====================================
         # SEND RESPONSE
