@@ -211,14 +211,18 @@ def whatsapp():
     incoming_msg = request.form.get(
         "Body",
         ""
-    ).strip().lower()
+    ).strip()
 
-    # Get business
+    # =====================================
+    # GET BUSINESS
+    # =====================================
+
     business = Business.query.first()
+
+    response = MessagingResponse()
 
     if not business:
 
-        response = MessagingResponse()
         response.message(
             "No business has been configured yet."
         )
@@ -228,39 +232,46 @@ def whatsapp():
             mimetype="text/xml"
         )
 
-    # -----------------------------------
-    # WELCOME MESSAGE
-    # -----------------------------------
+    # =====================================
+    # LOAD SERVICES
+    # =====================================
 
-    if incoming_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "start",
-        "menu"
-    ]:
+    services = Service.query.filter_by(
+        business_id=business.id
+    ).all()
 
-        services = Service.query.filter_by(
-            business_id=business.id
-        ).all()
+    if services:
 
-        if services:
+        services_text = "\n".join(
+            [
+                f"""
+Service: {s.name}
+Price: KES {s.price}
+Duration: {s.duration}
+                """
+                for s in services
+            ]
+        )
 
-            services_text = "\n".join(
-                [
-                    f"- {s.name}: KES {s.price} ({s.duration})"
-                    for s in services
-                ]
-            )
+    else:
 
-        else:
+        services_text = "No services configured."
 
-            services_text = "No services configured."
+    print("========== SERVICES ==========")
+    print(services_text)
 
-        prompt = f"""
+    # =====================================
+    # BUILD AI PROMPT
+    # =====================================
+
+    prompt = f"""
 You are the official AI receptionist for this business.
 
-Your job is to chat naturally with customers over WhatsApp exactly like a professional receptionist.
+Your job is to chat naturally with customers over WhatsApp.
+
+=========================
+BUSINESS
+=========================
 
 Business Name:
 {business.business_name}
@@ -274,45 +285,68 @@ Location:
 Opening Hours:
 {business.opening_hours}
 
-Available Services:
+=========================
+SERVICES
+=========================
 
 {services_text}
 
-Additional Instructions:
+=========================
+BUSINESS INSTRUCTIONS
+=========================
 
 {business.ai_prompt}
 
-The customer has just started the conversation.
+=========================
+RULES
+=========================
 
-Welcome them warmly.
+- Be friendly.
+- Be professional.
+- Talk naturally.
+- Never invent services.
+- Never invent prices.
+- Only recommend services listed above.
+- Answer questions about:
+    • services
+    • prices
+    • location
+    • opening hours
+    • appointments
+- Encourage bookings naturally.
+- Keep replies under 80 words.
+- Ask one question at a time.
+- Never restart the conversation.
+- Never display numbered menus.
 
-Introduce yourself as the business receptionist.
+=========================
+CUSTOMER MESSAGE
+=========================
 
-Explain that you can help with:
-- Appointments
-- Services
-- Prices
-- Location
-- Opening hours
+{incoming_msg}
 
-Do NOT show a numbered menu.
-
-Keep your reply friendly, natural and under 80 words.
+Reply as the business receptionist.
 """
 
-        print("========== SERVICES SENT TO AI ==========")
-        print(services_text)
+    # =====================================
+    # ASK AI
+    # =====================================
 
-        reply = ask_ai(prompt)
+    reply = ask_ai(prompt)
 
-        response = MessagingResponse()
+    print("========== AI REPLY ==========")
+    print(reply)
 
-        response.message(reply)
+    # =====================================
+    # SEND RESPONSE
+    # =====================================
 
-        return Response(
-            str(response),
-            mimetype="text/xml"
-        )
+    response.message(reply)
+
+    return Response(
+        str(response),
+        mimetype="text/xml"
+    )
 
 # =========================================
 # RESET DATABASE
