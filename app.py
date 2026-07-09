@@ -12,7 +12,14 @@ import base64
 
 from werkzeug.utils import secure_filename
 
-from models import db, Business, Appointment, Service, Payment
+from models import (
+    db,
+    Business,
+    Appointment,
+    Service,
+    Payment,
+    Conversation
+)
 
 from services import (
     get_access_token,
