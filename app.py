@@ -387,6 +387,10 @@ Reply as the business receptionist.
             "content": incoming_msg
         }
     )
+    print("========== CONVERSATION HISTORY ==========")
+
+    for msg in messages:
+        print(msg["role"], ":", msg["content"])
 
     reply = ask_ai(messages)
 
