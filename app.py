@@ -15,9 +15,7 @@ from werkzeug.utils import secure_filename
 from models import (
     db,
     Business,
-    Appointment,
     Service,
-    Payment,
     Conversation
 )
 
