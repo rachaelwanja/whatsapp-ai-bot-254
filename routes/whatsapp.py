@@ -10,6 +10,7 @@ from flask import (
 from twilio.twiml.messaging_response import MessagingResponse
 
 from models import (
+    db,
     Business,
     Service
     conversation
