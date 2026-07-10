@@ -408,7 +408,20 @@ for i, msg in enumerate(messages, start=1):
     db.session.add(conversation)
     db.session.commit()
 
-    print("========== AI REPLY ==========")
+    # =====================================
+    # DEBUG MESSAGES SENT TO OPENROUTER
+    # =====================================
+
+    print("\n========== MESSAGES SENT TO OPENROUTER ==========")
+
+    for i, msg in enumerate(messages, start=1):
+
+        print(f"\nMessage {i}")
+        print("ROLE:", msg["role"])
+        print("CONTENT:")
+        print(msg["content"])
+
+    print("\n========== AI REPLY ==========")
     print(reply)
 
     # =====================================
