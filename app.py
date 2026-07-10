@@ -255,19 +255,6 @@ def whatsapp():
     db.session.add(conversation)
     db.session.commit()
 
-        response = MessagingResponse()
-
-    if not business:
-
-        response.message(
-            "No business has been configured yet."
-        )
-
-        return Response(
-            str(response),
-            mimetype="text/xml"
-        )
-
     # =====================================
     # LOAD SERVICES
     # =====================================
