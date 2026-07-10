@@ -415,11 +415,27 @@ for i, msg in enumerate(messages, start=1):
     print("\n========== MESSAGES SENT TO OPENROUTER ==========")
 
     for i, msg in enumerate(messages, start=1):
-
         print(f"\nMessage {i}")
         print("ROLE:", msg["role"])
         print("CONTENT:")
         print(msg["content"])
+
+    # =====================================
+    # ASK AI
+    # =====================================
+
+    reply = ask_ai(messages)
+
+    # Save AI reply
+    conversation = Conversation(
+        business_id=business.id,
+        customer_phone=customer_phone,
+        role="assistant",
+        message=reply
+    )
+
+    db.session.add(conversation)
+    db.session.commit()
 
     print("\n========== AI REPLY ==========")
     print(reply)
