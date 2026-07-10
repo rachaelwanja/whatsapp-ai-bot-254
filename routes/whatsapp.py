@@ -22,6 +22,12 @@ whatsapp = Blueprint(
     "whatsapp",
     __name__
 )
+from brain.personality import PERSONALITY
+from brain.language import LANGUAGE
+from brain.empathy import EMPATHY
+from brain.booking import BOOKING
+from brain.rules import RULES
+from brain.business_types import BUSINESS_PERSONALITIES
 
 # =========================================
 # WHATSAPP AI
@@ -122,14 +128,31 @@ Duration: {service.duration}"""
     print("========== SERVICES ==========")
     print(services_text)
 
-    # -------------------------------------
-    # SYSTEM PROMPT
-    # -------------------------------------
+# =====================================
+# BUILD AI PROMPT
+# =====================================
+ 
+business_personality = BUSINESS_PERSONALITIES.get(
+    business.business_type,
+    ""
+)
 
-    prompt = f"""
-You are the official AI receptionist for this business.
+prompt = f"""
+{PERSONALITY}
 
-Your goal is to help customers exactly like a real receptionist.
+{LANGUAGE}
+
+{EMPATHY}
+
+{BOOKING}
+
+{RULES}
+
+{business_personality}
+
+=================================
+BUSINESS
+=================================
 
 Business Name:
 {business.business_name}
@@ -143,26 +166,25 @@ Location:
 Opening Hours:
 {business.opening_hours}
 
-Available Services:
+=================================
+AVAILABLE SERVICES
+=================================
 
 {services_text}
 
-Business Instructions:
+=================================
+BUSINESS INSTRUCTIONS
+=================================
 
 {business.ai_prompt}
 
-Rules:
+The conversation history will be provided below.
 
-- Be friendly and professional.
-- Keep replies short.
-- Never invent services.
-- Never invent prices.
-- Recommend only listed services.
-- Help customers book appointments.
-- Ask only ONE question at a time.
-- Continue the conversation naturally.
-- Never restart the conversation.
-- Never tell customers to contact the business unless absolutely necessary.
+Continue naturally from where the customer left off.
+
+Never restart the conversation.
+
+Only ask for information that is still missing.
 """
 
     # -------------------------------------
