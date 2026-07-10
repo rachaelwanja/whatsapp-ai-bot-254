@@ -209,24 +209,33 @@ def analytics():
     )
     
 # =========================================
-# WHATSAPP BOT
+# WHATSAPP AI RECEPTIONIST
 # =========================================
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp():
+
+    # -------------------------------------
+    # CUSTOMER MESSAGE
+    # -------------------------------------
 
     incoming_msg = request.form.get(
         "Body",
         ""
     ).strip()
 
-    # =====================================
-    # GET BUSINESS
-    # =====================================
-
-    business = Business.query.first()
+    customer_phone = request.form.get(
+        "From",
+        ""
+    )
 
     response = MessagingResponse()
+
+    # -------------------------------------
+    # LOAD BUSINESS
+    # -------------------------------------
+
+    business = Business.query.first()
 
     if not business:
 
@@ -239,25 +248,23 @@ def whatsapp():
             mimetype="text/xml"
         )
 
-    customer_phone = request.form.get(
-        "From",
-        ""
-    )
+    # -------------------------------------
+    # SAVE CUSTOMER MESSAGE
+    # -------------------------------------
 
-    # Save customer's message
-    conversation = Conversation(
+    customer_chat = Conversation(
         business_id=business.id,
         customer_phone=customer_phone,
         role="user",
         message=incoming_msg
     )
 
-    db.session.add(conversation)
+    db.session.add(customer_chat)
     db.session.commit()
 
-    # =====================================
+    # -------------------------------------
     # LOAD SERVICES
-    # =====================================
+    # -------------------------------------
 
     services = Service.query.filter_by(
         business_id=business.id
@@ -265,14 +272,12 @@ def whatsapp():
 
     if services:
 
-        services_text = "\n".join(
+        services_text = "\n\n".join(
             [
-                f"""
-Service: {s.name}
-Price: KES {s.price}
-Duration: {s.duration}
-                """
-                for s in services
+                f"""Service: {service.name}
+Price: KES {service.price}
+Duration: {service.duration}"""
+                for service in services
             ]
         )
 
@@ -283,18 +288,14 @@ Duration: {s.duration}
     print("========== SERVICES ==========")
     print(services_text)
 
-    # =====================================
-    # BUILD AI PROMPT
-    # =====================================
+    # -------------------------------------
+    # SYSTEM PROMPT
+    # -------------------------------------
 
     prompt = f"""
 You are the official AI receptionist for this business.
 
-Your job is to chat naturally with customers over WhatsApp.
-
-=========================
-BUSINESS
-=========================
+Your goal is to help customers exactly like a real receptionist.
 
 Business Name:
 {business.business_name}
@@ -308,52 +309,31 @@ Location:
 Opening Hours:
 {business.opening_hours}
 
-=========================
-SERVICES
-=========================
+Available Services:
 
 {services_text}
 
-=========================
-BUSINESS INSTRUCTIONS
-=========================
+Business Instructions:
 
 {business.ai_prompt}
 
-=========================
-RULES
-=========================
+Rules:
 
-- Be friendly.
-- Be professional.
-- Talk naturally.
+- Be friendly and professional.
+- Keep replies short.
 - Never invent services.
 - Never invent prices.
-- Only recommend services listed above.
-- Answer questions about:
-    • services
-    • prices
-    • location
-    • opening hours
-    • appointments
-- Encourage bookings naturally.
-- Keep replies under 80 words.
-- Ask one question at a time.
+- Recommend only listed services.
+- Help customers book appointments.
+- Ask only ONE question at a time.
+- Continue the conversation naturally.
 - Never restart the conversation.
-- Never display numbered menus.
-
-=========================
-CUSTOMER MESSAGE
-=========================
-
-{incoming_msg}
-
-Reply as the business receptionist.
+- Never tell customers to contact the business unless absolutely necessary.
 """
 
-    # =====================================
-    # ASK AI
-    # =====================================
+    # -------------------------------------
+    # BUILD CONVERSATION HISTORY
+    # -------------------------------------
 
     messages = [
         {
@@ -362,7 +342,6 @@ Reply as the business receptionist.
         }
     ]
 
-    # Load previous conversation
     history = Conversation.query.filter_by(
         business_id=business.id,
         customer_phone=customer_phone
@@ -370,7 +349,6 @@ Reply as the business receptionist.
         Conversation.created_at.asc()
     ).limit(20).all()
 
-    # Add previous messages
     for chat in history:
 
         messages.append(
@@ -380,69 +358,41 @@ Reply as the business receptionist.
             }
         )
 
-    # Add current customer message
-    messages.append(
-        {
-            "role": "user",
-            "content": incoming_msg
-        }
-    )
-print("========== MESSAGES SENT TO OPENROUTER ==========")
-
-for i, msg in enumerate(messages, start=1):
-    print(f"\nMessage {i}")
-    print("ROLE:", msg["role"])
-    print("CONTENT:")
-    print(msg["content"])
-
-    reply = ask_ai(messages)
-
-    # Save AI reply
-    conversation = Conversation(
-        business_id=business.id,
-        customer_phone=customer_phone,
-        role="assistant",
-        message=reply
-    )
-
-    db.session.add(conversation)
-    db.session.commit()
-
-    # =====================================
-    # DEBUG MESSAGES SENT TO OPENROUTER
-    # =====================================
-
     print("\n========== MESSAGES SENT TO OPENROUTER ==========")
 
     for i, msg in enumerate(messages, start=1):
+
         print(f"\nMessage {i}")
         print("ROLE:", msg["role"])
         print("CONTENT:")
         print(msg["content"])
-
-    # =====================================
-    # ASK AI
-    # =====================================
+        
+    # -------------------------------------
+    # ASK OPENROUTER
+    # -------------------------------------
 
     reply = ask_ai(messages)
 
-    # Save AI reply
-    conversation = Conversation(
+    print("\n========== AI REPLY ==========")
+    print(reply)
+
+    # -------------------------------------
+    # SAVE AI REPLY
+    # -------------------------------------
+
+    ai_chat = Conversation(
         business_id=business.id,
         customer_phone=customer_phone,
         role="assistant",
         message=reply
     )
 
-    db.session.add(conversation)
+    db.session.add(ai_chat)
     db.session.commit()
 
-    print("\n========== AI REPLY ==========")
-    print(reply)
-
-    # =====================================
-    # SEND RESPONSE
-    # =====================================
+    # -------------------------------------
+    # SEND WHATSAPP RESPONSE
+    # -------------------------------------
 
     response.message(reply)
 
@@ -450,6 +400,7 @@ for i, msg in enumerate(messages, start=1):
         str(response),
         mimetype="text/xml"
     )
+        
 
 # =========================================
 # RESET DATABASE
