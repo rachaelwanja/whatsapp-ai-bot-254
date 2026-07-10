@@ -224,22 +224,36 @@ def whatsapp():
     # GET BUSINESS
     # =====================================
 
-business = Business.query.first()
+    business = Business.query.first()
 
-customer_phone = request.form.get(
-    "From",
-    ""
-)
+    response = MessagingResponse()
 
-conversation = Conversation(
-    business_id=business.id,
-    customer_phone=customer_phone,
-    role="user",
-    message=incoming_msg
-)
+    if not business:
 
-db.session.add(conversation)
-db.session.commit()
+        response.message(
+            "No business has been configured yet."
+        )
+
+        return Response(
+            str(response),
+            mimetype="text/xml"
+        )
+
+    customer_phone = request.form.get(
+        "From",
+        ""
+    )
+
+    # Save customer's message
+    conversation = Conversation(
+        business_id=business.id,
+        customer_phone=customer_phone,
+        role="user",
+        message=incoming_msg
+    )
+
+    db.session.add(conversation)
+    db.session.commit()
 
         response = MessagingResponse()
 
