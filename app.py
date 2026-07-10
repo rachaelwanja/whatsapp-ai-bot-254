@@ -224,7 +224,22 @@ def whatsapp():
     # GET BUSINESS
     # =====================================
 
-    business = Business.query.first()
+business = Business.query.first()
+
+customer_phone = request.form.get(
+    "From",
+    ""
+)
+
+conversation = Conversation(
+    business_id=business.id,
+    customer_phone=customer_phone,
+    role="user",
+    message=incoming_msg
+)
+
+db.session.add(conversation)
+db.session.commit()
 
     response = MessagingResponse()
 
