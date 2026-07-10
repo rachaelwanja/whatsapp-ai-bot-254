@@ -366,6 +366,16 @@ Reply as the business receptionist.
     ]
 
     reply = ask_ai(messages)
+conversation = Conversation(
+    business_id=business.id,
+    customer_phone=customer_phone,
+    role="assistant",
+    message=reply
+)
+
+db.session.add(conversation)
+db.session.commit()
+
 
     print("========== AI REPLY ==========")
     print(reply)
