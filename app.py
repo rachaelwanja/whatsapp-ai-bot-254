@@ -358,24 +358,47 @@ Reply as the business receptionist.
         {
             "role": "system",
             "content": prompt
-        },
+        }
+    ]
+
+    # Load previous conversation
+    history = Conversation.query.filter_by(
+        business_id=business.id,
+        customer_phone=customer_phone
+    ).order_by(
+        Conversation.created_at.asc()
+    ).limit(20).all()
+
+    # Add previous messages
+    for chat in history:
+
+        messages.append(
+            {
+                "role": chat.role,
+                "content": chat.message
+            }
+        )
+
+    # Add current customer message
+    messages.append(
         {
             "role": "user",
             "content": incoming_msg
         }
-    ]
+    )
 
     reply = ask_ai(messages)
-conversation = Conversation(
-    business_id=business.id,
-    customer_phone=customer_phone,
-    role="assistant",
-    message=reply
-)
 
-db.session.add(conversation)
-db.session.commit()
+    # Save AI reply
+    conversation = Conversation(
+        business_id=business.id,
+        customer_phone=customer_phone,
+        role="assistant",
+        message=reply
+    )
 
+    db.session.add(conversation)
+    db.session.commit()
 
     print("========== AI REPLY ==========")
     print(reply)
