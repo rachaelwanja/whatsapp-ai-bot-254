@@ -12,6 +12,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from models import (
     Business,
     Service
+    conversation
 )
 
 from services import ask_ai
