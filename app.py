@@ -387,10 +387,13 @@ Reply as the business receptionist.
             "content": incoming_msg
         }
     )
-    print("========== CONVERSATION HISTORY ==========")
+print("========== MESSAGES SENT TO OPENROUTER ==========")
 
-    for msg in messages:
-        print(msg["role"], ":", msg["content"])
+for i, msg in enumerate(messages, start=1):
+    print(f"\nMessage {i}")
+    print("ROLE:", msg["role"])
+    print("CONTENT:")
+    print(msg["content"])
 
     reply = ask_ai(messages)
 
