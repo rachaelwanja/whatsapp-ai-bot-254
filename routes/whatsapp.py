@@ -18,12 +18,12 @@ from models import (
 
 from services import ask_ai
 
-from brain.personality import PERSONALITY
-from brain.language import LANGUAGE
-from brain.empathy import EMPATHY
-from brain.booking import BOOKING
-from brain.rules import RULES
-from brain.business_types import BUSINESS_PERSONALITIES
+from FlowAI.brain.personality import PERSONALITY
+from FlowAI.brain.language import LANGUAGE
+from FlowAI.brain.empathy import EMPATHY
+from FlowAI.brain.booking import BOOKING
+from FlowAI.brain.rules import RULES
+from FlowAI.brain.business_types import BUSINESS_PERSONALITIES
 
 whatsapp = Blueprint(
     "whatsapp",
