@@ -220,7 +220,8 @@ Only ask for information that is still missing.
         print("ROLE:", msg["role"])
         print("CONTENT:")
         print(msg["content"])
-            # =====================================
+        
+    # =====================================
     # ASK OPENROUTER
     # =====================================
 
