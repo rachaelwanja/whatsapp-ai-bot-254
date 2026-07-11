@@ -126,19 +126,16 @@ Duration: {service.duration}"""
 
         services_text = "No services configured."
 
-    print("========== SERVICES ==========")
-    print(services_text)
+print("========== SERVICES ==========")
+print(services_text)
 
-    # =====================================
-    # BUILD AI PROMPT
-    # =====================================
+# =====================================
+# BUILD AI PROMPT
+# =====================================
 
-    business_personality = ""
-        business.business_type,
-        ""
-    )
+business_personality = ""
 
-    prompt = f"""
+prompt = f"""
 {PERSONALITY}
 
 {LANGUAGE}
