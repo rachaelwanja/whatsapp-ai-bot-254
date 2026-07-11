@@ -36,7 +36,7 @@ from routes.services import services
 from routes.appointments import appointments
 from routes.customers import customers
 from routes.payments import payments
-#from routes.whatsapp import whatsapp
+from routes.whatsapp import whatsapp
 
 # =========================================
 # CREATE APP
@@ -75,7 +75,7 @@ app.register_blueprint(services)
 app.register_blueprint(appointments)
 app.register_blueprint(customers)
 app.register_blueprint(payments)
-#app.register_blueprint(whatsapp)
+app.register_blueprint(whatsapp)
 
 # =========================================
 # MPESA CONFIG
