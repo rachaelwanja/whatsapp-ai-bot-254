@@ -23,7 +23,7 @@ from FlowAI.brain.language import LANGUAGE
 from FlowAI.brain.empathy import EMPATHY
 from FlowAI.brain.booking import BOOKING
 from FlowAI.brain.rules import RULES
-from FlowAI.brain.business_types import BUSINESS_PERSONALITIES
+#from FlowAI.brain.business_types import BUSINESS_PERSONALITIES
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -133,7 +133,7 @@ Duration: {service.duration}"""
     # BUILD AI PROMPT
     # =====================================
 
-    business_personality = BUSINESS_PERSONALITIES.get(
+    business_personality = ""
         business.business_type,
         ""
     )
