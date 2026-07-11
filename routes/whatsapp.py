@@ -133,9 +133,9 @@ print(services_text)
 # BUILD AI PROMPT
 # =====================================
 
-business_personality = ""
+    business_personality = ""
 
-prompt = f"""
+    prompt = f"""
 {PERSONALITY}
 
 {LANGUAGE}
@@ -189,14 +189,14 @@ Only ask for information that is still missing.
     # BUILD CONVERSATION HISTORY
     # =====================================
 
-    messages = [
+     messages = [
         {
             "role": "system",
             "content": prompt
         }
     ]
 
-    history = Conversation.query.filter_by(
+        history = Conversation.query.filter_by(
         business_id=business.id,
         customer_phone=customer_phone
     ).order_by(
@@ -225,7 +225,7 @@ Only ask for information that is still missing.
     # ASK OPENROUTER
     # =====================================
 
-    reply = ask_ai(messages)
+        reply = ask_ai(messages)
 
     print("\n========== AI REPLY ==========")
     print(reply)
@@ -250,7 +250,7 @@ Only ask for information that is still missing.
 
     response.message(reply)
 
-    return Response(
+        return Response(
         str(response),
         mimetype="text/xml"
     )
