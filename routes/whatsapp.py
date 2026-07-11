@@ -12,7 +12,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from models import (
     db,
     Business,
-    Service
+    Service,
     conversation
 )
 
@@ -52,7 +52,7 @@ def whatsapp_ai():
 # WHATSAPP AI RECEPTIONIST
 # =========================================
 
-@whatapp.route("/whatsapp", methods=["POST"])
+@whastapp.route("/whatsapp", methods=["POST"])
 def whatsapp_route():
 
     # -------------------------------------
