@@ -33,7 +33,7 @@ from brain.business_types import BUSINESS_PERSONALITIES
 # WHATSAPP AI
 # =========================================
 
-@whatsapp.route("/whatsapp-ai")
+@whatsaap.route("/whatsapp-ai")
 def whatsapp_ai():
 
     if "business_id" not in session:
