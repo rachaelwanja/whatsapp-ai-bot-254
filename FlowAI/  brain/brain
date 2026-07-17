@@ -1,4 +1,12 @@
 from brain.personality import PERSONALITY
+
+
+
+
+
+
+
+
 from brain.language import LANGUAGE
 from brain.empathy import EMPATHY
 from brain.booking import BOOKING
