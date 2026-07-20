@@ -7,8 +7,7 @@ db = SQLAlchemy()
 # DATABASE MODELS
 # =========================================
 
-(db.Model):
-class Business
+class Business(db.Model):
     id = db.Column(
         db.Integer,
         primary_key=True
@@ -231,16 +230,18 @@ class Conversation(db.Model):
 # =========================================
 
 class Knowledge(db.Model):
-        id = db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
-        business_id = db.Column(
+
+    business_id = db.Column(
         db.Integer,
         db.ForeignKey("business.id"),
         nullable=False
     )
-        question = db.Column(
+
+    question = db.Column(
         db.String(300),
         nullable=False
     )
@@ -249,7 +250,8 @@ class Knowledge(db.Model):
         db.Text,
         nullable=False
     )
-        created_at = db.Column(
+
+    created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow
     )

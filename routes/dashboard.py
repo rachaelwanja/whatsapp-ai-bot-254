@@ -126,3 +126,22 @@ def business_settings():
         "business_settings.html",
         business=business
     )
+    
+# =========================================
+# AI EMPLOYEE
+# =========================================
+
+@dashboard.route("/ai-employee")
+def ai_employee():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    return render_template(
+        "ai_employee.html",
+        business=business
+    )

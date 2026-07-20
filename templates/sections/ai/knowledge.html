@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Knowledge Base</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex min-h-screen">
+
+    {% include "sidebar.html" %}
+
+    <div class="flex-1 p-6">
+
+        {% include "topbar.html" %}
+
+        <div class="bg-white rounded-xl shadow p-6">
+
+            <h1 class="text-3xl font-bold mb-2">
+                📚 Knowledge Base
+            </h1>
+
+            <p class="text-gray-600 mb-6">
+                Teach your AI receptionist about your business.
+            </p>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+
+                <h2 class="font-semibold mb-2">
+                    Coming Next
+                </h2>
+                <div class="bg-white rounded-xl shadow p-6 mt-6">
+
+    <h2 class="text-xl font-bold mb-4">
+        Add Knowledge
+    </h2>
+
+    <form method="POST">
+
+        <label class="font-semibold">
+            Question
+        </label>
+
+        <input
+            type="text"
+            name="question"
+            class="w-full border rounded-lg p-3 mt-2 mb-4"
+            placeholder="Example: Do you braid kids' hair?"
+            required
+        >
+
+        <label class="font-semibold">
+            Answer
+        </label>
+
+        <textarea
+            name="answer"
+            rows="4"
+            class="w-full border rounded-lg p-3 mt-2 mb-4"
+            placeholder="Yes, we braid children from age 5 and above."
+            required
+        ></textarea>
+
+        <button
+            type="submit"
+            class="bg-blue-600 text-white px-6 py-3 rounded-lg"
+        >
+            Save Knowledge
+        </button>
+
+    </form>
+<hr class="my-8">
+
+<h2 class="text-xl font-bold mb-4">
+    Saved Knowledge
+</h2>
+
+{% if knowledge %}
+
+    {% for item in knowledge %}
+
+    <div class="border rounded-lg p-4 mb-4 bg-gray-50">
+
+        <p class="font-bold">
+            {{ item.question }}
+        </p>
+
+        <p class="text-gray-700 mt-2">
+            {{ item.answer }}
+        </p>
+
+    </div>
+
+    {% endfor %}
+
+{% else %}
+
+<p class="text-gray-500">
+    No knowledge has been added yet.
+</p>
+
+{% endif %}
+</div>
+
+                <ul class="list-disc ml-6 space-y-2">
+                    <li>Add Questions & Answers</li>
+                    <li>Edit Knowledge</li>
+                    <li>Delete Knowledge</li>
+                    <li>AI searches this information before replying to customers</li>
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

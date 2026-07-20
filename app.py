@@ -4,19 +4,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from twilio.twiml.voice_response import VoiceResponse
 from twilio.twiml.messaging_response import MessagingResponse
-
 import os
+from dotenv import load_dotenv 
+
+load_dotenv()
 import uuid
 import requests
 import base64
-
 from werkzeug.utils import secure_filename
 
 from models import (
     db,
     Business,
     Service,
-    Conversation
+    Conversation,
+    Appointment,
+    Payment
 )
 
 from services import (
@@ -63,6 +66,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
+print("DATABASE_URL =", os.getenv("DATABASE_URL"))
+print("SQLALCHEMY_DATABASE_URI =", app.config["SQLALCHEMY_DATABASE_URI"])
+
 db.init_app(app)
 
 # =========================================
@@ -100,6 +106,7 @@ PASSKEY = os.getenv(
 CALLBACK_URL = os.getenv(
     "CALLBACK_URL"
 )
+
     
 # =========================================
 # HOME
@@ -206,27 +213,7 @@ def analytics():
         payments=payments
     )
 
-# =========================================
-# RESET DATABASE
-# =========================================
-
-@app.route("/reset-database")
-def reset_database():
-
-    try:
-
-        db.session.execute(
-            db.text("DROP SCHEMA public CASCADE")
-        )
-
-        db.session.execute(
-            db.text("CREATE SCHEMA public")
-        )
-
-        db.session.commit()
-
-       
-        
+           
 # =========================================
 # CREATE TABLES
 # =========================================

@@ -1,0 +1,71 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}AI Employee{% endblock %}
+
+{% set page_title = "AI Employee" %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- ========================================= -->
+    <!-- PAGE HEADER -->
+    <!-- ========================================= -->
+
+    <div>
+
+        <h1 class="text-4xl font-bold text-slate-900">
+            AI Employee
+        </h1>
+
+        <p class="mt-2 text-lg text-slate-500">
+            Manage your AI receptionist, personality, knowledge and performance.
+        </p>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- AI PROFILE -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/profile.html" %}
+
+    <!-- ========================================= -->
+    <!-- PERSONALITY -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/personality.html" %}
+
+    <!-- ========================================= -->
+    <!-- GREETING -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/greeting.html" %}
+
+    <!-- ========================================= -->
+    <!-- LANGUAGES -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/languages.html" %}
+
+    <!-- ========================================= -->
+    <!-- BOOKING -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/booking.html" %}
+
+    <!-- ========================================= -->
+    <!-- KNOWLEDGE -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/knowledge.html" %}
+
+    <!-- ========================================= -->
+    <!-- PERFORMANCE -->
+    <!-- ========================================= -->
+
+    {% include "sections/ai/performance.html" %}
+
+</div>
+
+{% endblock %}

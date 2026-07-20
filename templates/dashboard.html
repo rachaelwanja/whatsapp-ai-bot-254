@@ -1,32 +1,40 @@
-<!DOCTYPE html>
-<html>
+{% extends "layouts/base.html" %}
 
-<head>
-    <title>FlowAI Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+{% block title %}Dashboard{% endblock %}
 
-<body class="bg-gray-100">
+{% set page_title = "Dashboard" %}
 
-<div class="flex min-h-screen">
+{% block content %}
 
-    {% include "sidebar.html" %}
+<div class="space-y-8">
 
-    <div class="flex-1 p-6">
+    <!-- Welcome Banner -->
+    {% include "sections/dashboard/welcome_banner.html" %}
 
-        {% include "topbar.html" %}
+    <!-- Statistics -->
+    {% include "sections/dashboard/dashboard_stats.html" %}
 
-        {% include "stats.html" %}
+    <!-- Main Dashboard Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
 
-        {% include "services_section.html" %}
+        <!-- Left Column -->
+        <div class="xl:col-span-2 space-y-8">
 
-        {% include "appointments_section.html" %}
+            {% include "sections/dashboard/recent_conversations.html" %}
 
-        {% include "payments_section.html" %}
+            {% include "sections/dashboard/todays_appointments.html" %}
+
+        </div>
+
+        <!-- Right Column -->
+        <div>
+
+            {% include "sections/ai_employee_card.html" %}
+
+        </div>
 
     </div>
 
 </div>
 
-</body>
-</html>
+{% endblock %}

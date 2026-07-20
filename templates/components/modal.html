@@ -1,0 +1,106 @@
+<!-- FlowAI Reusable Modal -->
+
+<div id="modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+
+    <!-- Modal Window -->
+    <div class="w-full max-w-2xl mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-8 py-6 border-b border-slate-200">
+
+            <div>
+
+                <p class="text-sm uppercase tracking-widest text-slate-500">
+                    FlowAI
+                </p>
+
+                <h2 class="text-2xl font-bold text-slate-900 mt-1">
+                    {{ modal_title|default("Modal Title") }}
+                </h2>
+
+            </div>
+
+            <button
+                onclick="closeModal()"
+                class="w-10 h-10 rounded-xl hover:bg-slate-100 text-slate-500 transition">
+
+                ✕
+
+            </button>
+
+        </div>
+
+        <!-- Body -->
+        <div class="px-8 py-8">
+
+            {% block modal_content %}
+
+            <p class="text-slate-500">
+                Modal content goes here...
+            </p>
+
+            {% endblock %}
+
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 px-8 py-6 bg-slate-50 border-t border-slate-200">
+
+            <button
+                type="button"
+                onclick="closeModal()"
+                class="px-6 py-3 rounded-xl border border-slate-300 hover:bg-slate-100 transition">
+
+                Cancel
+
+            </button>
+
+            <button
+                type="submit"
+                class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
+
+                {{ save_button_text|default("Save Changes") }}
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function openModal() {
+
+    const modal = document.getElementById("modal");
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+}
+
+function closeModal() {
+
+    const modal = document.getElementById("modal");
+
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
+
+}
+
+// Close when clicking outside the modal
+window.addEventListener("click", function(event) {
+
+    const modal = document.getElementById("modal");
+
+    if (event.target === modal) {
+
+        closeModal();
+
+    }
+
+});
+
+</script>

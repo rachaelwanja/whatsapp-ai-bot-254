@@ -1,9 +1,10 @@
 from flask import (
     Blueprint,
+    render_template,
     request,
     redirect,
     session,
-    render_template,
+    flash,
     Response
 )
 
@@ -13,17 +14,13 @@ from models import (
     db,
     Business,
     Service,
-    Conversation
+    Conversation,
+    Knowledge
 )
 
 from services import ask_ai
+from brain.prompt_builder import build_prompt
 
-from brain.personality import PERSONALITY
-from brain.language import LANGUAGE
-from brain.empathy import EMPATHY
-from brain.booking import BOOKING
-from brain.rules import RULES
-from business_types import BUSINESS_PERSONALITIES
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -47,6 +44,55 @@ def whatsapp_ai():
     return render_template(
         "whatsapp_ai.html",
         business=business
+    )
+    
+@whatsapp.route("/knowledge", methods=["GET", "POST"])
+def knowledge():
+
+    if "business_id" not in session:
+        return redirect("/login")
+
+    business = Business.query.get(
+        session["business_id"]
+    )
+
+    # -------------------------------
+    # SAVE NEW KNOWLEDGE
+    # -------------------------------
+    if request.method == "POST":
+
+        item = Knowledge(
+            business_id=business.id,
+            question=request.form.get("question"),
+            answer=request.form.get("answer")
+        )
+
+        print("Saving:", item.question, "->", item.answer)
+
+        db.session.add(item)
+        db.session.commit()
+
+        return redirect("/knowledge")
+
+    # -------------------------------
+    # LOAD KNOWLEDGE
+    # -------------------------------
+    knowledge = Knowledge.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    print("Knowledge records:", len(knowledge))
+
+    for item in knowledge:
+        print(item.question, "->", item.answer)
+
+    # -------------------------------
+    # SHOW PAGE
+    # -------------------------------
+    return render_template(
+        "knowledge.html",
+        business=business,
+        knowledge=knowledge
     )
 
 
@@ -134,70 +180,10 @@ Duration: {service.duration}"""
     # BUILD AI PROMPT
     # =====================================
 
-    business_personality = BUSINESS_PERSONALITIES.get(
-        business.business_type,
-        BUSINESS_PERSONALITIES["General"]
+    prompt = build_prompt(
+        business=business,
+        services_text=services_text
     )
-
-    prompt = f"""
-{PERSONALITY}
-
-{LANGUAGE}
-
-{EMPATHY}
-
-{BOOKING}
-
-{RULES}
-
-{business_personality}
-
-=================================
-BUSINESS PROFILE
-=================================
-
-Business Name:
-{business.business_name}
-
-Business Type:
-{business.business_type}
-
-Location:
-{business.location}
-
-Opening Hours:
-{business.opening_hours}
-
-=================================
-AVAILABLE SERVICES
-=================================
-
-{services_text}
-
-=================================
-BUSINESS INSTRUCTIONS
-=================================
-
-{business.ai_prompt}
-
-=================================
-INSTRUCTIONS
-=================================
-
-The conversation history will be provided below.
-
-Continue naturally from where the customer left off.
-
-Never restart the conversation.
-
-Only ask for information that is still missing.
-
-Never invent services.
-
-Never invent prices.
-
-Only use information supplied by the business.
-"""
 
     # =====================================
     # BUILD CONVERSATION HISTORY
@@ -234,6 +220,7 @@ Only use information supplied by the business.
         print("ROLE:", msg["role"])
         print("CONTENT:")
         print(msg["content"])
+    
     # =====================================
     # ASK OPENROUTER
     # =====================================

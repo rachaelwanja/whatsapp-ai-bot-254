@@ -1,0 +1,92 @@
+<header class="bg-white border-b border-slate-200 shadow-sm">
+
+    <div class="px-8 py-6">
+
+        <div class="flex items-center justify-between">
+
+            <!-- Left -->
+            <div>
+
+                <p class="text-sm font-medium text-slate-500">
+                    AI Workforce Platform
+                </p>
+
+                <h1 class="mt-1 text-3xl font-bold text-slate-900">
+                    {{ page_title|default("Dashboard") }}
+                </h1>
+
+                <p class="mt-2 text-slate-500">
+                    Welcome back{% if business %}, <span class="font-semibold text-slate-700">{{ business.business_name }}</span>{% endif %} 👋
+                </p>
+
+            </div>
+
+            <!-- Right -->
+            <div class="flex items-center gap-4">
+
+                <!-- Search -->
+                <div class="hidden xl:block relative">
+
+                    <input
+                        type="text"
+                        placeholder="Search customers, appointments..."
+                        class="w-80 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+
+                </div>
+
+                <!-- Notifications -->
+                <button
+                    class="w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 transition flex items-center justify-center">
+
+                    🔔
+
+                </button>
+
+                <!-- Settings -->
+                <button
+                    class="w-11 h-11 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 transition flex items-center justify-center">
+
+                    ⚙️
+
+                </button>
+
+                <!-- Business Profile -->
+                <div class="flex items-center gap-3 rounded-2xl bg-slate-100 px-4 py-2">
+
+                    <div class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg">
+
+                        {% if business %}
+                            {{ business.business_name[0]|upper }}
+                        {% else %}
+                            F
+                        {% endif %}
+
+                    </div>
+
+                    <div class="hidden lg:block">
+
+                        <p class="font-semibold text-slate-900">
+
+                            {% if business %}
+                                {{ business.business_name }}
+                            {% else %}
+                                FlowAI
+                            {% endif %}
+
+                        </p>
+
+                        <p class="text-xs text-slate-500">
+                            Business Workspace
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>

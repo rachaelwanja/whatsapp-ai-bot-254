@@ -1,63 +1,164 @@
+<div class="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-slate-950 text-white shadow-2xl">
 
-<div class="w-64 bg-white shadow hidden md:block">
+    <!-- Logo -->
+    <div class="px-8 py-8 border-b border-slate-800">
 
-    <div class="p-6 border-b">
+        <div class="flex items-center space-x-4">
 
-        <h1 class="text-3xl font-bold">
-            FlowAI
-        </h1>
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg">
+                🤖
+            </div>
 
-        <p class="text-sm text-gray-500">
-            AI Receptionist
-        </p>
+            <div>
+
+                <h1 class="text-3xl font-extrabold tracking-wide">
+                    FLOWAI
+                </h1>
+
+                <p class="text-sm text-slate-400">
+                    AI Workforce Platform
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="mt-6 bg-slate-900 rounded-2xl p-4 border border-slate-800">
+
+            <p class="text-xs uppercase tracking-widest text-slate-500">
+                Workspace
+            </p>
+
+            <p class="mt-1 font-semibold text-white">
+                {{ business.business_name if business else "My Business" }}
+            </p>
+
+        </div>
 
     </div>
 
-    <div class="p-4 space-y-2">
+    <!-- Navigation -->
+    <div class="flex-1 overflow-y-auto px-5 py-6">
 
-        <a href="/dashboard"
-           class="block px-4 py-3 rounded-lg bg-black text-white">
-            🏠 Dashboard
-        </a>
+        <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
+            Workspace
+        </p>
 
-        <a href="/business-settings"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            ⚙️ Business Settings
-        </a>
+        <nav class="space-y-2">
 
-        <a href="/services"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            💇 Services
-        </a>
+            <a href="/dashboard"
+               class="flex items-center px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition duration-200 font-medium">
+                <span class="mr-3">🏠</span>
+                Dashboard
+            </a>
 
-        <a href="/appointments"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            📅 Appointments
-        </a>
+            <a href="/business-settings"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">🏢</span>
+                Business
+            </a>
 
-        <a href="/customers"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            👥 Customers
-        </a>
+            <a href="/whatsapp-ai"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">🤖</span>
+                AI Employee
+            </a>
 
-        <a href="/payments"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            💳 Payments
-        </a>
+            <a href="/knowledge"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">📚</span>
+                Knowledge
+            </a>
 
-        <a href="/analytics"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            📊 Analytics
-        </a>
+        </nav>
 
-        <a href="/whatsapp-ai"
-           class="block px-4 py-3 rounded-lg hover:bg-gray-100">
-            🤖 WhatsApp AI
-        </a>
+        <div class="border-t border-slate-800 my-8"></div>
+
+        <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
+            Operations
+        </p>
+
+        <nav class="space-y-2">
+
+            <a href="/services"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">💇</span>
+                Services
+            </a>
+
+            <a href="/appointments"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">📅</span>
+                Appointments
+            </a>
+
+            <a href="/customers"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">👥</span>
+                Customers
+            </a>
+
+        </nav>
+
+        <div class="border-t border-slate-800 my-8"></div>
+
+        <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
+            Insights
+        </p>
+
+        <nav class="space-y-2">
+
+            <a href="/payments"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">💳</span>
+                Payments
+            </a>
+
+            <a href="/analytics"
+               class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
+                <span class="mr-3">📊</span>
+                Analytics
+            </a>
+
+        </nav>
+
+    </div>
+
+    <!-- Plan Card -->
+    <div class="px-5">
+
+        <div class="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 p-5 shadow-xl">
+
+            <p class="text-xs uppercase tracking-widest text-blue-100">
+                Current Plan
+            </p>
+
+            <h3 class="text-2xl font-bold mt-2">
+                Starter
+            </h3>
+
+            <p class="text-sm text-blue-100 mt-2">
+                Upgrade to unlock Voice AI, multiple AI employees, advanced analytics, and more.
+            </p>
+
+            <button
+                class="mt-5 w-full rounded-xl bg-white text-slate-900 py-3 font-semibold hover:bg-slate-100 transition">
+                Upgrade
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Logout -->
+    <div class="p-5">
 
         <a href="/logout"
-           class="block px-4 py-3 rounded-lg text-red-600 hover:bg-red-50">
-            🚪 Logout
+           class="flex items-center justify-center rounded-xl border border-red-500 text-red-400 hover:bg-red-600 hover:text-white py-3 transition duration-200">
+
+            🚪
+            <span class="ml-2">Logout</span>
+
         </a>
 
     </div>

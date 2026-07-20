@@ -1,0 +1,39 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+
+    {% with
+        title="Conversations",
+        value="147",
+        subtitle="+18% Today",
+        icon="💬"
+    %}
+        {% include "components/stat_card.html" %}
+    {% endwith %}
+
+    {% with
+        title="Appointments",
+        value="18",
+        subtitle="Today's Bookings",
+        icon="📅"
+    %}
+        {% include "components/stat_card.html" %}
+    {% endwith %}
+
+    {% with
+        title="Revenue",
+        value="KES 24,500",
+        subtitle="This Month",
+        icon="💰"
+    %}
+        {% include "components/stat_card.html" %}
+    {% endwith %}
+
+    {% with
+        title="AI Health",
+        value="98.6%",
+        subtitle="Excellent",
+        icon="🤖"
+    %}
+        {% include "components/stat_card.html" %}
+    {% endwith %}
+
+</div>

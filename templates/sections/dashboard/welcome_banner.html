@@ -1,0 +1,92 @@
+<div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 p-8 text-white shadow-2xl">
+
+    <!-- Background decoration -->
+    <div class="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-white/10"></div>
+    <div class="absolute right-24 bottom-0 w-40 h-40 rounded-full bg-white/5"></div>
+
+    <div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+
+        <!-- Left -->
+        <div>
+
+            <p class="uppercase tracking-[0.25em] text-blue-100 text-sm">
+                Welcome Back
+            </p>
+
+            <h2 class="mt-3 text-4xl font-bold">
+
+                {% if business %}
+                    {{ business.business_name }}
+                {% else %}
+                    Your Business
+                {% endif %}
+
+            </h2>
+
+            <p class="mt-4 text-blue-100 text-lg max-w-2xl">
+                Your AI employee is online and ready to answer customers,
+                book appointments, and grow your business.
+            </p>
+
+            <div class="mt-8 flex flex-wrap gap-4">
+
+                <div class="bg-white/15 backdrop-blur rounded-2xl px-5 py-3">
+                    💬 <strong>147</strong> Conversations
+                </div>
+
+                <div class="bg-white/15 backdrop-blur rounded-2xl px-5 py-3">
+                    📅 <strong>18</strong> Bookings
+                </div>
+
+                <div class="bg-white/15 backdrop-blur rounded-2xl px-5 py-3">
+                    🤖 AI Online
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Right -->
+        <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 w-full lg:w-80 border border-white/20">
+
+            <p class="text-blue-100 text-sm uppercase tracking-widest">
+                AI Employee
+            </p>
+
+            <h3 class="mt-2 text-2xl font-bold">
+                Sophia
+            </h3>
+
+            <p class="text-blue-100">
+                Receptionist
+            </p>
+
+            <div class="mt-6 space-y-4">
+
+                <div class="flex justify-between">
+                    <span>Status</span>
+                    <span class="text-green-300 font-semibold">🟢 Online</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Response Time</span>
+                    <span>2.1 sec</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Satisfaction</span>
+                    <span>98%</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Bookings</span>
+                    <span>18 Today</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

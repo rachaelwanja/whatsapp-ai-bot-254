@@ -1,0 +1,36 @@
+<span class="
+inline-flex
+items-center
+gap-2
+rounded-full
+px-4
+py-2
+text-sm
+font-semibold
+
+{% if status == 'online' %}
+bg-green-100 text-green-700
+{% elif status == 'offline' %}
+bg-red-100 text-red-700
+{% elif status == 'trial' %}
+bg-blue-100 text-blue-700
+{% elif status == 'expired' %}
+bg-orange-100 text-orange-700
+{% else %}
+bg-slate-100 text-slate-700
+{% endif %}
+">
+
+{% if status == "online" %}
+🟢
+{% elif status == "offline" %}
+🔴
+{% elif status == "trial" %}
+🔵
+{% elif status == "expired" %}
+🟠
+{% endif %}
+
+{{ label }}
+
+</span>
