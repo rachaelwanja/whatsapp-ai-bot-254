@@ -58,9 +58,12 @@ app.secret_key = os.environ.get(
     "flowai-secret"
 )
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///flowai.db"
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
