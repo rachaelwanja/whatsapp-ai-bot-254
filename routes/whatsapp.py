@@ -224,6 +224,40 @@ Duration: {service.duration}"""
     # =====================================
     # ASK OPENROUTER
     # =====================================
+    system_prompt = f"""
+You are the AI receptionist for {business.business_name}.
+
+Business type:
+{business.business_type}
+
+Phone:
+{business.business_phone}
+
+Location:
+{business.location}
+
+Opening hours:
+{business.opening_hours}
+
+Instructions:
+{business.ai_prompt}
+
+Always answer as this business.
+Be friendly, professional and helpful.
+"""
+    messages.insert(
+    0,
+    {
+        "role": "system",
+        "content": system_prompt
+    }
+)
+    print("\n========== SYSTEM PROMPT ==========")
+print(system_prompt)
+
+print("\n========== MESSAGES ==========")
+for msg in messages:
+    print(msg)
 
     reply = ask_ai(messages)
 
