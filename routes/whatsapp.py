@@ -224,6 +224,7 @@ Duration: {service.duration}"""
     # =====================================
     # ASK OPENROUTER
     # =====================================
+
     system_prompt = f"""
 You are the AI receptionist for {business.business_name}.
 
@@ -245,19 +246,21 @@ Instructions:
 Always answer as this business.
 Be friendly, professional and helpful.
 """
-    messages.insert(
-    0,
-    {
-        "role": "system",
-        "content": system_prompt
-    }
-)
-    print("\n========== SYSTEM PROMPT ==========")
-print(system_prompt)
 
-print("\n========== MESSAGES ==========")
-for msg in messages:
-    print(msg)
+    messages.insert(
+        0,
+        {
+            "role": "system",
+            "content": system_prompt
+        }
+    )
+
+    print("\n========== SYSTEM PROMPT ==========")
+    print(system_prompt)
+
+    print("\n========== MESSAGES ==========")
+    for msg in messages:
+        print(msg)
 
     reply = ask_ai(messages)
 
