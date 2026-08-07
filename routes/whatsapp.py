@@ -1,3 +1,5 @@
+from urllib import response
+
 from flask import (
     Blueprint,
     render_template,
@@ -183,7 +185,9 @@ Duration: {service.duration}"""
     prompt = build_prompt(
         business=business,
         services_text=services_text
-    )
+        
+    )   
+
 
     # =====================================
     # BUILD CONVERSATION HISTORY
@@ -204,7 +208,6 @@ Duration: {service.duration}"""
     ).limit(20).all()
 
     for chat in history:
-
         messages.append(
             {
                 "role": chat.role,
@@ -212,55 +215,20 @@ Duration: {service.duration}"""
             }
         )
 
+    print("\n========== SYSTEM PROMPT ==========")
+    print(prompt)
+
     print("\n========== MESSAGES SENT TO OPENROUTER ==========")
 
     for i, msg in enumerate(messages, start=1):
-
         print(f"\nMessage {i}")
         print("ROLE:", msg["role"])
         print("CONTENT:")
         print(msg["content"])
-    
+
     # =====================================
     # ASK OPENROUTER
     # =====================================
-
-    system_prompt = f"""
-You are the AI receptionist for {business.business_name}.
-
-Business type:
-{business.business_type}
-
-Phone:
-{business.business_phone}
-
-Location:
-{business.location}
-
-Opening hours:
-{business.opening_hours}
-
-Instructions:
-{business.ai_prompt}
-
-Always answer as this business.
-Be friendly, professional and helpful.
-"""
-
-    messages.insert(
-        0,
-        {
-            "role": "system",
-            "content": system_prompt
-        }
-    )
-
-    print("\n========== SYSTEM PROMPT ==========")
-    print(system_prompt)
-
-    print("\n========== MESSAGES ==========")
-    for msg in messages:
-        print(msg)
 
     reply = ask_ai(messages)
 
@@ -290,4 +258,5 @@ Be friendly, professional and helpful.
     return Response(
         str(response),
         mimetype="text/xml"
+
     )
