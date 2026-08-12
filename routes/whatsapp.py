@@ -288,10 +288,23 @@ Answer: {item.answer}"""
     # SEND WHATSAPP RESPONSE
     # =====================================
 
+    ai_chat = Conversation(
+        business_id=business.id,
+        customer_phone=customer_phone,
+        role="assistant",
+        message=reply
+    )
+
+    db.session.add(ai_chat)
+    db.session.commit()
+
+    # =====================================
+    # SEND WHATSAPP RESPONSE
+    # =====================================
+
     response.message(reply)
 
-    Response(
+    return Response(
         str(response),
         mimetype="text/xml"
-
-  )
+    )
