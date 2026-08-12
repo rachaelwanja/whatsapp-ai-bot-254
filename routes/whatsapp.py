@@ -69,7 +69,12 @@ def knowledge():
             answer=request.form.get("answer")
         )
 
-        print("Saving:", item.question, "->", item.answer)
+        print(
+            "Saving:",
+            item.question,
+            "->",
+            item.answer
+        )
 
         db.session.add(item)
         db.session.commit()
@@ -79,20 +84,29 @@ def knowledge():
     # -------------------------------
     # LOAD KNOWLEDGE
     # -------------------------------
+
     knowledge = Knowledge.query.filter_by(
         business_id=business.id
     ).all()
 
-    print("Knowledge records:", len(knowledge))
+    print(
+        "Knowledge records:",
+        len(knowledge)
+    )
 
     for item in knowledge:
-        print(item.question, "->", item.answer)
+        print(
+            item.question,
+            "->",
+            item.answer
+        )
 
     # -------------------------------
     # SHOW PAGE
     # -------------------------------
+
     return render_template(
-        "knowledge.html",
+        "sections/ai/knowledge.html",
         business=business,
         knowledge=knowledge
     )
@@ -179,15 +193,39 @@ Duration: {service.duration}"""
     print(services_text)
 
     # =====================================
+    # LOAD KNOWLEDGE BASE
+    # =====================================
+
+    knowledge_items = Knowledge.query.filter_by(
+        business_id=business.id
+    ).all()
+
+    if knowledge_items:
+
+        knowledge_text = "\n\n".join(
+            [
+                f"""Question: {item.question}
+Answer: {item.answer}"""
+                for item in knowledge_items
+            ]
+        )
+
+    else:
+
+        knowledge_text = "No business knowledge configured."
+
+    print("========== KNOWLEDGE ==========")
+    print(knowledge_text)
+
+    # =====================================
     # BUILD AI PROMPT
     # =====================================
 
     prompt = build_prompt(
         business=business,
-        services_text=services_text
-        
-    )   
-
+        services_text=services_text,
+        knowledge_text=knowledge_text
+    )
 
     # =====================================
     # BUILD CONVERSATION HISTORY
@@ -246,17 +284,14 @@ Duration: {service.duration}"""
         message=reply
     )
 
-    db.session.add(ai_chat)
-    db.session.commit()
-
     # =====================================
     # SEND WHATSAPP RESPONSE
     # =====================================
 
     response.message(reply)
 
-    return Response(
+    Response(
         str(response),
         mimetype="text/xml"
 
-    )
+  )
