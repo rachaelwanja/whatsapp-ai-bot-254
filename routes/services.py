@@ -95,8 +95,8 @@ def add_service():
         duration=request.form["duration"],
 
         deposit=int(
-            request.form.get("deposit", 0)
-        ),
+    request.form.get("deposit") or 0
+),
 
         image=image_name,
 
