@@ -1,4 +1,7 @@
 from urllib import response
+from datetime import datetime
+import json
+import re
 
 from flask import (
     Blueprint,
@@ -16,8 +19,9 @@ from models import (
     db,
     Business,
     Service,
+    Knowledge,
     Conversation,
-    Knowledge
+    Appointment
 )
 
 from services import ask_ai
@@ -272,6 +276,58 @@ Answer: {item.answer}"""
 
     print("\n========== AI REPLY ==========")
     print(reply)
+
+    # =====================================
+    # CHECK FOR COMPLETED BOOKING
+    # =====================================
+
+    if "[BOOKING_READY]" in reply:
+
+        try:
+
+            booking_json = reply.split(
+                "[BOOKING_READY]",
+                1
+            )[1].strip()
+
+            booking_data = json.loads(
+                booking_json
+            )
+
+            print(
+                "========== BOOKING DATA =========="
+            )
+
+            print(
+                booking_data
+            )
+
+            appointment = Appointment(
+                business_id=business.id,
+                customer_name=booking_data["customer_name"],
+                customer_phone=customer_phone,
+                service=booking_data["service"],
+                amount=0,
+                appointment_time=f"{booking_data['date']} {booking_data['time']}",
+                status="confirmed"
+            )
+
+            db.session.add(appointment)
+            db.session.commit()
+
+            print(
+                "========== APPOINTMENT CREATED =========="
+            )
+
+            print(
+                appointment.id
+            )
+        except Exception as e:
+
+            print(
+                "BOOKING PARSE ERROR:",
+                e
+            )
 
     # =====================================
     # SAVE AI RESPONSE
