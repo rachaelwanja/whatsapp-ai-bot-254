@@ -302,26 +302,44 @@ Answer: {item.answer}"""
                 booking_data
             )
 
-            appointment = Appointment(
+            service = Service.query.filter_by(
                 business_id=business.id,
-                customer_name=booking_data["customer_name"],
-                customer_phone=customer_phone,
-                service=booking_data["service"],
-                amount=0,
-                appointment_time=f"{booking_data['date']} {booking_data['time']}",
-                status="confirmed"
-            )
+                name=booking_data["service"]
+            ).first()
 
-            db.session.add(appointment)
-            db.session.commit()
+            if not service:
 
-            print(
-                "========== APPOINTMENT CREATED =========="
-            )
+                print(
+                    "BOOKING ERROR: Service not found:",
+                    booking_data["service"]
+                )
 
-            print(
-                appointment.id
-            )
+            else:
+
+                appointment = Appointment(
+                    business_id=business.id,
+                    customer_name=booking_data["customer_name"],
+                    customer_phone=customer_phone,
+                    service=service.name,
+                    amount=service.price,
+                    appointment_time=f"{booking_data['date']} {booking_data['time']}",
+                    status="confirmed"
+                )
+
+                db.session.add(
+                    appointment
+                )
+
+                db.session.commit()
+
+                print(
+                    "========== APPOINTMENT CREATED =========="
+                )
+
+                print(
+                    appointment.id
+                )
+
         except Exception as e:
 
             print(
