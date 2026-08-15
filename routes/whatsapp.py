@@ -1,5 +1,5 @@
 from urllib import response
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import re
 
@@ -283,7 +283,7 @@ Answer: {item.answer}"""
 
     if "[BOOKING_READY]" in reply:
 
-        try:
+
 
             booking_json = reply.split(
                 "[BOOKING_READY]",
@@ -316,37 +316,126 @@ Answer: {item.answer}"""
 
             else:
 
-                appointment = Appointment(
+                # =====================================
+                # CHECK FOR DOUBLE BOOKING
+                # =====================================
+
+                requested_start = datetime.strptime(
+                    f"{booking_data['date']} {booking_data['time']}",
+                    "%Y-%m-%d %H:%M"
+                )
+
+                duration_text = str(
+                    service.duration
+                ).lower()
+
+                duration_match = re.search(
+                    r"\d+",
+                    duration_text
+                )
+
+                duration_hours = (
+                    int(duration_match.group())
+                    if duration_match
+                    else 1
+                )
+
+                requested_end = (
+                    requested_start
+                    + timedelta(hours=duration_hours)
+                )
+
+                conflict = False
+
+                existing_appointments = Appointment.query.filter_by(
                     business_id=business.id,
-                    customer_name=booking_data["customer_name"],
-                    customer_phone=customer_phone,
-                    service=service.name,
-                    amount=service.price,
-                    appointment_time=f"{booking_data['date']} {booking_data['time']}",
                     status="confirmed"
-                )
+                ).all()
 
-                db.session.add(
-                    appointment
-                )
+                for existing in existing_appointments:
 
-                db.session.commit()
+                    existing_start = datetime.strptime(
+                        existing.appointment_time,
+                        "%Y-%m-%d %H:%M"
+                    )
 
-                print(
-                    "========== APPOINTMENT CREATED =========="
-                )
+                    existing_service = Service.query.filter_by(
+                        business_id=business.id,
+                        name=existing.service
+                    ).first()
 
-                print(
-                    appointment.id
-                )
+                    if existing_service:
 
-        except Exception as e:
+                        existing_duration_match = re.search(
+                            r"\d+",
+                            str(existing_service.duration).lower()
+                        )
 
-            print(
-                "BOOKING PARSE ERROR:",
-                e
-            )
+                        existing_duration_hours = (
+                            int(existing_duration_match.group())
+                            if existing_duration_match
+                            else 1
+                        )
 
+                    else:
+
+                        existing_duration_hours = 1
+
+                    existing_end = (
+                        existing_start
+                        + timedelta(
+                            hours=existing_duration_hours
+                        )
+                    )
+
+                    if (
+                        requested_start < existing_end
+                        and requested_end > existing_start
+                    ):
+
+                        conflict = True
+                        break
+
+                if conflict:
+
+                    print(
+                        "========== BOOKING CONFLICT =========="
+                    )
+
+                    reply = (
+                        f"Sorry, {booking_data['date']} at "
+                        f"{booking_data['time']} is already booked. "
+                        "Please choose another time."
+                    )
+
+                else:
+
+                    appointment = Appointment(
+                        business_id=business.id,
+                        customer_name=booking_data["customer_name"],
+                        customer_phone=customer_phone,
+                        service=service.name,
+                        amount=service.price,
+                        appointment_time=(
+                            f"{booking_data['date']} "
+                            f"{booking_data['time']}"
+                        ),
+                        status="confirmed"
+                    )
+
+                    db.session.add(
+                        appointment
+                    )
+
+                    db.session.commit()
+
+                    print(
+                        "========== APPOINTMENT CREATED =========="
+                    )
+
+                    print(
+                        appointment.id
+                    )
     # =====================================
     # SAVE AI RESPONSE
     # =====================================
