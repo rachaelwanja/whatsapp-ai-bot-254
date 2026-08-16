@@ -26,7 +26,7 @@ from models import (
 
 from services import ask_ai
 from brain.prompt_builder import build_prompt
-
+from brain.business_hours import check_business_hours
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -344,98 +344,117 @@ Answer: {item.answer}"""
                     requested_start
                     + timedelta(hours=duration_hours)
                 )
+                # =====================================
+                # CHECK BUSINESS HOURS
+                # =====================================
 
-                conflict = False
+                within_hours, hours_error = check_business_hours(
+                    business.opening_hours,
+                    requested_start,
+                    requested_end
+                )
 
-                existing_appointments = Appointment.query.filter_by(
-                    business_id=business.id,
-                    status="confirmed"
-                ).all()
+                if not within_hours:
 
-                for existing in existing_appointments:
-
-                    existing_start = datetime.strptime(
-                        existing.appointment_time,
-                        "%Y-%m-%d %H:%M"
+                    print(
+                        "========== BUSINESS HOURS CONFLICT =========="
                     )
 
-                    existing_service = Service.query.filter_by(
+                    reply = hours_error
+
+                else:
+
+                    conflict = False
+
+                    existing_appointments = Appointment.query.filter_by(
                         business_id=business.id,
-                        name=existing.service
-                    ).first()
+                        status="confirmed"
+                    ).all()
 
-                    if existing_service:
+                    for existing in existing_appointments:
 
-                        existing_duration_match = re.search(
-                            r"\d+",
-                            str(existing_service.duration).lower()
+                        existing_start = datetime.strptime(
+                            existing.appointment_time,
+                            "%Y-%m-%d %H:%M"
                         )
 
-                        existing_duration_hours = (
-                            int(existing_duration_match.group())
-                            if existing_duration_match
-                            else 1
+                        existing_service = Service.query.filter_by(
+                            business_id=business.id,
+                            name=existing.service
+                        ).first()
+
+                        if existing_service:
+
+                            existing_duration_match = re.search(
+                                r"\d+",
+                                str(existing_service.duration).lower()
+                            )
+
+                            existing_duration_hours = (
+                                int(existing_duration_match.group())
+                                if existing_duration_match
+                                else 1
+                            )
+
+                        else:
+
+                            existing_duration_hours = 1
+
+                        existing_end = (
+                            existing_start
+                            + timedelta(
+                                hours=existing_duration_hours
+                            )
+                        )
+
+                        if (
+                            requested_start < existing_end
+                            and requested_end > existing_start
+                        ):
+
+                            conflict = True
+                            break
+
+                    if conflict:
+
+                        print(
+                            "========== BOOKING CONFLICT =========="
+                        )
+
+                        reply = (
+                            f"Sorry, {booking_data['date']} at "
+                            f"{booking_data['time']} is already booked. "
+                            "Please choose another time."
                         )
 
                     else:
 
-                        existing_duration_hours = 1
-
-                    existing_end = (
-                        existing_start
-                        + timedelta(
-                            hours=existing_duration_hours
+                        appointment = Appointment(
+                            business_id=business.id,
+                            customer_name=booking_data["customer_name"],
+                            customer_phone=customer_phone,
+                            service=service.name,
+                            amount=service.price,
+                            appointment_time=(
+                                f"{booking_data['date']} "
+                                f"{booking_data['time']}"
+                            ),
+                            status="confirmed"
                         )
-                    )
 
-                    if (
-                        requested_start < existing_end
-                        and requested_end > existing_start
-                    ):
+                        db.session.add(
+                            appointment
+                        )
 
-                        conflict = True
-                        break
+                        db.session.commit()
 
-                if conflict:
+                        print(
+                            "========== APPOINTMENT CREATED =========="
+                        )
 
-                    print(
-                        "========== BOOKING CONFLICT =========="
-                    )
-
-                    reply = (
-                        f"Sorry, {booking_data['date']} at "
-                        f"{booking_data['time']} is already booked. "
-                        "Please choose another time."
-                    )
-
-                else:
-
-                    appointment = Appointment(
-                        business_id=business.id,
-                        customer_name=booking_data["customer_name"],
-                        customer_phone=customer_phone,
-                        service=service.name,
-                        amount=service.price,
-                        appointment_time=(
-                            f"{booking_data['date']} "
-                            f"{booking_data['time']}"
-                        ),
-                        status="confirmed"
-                    )
-
-                    db.session.add(
-                        appointment
-                    )
-
-                    db.session.commit()
-
-                    print(
-                        "========== APPOINTMENT CREATED =========="
-                    )
-
-                    print(
-                        appointment.id
-                    )
+                        print(
+                            appointment.id
+                        )
     # =====================================
     # SAVE AI RESPONSE
     # =====================================
