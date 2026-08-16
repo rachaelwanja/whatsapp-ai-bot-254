@@ -479,7 +479,78 @@ Answer: {item.answer}"""
 
     db.session.add(ai_chat)
     db.session.commit()
+    # =====================================
+    # CHECK FOR CANCELLATION REQUEST
+    # =====================================
 
+    if "[CANCEL_REQUEST]" in reply:
+
+        try:
+
+            cancel_json = reply.split(
+                "[CANCEL_REQUEST]",
+                1
+            )[1].strip()
+
+            cancel_data = json.loads(
+                cancel_json
+            )
+
+            cancel_time = datetime.strptime(
+                f"{cancel_data['date']} {cancel_data['time']}",
+                "%Y-%m-%d %H:%M"
+            )
+
+            appointment = Appointment.query.filter_by(
+                business_id=business.id,
+                customer_phone=customer_phone,
+                appointment_time=cancel_time.strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+                status="confirmed"
+            ).first()
+
+            if appointment:
+
+                appointment.status = "cancelled"
+
+                db.session.commit()
+
+                reply = (
+                    f"Your appointment for "
+                    f"{appointment.service} on "
+                    f"{cancel_data['date']} at "
+                    f"{cancel_data['time']} "
+                    "has been cancelled successfully."
+                )
+
+                print(
+                    "========== APPOINTMENT CANCELLED =========="
+                )
+
+                print(
+                    appointment.id
+                )
+
+            else:
+
+                reply = (
+                    "I couldn't find a confirmed appointment "
+                    "for that date and time. Please check the "
+                    "details and try again."
+                )
+
+        except Exception as e:
+
+            print(
+                "CANCELLATION ERROR:",
+                e
+            )
+
+            reply = (
+                "Sorry, I couldn't process the cancellation. "
+                "Please check the appointment details and try again."
+            )
     # =====================================
     # SEND WHATSAPP RESPONSE
     # =====================================
