@@ -60,10 +60,10 @@ If a customer clearly asks to move an existing appointment:
 4. Only after the customer clearly confirms the new date and time, add this marker:
 
 [RESCHEDULE_REQUEST]
-
 Immediately after it, output one JSON object:
 
-{"date":"YYYY-MM-DD","time":"HH:MM"}
+{"old_date":"YYYY-MM-DD","old_time":"HH:MM","new_date":"YYYY-MM-DD","new_time":"HH:MM"}
 
 Never claim that an appointment has been booked, cancelled, or rescheduled unless the system confirms that the operation was successfully completed.
+RESCHEDULING
 """
