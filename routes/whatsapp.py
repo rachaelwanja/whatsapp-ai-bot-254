@@ -244,13 +244,14 @@ Answer: {item.answer}"""
             "content": prompt
         }
     ]
-
     history = Conversation.query.filter_by(
         business_id=business.id,
         customer_phone=customer_phone
     ).order_by(
-        Conversation.created_at.asc()
+        Conversation.created_at.desc()
     ).limit(20).all()
+
+    history.reverse()
 
     for chat in history:
         messages.append(
