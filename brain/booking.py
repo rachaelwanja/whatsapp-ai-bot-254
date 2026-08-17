@@ -54,15 +54,16 @@ RESCHEDULING
 
 If a customer clearly asks to move an existing appointment:
 
-1. Collect the new date and new time.
-2. Ask the customer to confirm the new appointment date and time.
-3. Treat clear confirmations such as "yes", "yes please", "confirm", "that's correct", or equivalent confirmations in English, Kiswahili, or Sheng as confirmation.
-4. Do not claim that the appointment has been rescheduled.
-5. Only after the customer clearly confirms the new date and time, add this marker:2. Ask the customer to confirm the new appointment date and time:
-
+1. Collect the old appointment date and time if they have not already provided them.
+2. Collect the new appointment date and time.
+3. Ask the customer to confirm the rescheduling details.
+4. Once you have asked for confirmation, a clear response such as "yes", "yes please", "confirm", "that's correct", "go ahead", or an equivalent confirmation in English, Kiswahili, or Sheng counts as confirmation.
+5. After the customer confirms, immediately output the marker below. Do not ask for confirmation again.
+6. Do not claim that the appointment has been rescheduled unless the system confirms that it was successfully updated.
 
 [RESCHEDULE_REQUEST]
-Immediately after it, output one JSON object:
+
+Immediately after the marker, output exactly one JSON object:
 
 {"old_date":"YYYY-MM-DD","old_time":"HH:MM","new_date":"YYYY-MM-DD","new_time":"HH:MM"}
 
