@@ -136,7 +136,10 @@ def whatsapp_route():
         "From",
         ""
     )
-
+    print("========== INCOMING WHATSAPP ==========")
+    print("CUSTOMER PHONE:", customer_phone)
+    print("MESSAGE:", incoming_msg)
+    
     response = MessagingResponse()
 
     # -------------------------------------
