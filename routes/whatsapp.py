@@ -27,6 +27,7 @@ from models import (
 from services import ask_ai
 from brain.prompt_builder import build_prompt
 from brain.business_hours import check_business_hours
+from brain.rescheduling import process_reschedule
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -459,6 +460,20 @@ Answer: {item.answer}"""
                         print(
                             appointment.id
                         )
+
+    # =====================================
+    # CHECK FOR RESCHEDULE REQUEST
+    # =====================================
+
+    if "[RESCHEDULE_REQUEST]" in reply:
+
+        reply = process_reschedule(
+            reply=reply,
+            business=business,
+            customer_phone=customer_phone
+        )
+
+
     # =====================================
     # SAVE AI RESPONSE
     # =====================================
@@ -470,308 +485,20 @@ Answer: {item.answer}"""
         message=reply
     )
 
-    # =====================================
-    # SEND WHATSAPP RESPONSE
-    # =====================================
-
-    ai_chat = Conversation(
-        business_id=business.id,
-        customer_phone=customer_phone,
-        role="assistant",
-        message=reply
+    db.session.add(
+        ai_chat
     )
 
-    db.session.add(ai_chat)
     db.session.commit()
-    # =====================================
-    # CHECK FOR CANCELLATION REQUEST
-    # =====================================
 
-    if "[CANCEL_REQUEST]" in reply:
 
-        try:
-
-            cancel_json = reply.split(
-                "[CANCEL_REQUEST]",
-                1
-            )[1].strip()
-
-            cancel_data = json.loads(
-                cancel_json
-            )
-
-            cancel_time = datetime.strptime(
-                f"{cancel_data['date']} {cancel_data['time']}",
-                "%Y-%m-%d %H:%M"
-            )
-
-            appointment = Appointment.query.filter_by(
-                business_id=business.id,
-                customer_phone=customer_phone,
-                appointment_time=cancel_time.strftime(
-                    "%Y-%m-%d %H:%M"
-                ),
-                status="confirmed"
-            ).first()
-
-            if appointment:
-
-                appointment.status = "cancelled"
-
-                db.session.commit()
-
-                reply = (
-                    f"Your appointment for "
-                    f"{appointment.service} on "
-                    f"{cancel_data['date']} at "
-                    f"{cancel_data['time']} "
-                    "has been cancelled successfully."
-                )
-
-                print(
-                    "========== APPOINTMENT CANCELLED =========="
-                )
-
-                print(
-                    appointment.id
-                )
-
-            else:
-
-                reply = (
-                    "I couldn't find a confirmed appointment "
-                    "for that date and time. Please check the "
-                    "details and try again."
-                )
-
-        except Exception as e:
-
-            print(
-                "CANCELLATION ERROR:",
-                e
-            )
-
-            reply = (
-                "Sorry, I couldn't process the cancellation. "
-                "Please check the appointment details and try again."
-            )
-    # =====================================
-    # CHECK FOR RESCHEDULE REQUEST
-    # =====================================
-
-    if "[RESCHEDULE_REQUEST]" in reply:
-
-        try:
-
-            reschedule_json = reply.split(
-                "[RESCHEDULE_REQUEST]",
-                1
-            )[1].strip()
-
-            reschedule_data = json.loads(
-                reschedule_json
-            )
-
-            old_time = datetime.strptime(
-                f"{reschedule_data['old_date']} "
-                f"{reschedule_data['old_time']}",
-                "%Y-%m-%d %H:%M"
-            )
-
-            new_start = datetime.strptime(
-                f"{reschedule_data['new_date']} "
-                f"{reschedule_data['new_time']}",
-                "%Y-%m-%d %H:%M"
-            )
-
-            # -------------------------------------
-            # FIND EXISTING APPOINTMENT
-            # -------------------------------------
-
-            appointment = Appointment.query.filter_by(
-                business_id=business.id,
-                customer_phone=customer_phone,
-                appointment_time=old_time.strftime(
-                    "%Y-%m-%d %H:%M"
-                ),
-                status="confirmed"
-            ).first()
-
-            if not appointment:
-
-                reply = (
-                    "I couldn't find a confirmed appointment "
-                    "for that date and time. Please check the "
-                    "details and try again."
-                )
-
-            else:
-
-                # -------------------------------------
-                # FIND SERVICE
-                # -------------------------------------
-
-                service = Service.query.filter_by(
-                    business_id=business.id,
-                    name=appointment.service
-                ).first()
-
-                if service:
-
-                    duration_match = re.search(
-                        r"\d+",
-                        str(service.duration).lower()
-                    )
-
-                    duration_hours = (
-                        int(duration_match.group())
-                        if duration_match
-                        else 1
-                    )
-
-                else:
-
-                    duration_hours = 1
-
-                new_end = (
-                    new_start
-                    + timedelta(hours=duration_hours)
-                )
-
-                # -------------------------------------
-                # CHECK BUSINESS HOURS
-                # -------------------------------------
-
-                within_hours, hours_error = (
-                    check_business_hours(
-                        business.opening_hours,
-                        new_start,
-                        new_end
-                    )
-                )
-
-                if not within_hours:
-
-                    reply = hours_error
-
-                else:
-
-                    # -------------------------------------
-                    # CHECK FOR DOUBLE BOOKING
-                    # -------------------------------------
-
-                    conflict = False
-
-                    existing_appointments = (
-                        Appointment.query.filter_by(
-                            business_id=business.id,
-                            status="confirmed"
-                        ).all()
-                    )
-
-                    for existing in existing_appointments:
-
-                        # Ignore the appointment being moved
-                        if existing.id == appointment.id:
-                            continue
-
-                        existing_start = datetime.strptime(
-                            existing.appointment_time,
-                            "%Y-%m-%d %H:%M"
-                        )
-
-                        existing_service = (
-                            Service.query.filter_by(
-                                business_id=business.id,
-                                name=existing.service
-                            ).first()
-                        )
-
-                        if existing_service:
-
-                            existing_duration_match = re.search(
-                                r"\d+",
-                                str(existing_service.duration).lower()
-                            )
-
-                            existing_duration_hours = (
-                                int(
-                                    existing_duration_match.group()
-                                )
-                                if existing_duration_match
-                                else 1
-                            )
-
-                        else:
-
-                            existing_duration_hours = 1
-
-                        existing_end = (
-                            existing_start
-                            + timedelta(
-                                hours=existing_duration_hours
-                            )
-                        )
-
-                        if (
-                            new_start < existing_end
-                            and new_end > existing_start
-                        ):
-
-                            conflict = True
-                            break
-
-                    if conflict:
-
-                        reply = (
-                            f"Sorry, {reschedule_data['new_date']} "
-                            f"at {reschedule_data['new_time']} "
-                            "is already booked. Please choose "
-                            "another time."
-                        )
-
-                    else:
-
-                        appointment.appointment_time = (
-                            new_start.strftime(
-                                "%Y-%m-%d %H:%M"
-                            )
-                        )
-
-                        db.session.commit()
-
-                        reply = (
-                            f"Your appointment for "
-                            f"{appointment.service} has been "
-                            f"rescheduled successfully to "
-                            f"{reschedule_data['new_date']} at "
-                            f"{reschedule_data['new_time']}."
-                        )
-
-                        print(
-                            "========== APPOINTMENT RESCHEDULED =========="
-                        )
-
-                        print(
-                            appointment.id
-                        )
-
-        except Exception as e:
-
-            print(
-                "RESCHEDULE ERROR:",
-                e
-            )
-
-            reply = (
-                "Sorry, I couldn't process the rescheduling. "
-                "Please check the appointment details and try again."
-            )
     # =====================================
     # SEND WHATSAPP RESPONSE
     # =====================================
 
-    response.message(reply)
+    response.message(
+        reply
+    )
 
     return Response(
         str(response),
