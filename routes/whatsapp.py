@@ -346,7 +346,20 @@ Answer: {item.answer}"""
             customer = update_customer_name(
                 customer,
                 booking_data["customer_name"]
-  )
+           )
+            print(
+                "========== CUSTOMER UPDATED =========="
+           )
+
+            print(
+                "CUSTOMER ID:",
+                customer.id
+         )
+
+            print(
+    "CUSTOMER NAME:",
+    customer.name
+)
 
             print(
                 "========== BOOKING DATA =========="
