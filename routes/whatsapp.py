@@ -343,6 +343,11 @@ Answer: {item.answer}"""
                 booking_json
             )
 
+            customer = update_customer_name(
+                customer,
+                booking_data["customer_name"]
+  )
+
             print(
                 "========== BOOKING DATA =========="
             )
