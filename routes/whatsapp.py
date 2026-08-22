@@ -28,7 +28,10 @@ from services import ask_ai
 from brain.prompt_builder import build_prompt
 from brain.business_hours import check_business_hours
 from brain.rescheduling import process_reschedule
-from brain.customer import get_or_create_customer
+from brain.customer import (
+    get_or_create_customer,
+    update_customer_name
+)
 
 whatsapp = Blueprint(
     "whatsapp",
