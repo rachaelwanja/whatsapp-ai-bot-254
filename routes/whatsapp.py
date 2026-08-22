@@ -1,4 +1,4 @@
-from urllib import response
+
 from datetime import datetime, timedelta
 import json
 import re
@@ -28,6 +28,7 @@ from services import ask_ai
 from brain.prompt_builder import build_prompt
 from brain.business_hours import check_business_hours
 from brain.rescheduling import process_reschedule
+from brain.customer import get_or_create_customer
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -137,10 +138,21 @@ def whatsapp_route():
         "From",
         ""
     )
-    print("========== INCOMING WHATSAPP ==========")
-    print("CUSTOMER PHONE:", customer_phone)
-    print("MESSAGE:", incoming_msg)
-    
+
+    print(
+        "========== INCOMING WHATSAPP =========="
+    )
+
+    print(
+        "CUSTOMER PHONE:",
+        customer_phone
+    )
+
+    print(
+        "MESSAGE:",
+        incoming_msg
+    )
+
     response = MessagingResponse()
 
     # -------------------------------------
@@ -161,6 +173,33 @@ def whatsapp_route():
         )
 
     # -------------------------------------
+    # GET / CREATE CUSTOMER
+    # -------------------------------------
+
+    customer = get_or_create_customer(
+        business_id=business.id,
+        customer_phone=customer_phone
+    )
+    print(
+        "========== CUSTOMER =========="
+    )
+
+    print(
+        "CUSTOMER ID:",
+        customer.id
+    )
+
+    print(
+        "CUSTOMER PHONE:",
+        customer.phone
+    )
+
+    print(
+        "CUSTOMER NAME:",
+        customer.name
+    )
+
+    # -------------------------------------
     # SAVE CUSTOMER MESSAGE
     # -------------------------------------
 
@@ -171,9 +210,11 @@ def whatsapp_route():
         message=incoming_msg
     )
 
-    db.session.add(customer_chat)
-    db.session.commit()
+    db.session.add(
+        customer_chat
+    )
 
+    db.session.commit()
     # -------------------------------------
     # LOAD SERVICES
     # -------------------------------------

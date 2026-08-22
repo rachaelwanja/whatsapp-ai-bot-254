@@ -54,7 +54,34 @@ class Business(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+    
+class Customer(db.Model):
 
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id"),
+        nullable=False
+    )
+
+    name = db.Column(
+        db.String(200),
+        default=""
+    )
+
+    phone = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
 class Appointment(db.Model):
 
