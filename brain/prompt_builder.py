@@ -9,7 +9,8 @@ from brain.personality import PERSONALITY
 def build_prompt(
     business,
     services_text,
-    knowledge_text
+    knowledge_text,
+    customer_history_text=""
 ):
     
     """
@@ -91,6 +92,12 @@ BUSINESS KNOWLEDGE
 =================================
 
 {knowledge_text}
+
+=================================
+CUSTOMER HISTORY
+=================================
+
+{customer_history_text}
 
 =================================
 BUSINESS INSTRUCTIONS

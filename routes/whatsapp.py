@@ -32,6 +32,10 @@ from brain.customer import (
     get_or_create_customer,
     update_customer_name
 )
+from brain.customer_history import (
+    get_customer_history,
+    format_customer_history
+)
 
 whatsapp = Blueprint(
     "whatsapp",
@@ -268,6 +272,22 @@ Answer: {item.answer}"""
 
     print("========== KNOWLEDGE ==========")
     print(knowledge_text)
+    # =====================================
+    # LOAD CUSTOMER HISTORY
+    # =====================================
+
+    customer_history = get_customer_history(
+        business_id=business.id,
+        customer_phone=customer_phone
+    )
+
+    customer_history_text = format_customer_history(
+        customer_history,
+        customer_name=customer.name
+    )
+
+    print("\n========== CUSTOMER HISTORY ==========")
+    print(customer_history_text)
 
     # =====================================
     # BUILD AI PROMPT
@@ -276,7 +296,8 @@ Answer: {item.answer}"""
     prompt = build_prompt(
         business=business,
         services_text=services_text,
-        knowledge_text=knowledge_text
+        knowledge_text=knowledge_text,
+        customer_history_text=customer_history_text
     )
 
     # =====================================
