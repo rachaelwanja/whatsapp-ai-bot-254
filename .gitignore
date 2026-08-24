@@ -12,5 +12,5 @@ __pycache__/
 instance/
 *.db
 
-# VS Code settings (optional)
-.vscode/settings.json
+# VS Code settings
+.vscode/
