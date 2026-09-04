@@ -120,10 +120,16 @@ def stk_push(phone, amount):
 
 def ask_ai(messages):
 
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not api_key:
+        print("ERROR: OPENROUTER_API_KEY is not loaded.")
+        return "I'm sorry, I'm having trouble connecting right now."
+
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         },
         json={
@@ -132,8 +138,21 @@ def ask_ai(messages):
         }
     )
 
-    print(response.text)
+    print("OPENROUTER STATUS:", response.status_code)
+    print("OPENROUTER RESPONSE:", response.text)
 
-    data = response.json()
+    try:
+        data = response.json()
+    except Exception:
+        print("ERROR: OpenRouter returned invalid JSON.")
+        return "I'm sorry, I'm having trouble processing your request."
+
+    if response.status_code != 200:
+        print("OPENROUTER ERROR:", data)
+        return "I'm sorry, I'm having trouble connecting to the AI right now."
+
+    if "choices" not in data:
+        print("ERROR: No choices returned:", data)
+        return "I'm sorry, I couldn't generate a response right now."
 
     return data["choices"][0]["message"]["content"]

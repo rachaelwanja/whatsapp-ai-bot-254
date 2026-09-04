@@ -1,34 +1,44 @@
-```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>FlowAI Services</title>
+    <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>FlowAI Services</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
 
+
 <body class="bg-gray-100">
+
 
 <div class="flex min-h-screen">
 
+
     {% include "sidebar.html" %}
+
 
     <div class="flex-1 p-8">
 
-        <!-- HEADER -->
+
+        <!-- =========================================
+             HEADER
+        ========================================== -->
 
         <div class="flex justify-between items-center mb-8">
 
             <div>
 
                 <h1 class="text-4xl font-bold">
-                    💇 Services
+                    🛠️ Services
                 </h1>
 
                 <p class="text-gray-500 mt-2">
@@ -37,8 +47,11 @@
 
             </div>
 
-            <a href="/dashboard"
-               class="bg-black text-white px-5 py-3 rounded-xl">
+
+            <a
+                href="/dashboard"
+                class="bg-black text-white px-5 py-3 rounded-xl"
+            >
 
                 Dashboard
 
@@ -46,246 +59,528 @@
 
         </div>
 
-        <!-- ADD SERVICE -->
 
-        <div class="bg-white rounded-3xl shadow-lg p-8 mb-8">
 
-            <h2 class="text-2xl font-bold mb-6">
+    <!-- =========================================
+        ADD SERVICE
+    ========================================== -->
 
-                Add New Service
+    <div class="bg-white rounded-3xl shadow-lg p-8 mb-8">
 
-            </h2>
+        <h2 class="text-2xl font-bold mb-6">
+            Add New Service
+        </h2>
 
-            <form
-                action="/add-service"
-                method="POST"
-                class="grid md:grid-cols-2 gap-5">
 
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="Service Name"
-                    required
-                    class="border rounded-xl p-3">
+    <!-- =========================================
+         SERVICE FORM
+    ========================================== -->
 
-                <select
-                    name="category"
-                    class="border rounded-xl p-3">
+    <form
+        action="/add-service"
+        method="POST"
+        enctype="multipart/form-data"
+        class="grid md:grid-cols-2 gap-5"
+    >
 
-                    <option>Hair</option>
-                    <option>Barber</option>
-                    <option>Beauty</option>
-                    <option>Spa</option>
-                    <option>Massage</option>
-                    <option>Medical</option>
-                    <option>Consultation</option>
-                    <option>Other</option>
 
-                </select>
+        <!-- =========================================
+             IMAGE
+        ========================================== -->
 
-                <input
-                    type="number"
-                    name="price"
-                    placeholder="Price (KES)"
-                    required
-                    class="border rounded-xl p-3">
+        <div class="md:col-span-2">
 
-                <input
-                    type="text"
-                    name="duration"
-                    placeholder="30 mins"
-                    required
-                    class="border rounded-xl p-3">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Service Image
+            </label>
 
-                <input
-                    type="number"
-                    name="deposit"
-                    placeholder="Deposit (Optional)"
-                    class="border rounded-xl p-3">
+            <input
+                type="file"
+                name="image"
+                accept="image/jpeg,image/png,image/webp"
+                class="w-full border rounded-xl p-3 bg-white"
+            >
 
-                <input
-                    type="text"
-                    name="image"
-                    placeholder="Image URL"
-                    class="border rounded-xl p-3">
-
-                <div class="flex items-center gap-3">
-
-                    <input
-                        type="checkbox"
-                        name="available"
-                        checked>
-
-                    <label>
-
-                        Available
-
-                    </label>
-
-                </div>
-
-                <button
-                    class="bg-black text-white rounded-xl p-3 md:col-span-2">
-
-                    Add Service
-
-                </button>
-
-            </form>
-
-        </div>
-
-        <!-- SERVICES -->
-
-        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-
-        {% for service in services %}
-
-        <div class="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden">
-
-            {% if service.image %}
-
-<img
-    src="{{ url_for('static', filename='uploads/' + service.image) }}"
-    class="w-full h-56 object-cover">
-
-{% else %}
-
-            <div class="h-56 bg-gray-200 flex items-center justify-center text-7xl">
-
-                💇
-
-            </div>
-
-            {% endif %}
-
-            <div class="p-6">
-
-                <h2 class="text-2xl font-bold">
-
-                    {{ service.name }}
-
-                </h2>
-
-                <p class="text-gray-500 mt-1">
-
-                    {{ service.category }}
-
-                </p>
-
-                <div class="mt-5 space-y-2">
-
-                    <div>
-
-                        💰
-
-                        <span class="font-bold text-green-600">
-
-                            KES {{ service.price }}
-
-                        </span>
-
-                    </div>
-
-                    <div>
-
-                        ⏱
-
-                        {{ service.duration }}
-
-                    </div>
-
-                    <div>
-
-                        Deposit
-
-                        <strong>
-
-                            KES {{ service.deposit }}
-
-                        </strong>
-
-                    </div>
-
-                </div>
-
-                {% if service.available %}
-
-                <span class="inline-block mt-5 bg-green-100 text-green-700 px-3 py-1 rounded-full">
-
-                    🟢 Available
-
-                </span>
-
-                {% else %}
-
-                <span class="inline-block mt-5 bg-red-100 text-red-700 px-3 py-1 rounded-full">
-
-                    🔴 Unavailable
-
-                </span>
-
-                {% endif %}
-
-                <div class="flex gap-3 mt-6">
-
-                    <a
-                        href="/edit-service/{{ service.id }}"
-                        class="flex-1 bg-blue-600 text-white text-center py-2 rounded-xl">
-
-                        ✏️ Edit
-
-                    </a>
-
-                    <a
-                        href="/delete-service/{{ service.id }}"
-                        class="flex-1 bg-red-600 text-white text-center py-2 rounded-xl">
-
-                        🗑 Delete
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {% endfor %}
-
-        </div>
-
-        {% if not services %}
-
-        <div class="bg-white rounded-3xl shadow-lg p-12 text-center mt-8">
-
-            <div class="text-6xl mb-4">
-
-                💼
-
-            </div>
-
-            <h2 class="text-2xl font-bold">
-
-                No Services Yet
-
-            </h2>
-
-            <p class="text-gray-500 mt-2">
-
-                Add your first service using the form above.
-
+            <p class="text-sm text-gray-500 mt-2">
+                Upload a JPG, PNG, or WEBP image.
             </p>
 
         </div>
 
+
+        <!-- =========================================
+             SERVICE NAME
+        ========================================== -->
+
+        <input
+            type="text"
+            name="name"
+            placeholder="Service Name"
+            required
+            class="border rounded-xl p-3"
+        >
+
+
+        <!-- =========================================
+             CATEGORY
+        ========================================== -->
+
+        <select
+            name="category"
+            class="border rounded-xl p-3"
+        >
+
+            <option value="Hair">
+                Hair
+            </option>
+
+            <option value="Barber">
+                Barber
+            </option>
+
+            <option value="Beauty">
+                Beauty
+            </option>
+
+            <option value="Spa">
+                Spa
+            </option>
+
+            <option value="Massage">
+                Massage
+            </option>
+
+            <option value="Medical">
+                Medical
+            </option>
+
+            <option value="Consultation">
+                Consultation
+            </option>
+
+            <option value="Nutrition">
+                Nutrition
+            </option>
+
+            <option value="Other">
+                Other
+            </option>
+
+        </select>
+
+
+        <!-- =========================================
+             PRICE
+        ========================================== -->
+
+        <input
+            type="number"
+            name="price"
+            placeholder="Price (KES)"
+            required
+            class="border rounded-xl p-3"
+        >
+
+
+        <!-- =========================================
+             DURATION
+        ========================================== -->
+
+        <input
+            type="text"
+            name="duration"
+            placeholder="30 mins"
+            required
+            class="border rounded-xl p-3"
+        >
+
+
+        <!-- =========================================
+             DEPOSIT
+        ========================================== -->
+
+        <input
+            type="number"
+            name="deposit"
+            placeholder="Deposit (Optional)"
+            class="border rounded-xl p-3"
+        >
+
+
+        <!-- =========================================
+             AVAILABILITY
+        ========================================== -->
+
+        <div class="flex items-center gap-3">
+
+            <input
+                type="checkbox"
+                name="available"
+                checked
+            >
+
+            <label>
+                Available
+            </label>
+
+        </div>
+
+
+        <!-- =========================================
+             SUBMIT
+        ========================================== -->
+
+        <button
+            type="submit"
+            class="bg-black text-white rounded-xl p-3 md:col-span-2"
+        >
+
+            Add Service
+
+        </button>
+
+
+    </form>
+
+</div>
+
+        <!-- =========================================
+             SERVICES GRID
+        ========================================== -->
+
+        <div
+            class="grid md:grid-cols-2 xl:grid-cols-3 gap-6"
+        >
+
+
+        {% for service in services %}
+
+
+            <div
+                class="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden"
+            >
+
+
+                <!-- =========================================
+                     SERVICE IMAGE
+                ========================================== -->
+
+
+                {% if service.image %}
+
+
+                    <img
+                        src="{{ url_for(
+                            'static',
+                            filename='uploads/' + service.image
+                        ) }}"
+                        class="w-full h-56 object-cover"
+                        alt="{{ service.name }}"
+                    >
+
+
+                {% else %}
+
+
+                    <!-- CATEGORY BASED FALLBACK -->
+
+                    <div
+                        class="h-56 bg-gray-200 flex items-center justify-center text-7xl"
+                    >
+
+
+                        {% if service.category == "Medical" %}
+
+                            🏥
+
+                        {% elif service.category == "Consultation" %}
+
+                            👩‍⚕️
+
+                        {% elif service.category == "Nutrition" %}
+
+                            🥗
+
+                        {% elif service.category == "Hair" %}
+
+                            💇
+
+                        {% elif service.category == "Barber" %}
+
+                            💈
+
+                        {% elif service.category == "Beauty" %}
+
+                            💄
+
+                        {% elif service.category == "Spa" %}
+
+                            🧖
+
+                        {% elif service.category == "Massage" %}
+
+                            💆
+
+                        {% else %}
+
+                            💼
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                {% endif %}
+
+
+
+                <!-- =========================================
+                     SERVICE INFORMATION
+                ========================================== -->
+
+                <div class="p-6">
+
+
+                    <!-- SERVICE NAME -->
+
+                    <h2 class="text-2xl font-bold">
+
+                        {{ service.name }}
+
+                    </h2>
+
+
+
+                    <!-- CATEGORY -->
+
+                    <p class="text-gray-500 mt-1">
+
+                        {{ service.category }}
+
+                    </p>
+
+
+
+                    <!-- DETAILS -->
+
+                    <div class="mt-5 space-y-2">
+
+
+                        <!-- PRICE -->
+
+                        <div>
+
+                            💰
+
+                            <span
+                                class="font-bold text-green-600"
+                            >
+
+                                KES {{ service.price }}
+
+                            </span>
+
+                        </div>
+
+
+
+                        <!-- DURATION -->
+
+                        <div>
+
+                            ⏱
+
+                            {{ service.duration }}
+
+                        </div>
+
+
+
+                        <!-- DEPOSIT -->
+
+                        <div>
+
+                            Deposit
+
+                            <strong>
+
+                                KES {{ service.deposit }}
+
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- =========================================
+                         AVAILABILITY
+                    ========================================== -->
+
+
+                    {% if service.available %}
+
+
+                        <span
+                            class="
+                                inline-block
+                                mt-5
+                                bg-green-100
+                                text-green-700
+                                px-3
+                                py-1
+                                rounded-full
+                            "
+                        >
+
+                            🟢 Available
+
+                        </span>
+
+
+                    {% else %}
+
+
+                        <span
+                            class="
+                                inline-block
+                                mt-5
+                                bg-red-100
+                                text-red-700
+                                px-3
+                                py-1
+                                rounded-full
+                            "
+                        >
+
+                            🔴 Unavailable
+
+                        </span>
+
+
+                    {% endif %}
+
+
+
+                    <!-- =========================================
+                         ACTION BUTTONS
+                    ========================================== -->
+
+
+                    <div class="flex gap-3 mt-6">
+
+
+                        <!-- EDIT -->
+
+                        <a
+                            href="/edit-service/{{ service.id }}"
+                            class="
+                                flex-1
+                                bg-blue-600
+                                text-white
+                                text-center
+                                py-2
+                                rounded-xl
+                            "
+                        >
+
+                            ✏️ Edit
+
+                        </a>
+
+
+
+                        <!-- DELETE -->
+
+                        <a
+                            href="/delete-service/{{ service.id }}"
+                            class="
+                                flex-1
+                                bg-red-600
+                                text-white
+                                text-center
+                                py-2
+                                rounded-xl
+                            "
+                        >
+
+                            🗑 Delete
+
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        {% endfor %}
+
+
+        </div>
+
+
+
+        <!-- =========================================
+             NO SERVICES
+        ========================================== -->
+
+
+        {% if not services %}
+
+
+            <div
+                class="
+                    bg-white
+                    rounded-3xl
+                    shadow-lg
+                    p-12
+                    text-center
+                    mt-8
+                "
+            >
+
+
+                <div class="text-6xl mb-4">
+
+                    💼
+
+                </div>
+
+
+                <h2 class="text-2xl font-bold">
+
+                    No Services Yet
+
+                </h2>
+
+
+                <p class="text-gray-500 mt-2">
+
+                    Add your first service using the form above.
+
+                </p>
+
+
+            </div>
+
+
         {% endif %}
+
 
     </div>
 
+
 </div>
+
 
 </body>
 
 </html>
-```

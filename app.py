@@ -6,18 +6,16 @@ from twilio.twiml.voice_response import VoiceResponse
 from twilio.twiml.messaging_response import MessagingResponse
 import os
 from dotenv import load_dotenv 
-
 load_dotenv()
 import uuid
 import requests
 import base64
 from werkzeug.utils import secure_filename
-
 from models import (
     db,
     Business,
-    Customer,
     Service,
+    Product,
     Conversation,
     Appointment,
     Payment
@@ -41,6 +39,8 @@ from routes.appointments import appointments
 from routes.customers import customers
 from routes.payments import payments
 from routes.whatsapp import whatsapp
+from routes.catalog import catalog
+
 
 # =========================================
 # CREATE APP
@@ -68,7 +68,17 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-app.config["UPLOAD_FOLDER"] = "static/uploads"
+# =========================================
+# UPLOAD FOLDER
+# =========================================
+
+app.config["UPLOAD_FOLDER"] = os.path.join(
+    app.root_path,
+    "static",
+    "uploads"
+)
+
+print("UPLOAD FOLDER:", app.config["UPLOAD_FOLDER"])
 
 print("DATABASE_URL =", os.getenv("DATABASE_URL"))
 print("SQLALCHEMY_DATABASE_URI =", app.config["SQLALCHEMY_DATABASE_URI"])
@@ -86,6 +96,7 @@ app.register_blueprint(appointments)
 app.register_blueprint(customers)
 app.register_blueprint(payments)
 app.register_blueprint(whatsapp)
+app.register_blueprint(catalog)
 
 # =========================================
 # MPESA CONFIG
@@ -133,6 +144,29 @@ def debug_businesses():
         output += f"{b.id} | {b.username}<br>"
 
     return output
+
+# =========================================
+# LEGAL PAGES
+# =========================================
+
+@app.route("/privacy")
+def privacy():
+
+    return render_template(
+        "privacy.html"
+    )
+
+
+@app.route("/terms")
+def terms():
+
+    return render_template(
+        "terms.html"
+    )
+
+
+
+
 
 @app.route("/users")
 def users():

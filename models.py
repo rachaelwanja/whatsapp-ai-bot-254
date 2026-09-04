@@ -18,6 +18,11 @@ class Business(db.Model):
         unique=True
     )
 
+    email = db.Column(
+        db.String(200),
+        unique=True
+    )
+
     password = db.Column(
         db.String(200)
     )
@@ -54,6 +59,40 @@ class Business(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+class PasswordResetToken(db.Model):
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id"),
+        nullable=False
+    )
+
+    token = db.Column(
+        db.String(200),
+        unique=True,
+        nullable=False
+    )
+
+    expires_at = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    used = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    ) 
     
 class Customer(db.Model):
 
@@ -174,6 +213,62 @@ class Service(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+# =========================================
+# PRODUCTS
+# =========================================
+
+class Product(db.Model):
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    business_id = db.Column(
+        db.Integer,
+        db.ForeignKey("business.id"),
+        nullable=False
+    )
+
+    name = db.Column(
+        db.String(200),
+        nullable=False
+    )
+
+    category = db.Column(
+        db.String(100),
+        default="General"
+    )
+
+    description = db.Column(
+        db.Text,
+        default=""
+    )
+
+    price = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    stock = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    image = db.Column(
+        db.String(500),
+        default=""
+    )
+
+    available = db.Column(
+        db.Boolean,
+        default=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )    
 
 class Payment(db.Model):
 

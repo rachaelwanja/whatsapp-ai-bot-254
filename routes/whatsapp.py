@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 import json
 import re
+from urllib import response
 
 from flask import (
     Blueprint,
@@ -36,11 +37,13 @@ from brain.customer_history import (
     get_customer_history,
     format_customer_history
 )
+import services
 
 whatsapp = Blueprint(
     "whatsapp",
     __name__
 )
+
 
 # =========================================
 # WHATSAPP AI PAGE
@@ -222,6 +225,7 @@ def whatsapp_route():
     )
 
     db.session.commit()
+
     # -------------------------------------
     # LOAD SERVICES
     # -------------------------------------
@@ -230,20 +234,41 @@ def whatsapp_route():
         business_id=business.id
     ).all()
 
+    print("========== SERVICE DEBUG ==========")
+    print("BUSINESS ID:", business.id)
+    print("BUSINESS NAME:", business.business_name)
+    print("TOTAL SERVICES:", len(services))
+
+    for service in services:
+
+        print(
+            service.id,
+            "|",
+            service.name,
+            "|",
+            service.price,
+            "|",
+            service.duration,
+            "| AVAILABLE:",
+            service.available
+        )
+
+    print("===================================")
+
     if services:
 
         services_text = "\n\n".join(
             [
                 f"""Service: {service.name}
-Price: KES {service.price}
-Duration: {service.duration}"""
+    Price: KES {service.price}
+    Duration: {service.duration}"""
                 for service in services
             ]
         )
 
     else:
 
-        services_text = "No services configured."
+        services_text = "No services are currently available."
 
     print("========== SERVICES ==========")
     print(services_text)
@@ -272,6 +297,7 @@ Answer: {item.answer}"""
 
     print("========== KNOWLEDGE ==========")
     print(knowledge_text)
+
     # =====================================
     # LOAD CUSTOMER HISTORY
     # =====================================
@@ -294,10 +320,11 @@ Answer: {item.answer}"""
     # =====================================
 
     prompt = build_prompt(
-        business=business,
-        services_text=services_text,
-        knowledge_text=knowledge_text,
-        customer_history_text=customer_history_text
+    business=business,
+    services_text=services_text,
+    knowledge_text=knowledge_text,
+    customer_history_text=customer_history_text,
+    current_message=incoming_msg
     )
 
     # =====================================
@@ -310,16 +337,18 @@ Answer: {item.answer}"""
             "content": prompt
         }
     ]
+
     history = Conversation.query.filter_by(
         business_id=business.id,
         customer_phone=customer_phone
     ).order_by(
         Conversation.created_at.desc()
-    ).limit(20).all()
+    ).limit(10).all()
 
     history.reverse()
 
     for chat in history:
+
         messages.append(
             {
                 "role": chat.role,
@@ -333,6 +362,7 @@ Answer: {item.answer}"""
     print("\n========== MESSAGES SENT TO OPENROUTER ==========")
 
     for i, msg in enumerate(messages, start=1):
+
         print(f"\nMessage {i}")
         print("ROLE:", msg["role"])
         print("CONTENT:")
@@ -343,6 +373,9 @@ Answer: {item.answer}"""
     # =====================================
 
     reply = ask_ai(messages)
+    print("========== RAW AI REPLY ==========")
+    print(reply)
+    print("===================================")
 
     print("\n========== AI REPLY ==========")
     print(reply)
@@ -353,29 +386,108 @@ Answer: {item.answer}"""
 
     if "[BOOKING_READY]" in reply:
 
+        booking_json = reply.split(
+            "[BOOKING_READY]",
+            1
+        )[1].strip()
 
+        booking_data = json.loads(
+            booking_json
+        )
 
-            booking_json = reply.split(
-                "[BOOKING_READY]",
-                1
-            )[1].strip()
+        print(
+            "========== BOOKING DATA =========="
+        )
 
-            booking_data = json.loads(
-                booking_json
+        print(
+            booking_data
             )
 
-            customer = update_customer_name(
-                customer,
-                booking_data["customer_name"]
+        # =====================================
+        # DETERMINE BOOKING RECIPIENT
+        # =====================================
+
+        booking_for = booking_data.get(
+            "booking_for",
+            "self"
+        )
+
+        booking_customer_name = booking_data.get(
+            "customer_name"
+        )
+
+        if booking_for == "self":
+
+            # Use the name collected by the AI.
+            # If it is missing, fall back to the saved customer name.
+            if not booking_customer_name:
+                booking_customer_name = customer.name
+
+            print(
+                "========== BOOKING FOR SELF =========="
             )
 
             print(
-                "========== BOOKING DATA =========="
+                "WHATSAPP CUSTOMER:",
+                customer.name
             )
 
             print(
-                booking_data
+                "BOOKING CUSTOMER NAME:",
+                booking_customer_name
             )
+
+        else:
+
+            # For another person, the AI must provide
+            # the recipient's name.
+            if not booking_customer_name:
+                print(
+                    "ERROR: Booking recipient name is missing."
+                )
+
+                response.message(
+                    "Sure. What is the name of the person the appointment is for?"
+                )
+
+                return Response(
+                    str(response),
+                    mimetype="text/xml"
+                )
+
+                print(
+                    "========== BOOKING FOR ANOTHER PERSON =========="
+                )
+
+                print(
+                    "WHATSAPP CUSTOMER:",
+                    customer.name
+                )
+
+                print(
+                    "SERVICE RECIPIENT:",
+                    booking_customer_name
+                )
+        # =====================================
+        # VALIDATE RECIPIENT NAME
+        # =====================================
+
+        if not booking_customer_name:
+
+            print(
+                "BOOKING ERROR: Missing customer name"
+            )
+
+            reply = (
+                "What is the name of the person "
+                "the appointment is for?"
+            )
+
+        else:
+
+            # =====================================
+            # FIND SERVICE
+            # =====================================
 
             service = Service.query.filter_by(
                 business_id=business.id,
@@ -389,16 +501,26 @@ Answer: {item.answer}"""
                     booking_data["service"]
                 )
 
+                reply = (
+                    f"Sorry, I couldn't find the service "
+                    f"'{booking_data['service']}'."
+                )
+
             else:
 
                 # =====================================
-                # CHECK FOR DOUBLE BOOKING
+                # BUILD REQUESTED TIME
                 # =====================================
 
                 requested_start = datetime.strptime(
-                    f"{booking_data['date']} {booking_data['time']}",
+                    f"{booking_data['date']} "
+                    f"{booking_data['time']}",
                     "%Y-%m-%d %H:%M"
                 )
+
+                # =====================================
+                # CALCULATE SERVICE DURATION
+                # =====================================
 
                 duration_text = str(
                     service.duration
@@ -417,8 +539,11 @@ Answer: {item.answer}"""
 
                 requested_end = (
                     requested_start
-                    + timedelta(hours=duration_hours)
+                    + timedelta(
+                        hours=duration_hours
+                    )
                 )
+
                 # =====================================
                 # CHECK BUSINESS HOURS
                 # =====================================
@@ -439,12 +564,18 @@ Answer: {item.answer}"""
 
                 else:
 
+                    # =====================================
+                    # CHECK FOR DOUBLE BOOKING
+                    # =====================================
+
                     conflict = False
 
-                    existing_appointments = Appointment.query.filter_by(
-                        business_id=business.id,
-                        status="confirmed"
-                    ).all()
+                    existing_appointments = (
+                        Appointment.query.filter_by(
+                            business_id=business.id,
+                            status="confirmed"
+                        ).all()
+                    )
 
                     for existing in existing_appointments:
 
@@ -453,20 +584,26 @@ Answer: {item.answer}"""
                             "%Y-%m-%d %H:%M"
                         )
 
-                        existing_service = Service.query.filter_by(
-                            business_id=business.id,
-                            name=existing.service
-                        ).first()
+                        existing_service = (
+                            Service.query.filter_by(
+                                business_id=business.id,
+                                name=existing.service
+                            ).first()
+                        )
 
                         if existing_service:
 
                             existing_duration_match = re.search(
                                 r"\d+",
-                                str(existing_service.duration).lower()
+                                str(
+                                    existing_service.duration
+                                ).lower()
                             )
 
                             existing_duration_hours = (
-                                int(existing_duration_match.group())
+                                int(
+                                    existing_duration_match.group()
+                                )
                                 if existing_duration_match
                                 else 1
                             )
@@ -490,6 +627,10 @@ Answer: {item.answer}"""
                             conflict = True
                             break
 
+                    # =====================================
+                    # HANDLE BOOKING CONFLICT
+                    # =====================================
+
                     if conflict:
 
                         print(
@@ -504,9 +645,13 @@ Answer: {item.answer}"""
 
                     else:
 
+                        # =====================================
+                        # CREATE APPOINTMENT
+                        # =====================================
+
                         appointment = Appointment(
                             business_id=business.id,
-                            customer_name=booking_data["customer_name"],
+                            customer_name=booking_customer_name,
                             customer_phone=customer_phone,
                             service=service.name,
                             amount=service.price,
@@ -523,14 +668,75 @@ Answer: {item.answer}"""
 
                         db.session.commit()
 
+                        # =====================================
+                        # UPDATE CUSTOMER NAME ONLY FOR SELF
+                        # =====================================
+
+                        if booking_for == "self":
+
+                            customer = update_customer_name(
+                                customer,
+                                booking_customer_name
+                            )
+
+                            print(
+                                "========== CUSTOMER UPDATED =========="
+                            )
+
+                            print(
+                                "CUSTOMER ID:",
+                                customer.id
+                            )
+
+                            print(
+                                "CUSTOMER NAME:",
+                                customer.name
+                            )
+
+                        else:
+
+                            print(
+                                "========== CUSTOMER NOT UPDATED =========="
+                            )
+
+                            print(
+                                "WhatsApp customer remains:",
+                                customer.name
+                            )
+
+                            print(
+                                "Appointment recipient:",
+                                booking_customer_name
+                            )
+
                         print(
                             "========== APPOINTMENT CREATED =========="
                         )
 
                         print(
+                            "APPOINTMENT ID:",
                             appointment.id
                         )
 
+                        print(
+                            "APPOINTMENT CUSTOMER NAME:",
+                            appointment.customer_name
+                        )
+
+                        print(
+                            "APPOINTMENT PHONE:",
+                            appointment.customer_phone
+                        )
+
+                        print(
+                            "APPOINTMENT SERVICE:",
+                            appointment.service
+                        )
+
+                        print(
+                            "APPOINTMENT TIME:",
+                            appointment.appointment_time
+                        )
     # =====================================
     # CHECK FOR RESCHEDULE REQUEST
     # =====================================
@@ -543,6 +749,16 @@ Answer: {item.answer}"""
             customer_phone=customer_phone
         )
 
+    # =====================================
+    # REMOVE INTERNAL BOOKING MARKER
+    # =====================================
+
+    if "[BOOKING_READY]" in reply:
+
+        reply = reply.split(
+            "[BOOKING_READY]",
+            1
+        )[0].strip()
 
     # =====================================
     # SAVE AI RESPONSE
@@ -561,16 +777,24 @@ Answer: {item.answer}"""
 
     db.session.commit()
 
-
     # =====================================
     # SEND WHATSAPP RESPONSE
     # =====================================
+
+    print("========== FINAL WHATSAPP REPLY ==========")
+    print(reply)
 
     response.message(
         reply
     )
 
+    twiml_response = str(response)
+
+    print("========== TWILIO TWIML RESPONSE ==========")
+    print(twiml_response)
+    print("============================================")
+
     return Response(
-        str(response),
+        twiml_response,
         mimetype="text/xml"
     )

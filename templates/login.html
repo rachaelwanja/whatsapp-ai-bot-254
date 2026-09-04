@@ -1,50 +1,300 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>FlowAI Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FlowAI — Login</title>
 
     <style>
 
-        body{
-            font-family: Arial;
-            background:#f5f5f5;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
+        * {
+            box-sizing: border-box;
         }
 
-        .box{
-            background:white;
-            padding:30px;
-            width:300px;
-            border-radius:10px;
-            box-shadow:0 0 10px rgba(0,0,0,0.1);
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f7f8fc, #eef1f8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #171717;
         }
 
-        input{
-            width:100%;
-            padding:12px;
-            margin-top:10px;
-            border:1px solid #ddd;
-            border-radius:5px;
+        .page {
+            width: 100%;
+            max-width: 1050px;
+            padding: 30px;
         }
 
-        button{
-            width:100%;
-            padding:12px;
-            margin-top:15px;
-            border:none;
-            background:#25D366;
-            color:white;
-            font-size:16px;
-            border-radius:5px;
-            cursor:pointer;
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
+            min-height: 600px;
         }
 
-        h2{
-            text-align:center;
+        /* =====================================
+           LEFT SIDE
+        ===================================== */
+
+        .brand-side {
+            padding: 55px;
+            background: linear-gradient(145deg, #111827, #1f2937);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 45px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: #25D366;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+        }
+
+        .logo-text {
+            font-size: 27px;
+            font-weight: bold;
+            letter-spacing: -1px;
+        }
+
+        .brand-side h1 {
+            font-size: 46px;
+            line-height: 1.08;
+            margin: 0 0 22px;
+            letter-spacing: -1.5px;
+        }
+
+        .brand-side h1 span {
+            color: #25D366;
+        }
+
+        .description {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #d1d5db;
+            max-width: 480px;
+            margin-bottom: 35px;
+        }
+
+        .features {
+            display: grid;
+            gap: 16px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #e5e7eb;
+            font-size: 15px;
+        }
+
+        .feature-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(37, 211, 102, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* =====================================
+           RIGHT SIDE
+        ===================================== */
+
+        .login-side {
+            padding: 55px 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-side h2 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .login-subtitle {
+            color: #777;
+            margin: 0 0 30px;
+            font-size: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 15px;
+            margin-top: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.10);
+        }
+
+        .password-container {
+            position: relative;
+            margin-top: 0;
+        }
+
+        .password-container input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-35%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #777;
+            user-select: none;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 18px;
+            border: none;
+            background: #25D366;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .login-button:hover {
+            background: #20bd5b;
+            transform: translateY(-1px);
+        }
+
+        .forgot {
+            display: block;
+            margin-top: 18px;
+            text-align: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot:hover {
+            color: #25D366;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 25px 0 18px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            height: 1px;
+            background: #eee;
+            flex: 1;
+        }
+
+        .google-button {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .google-button:hover {
+            background: #fafafa;
+        }
+
+        .google-icon {
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .coming-soon {
+            text-align: center;
+            margin-top: 8px;
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* =====================================
+           MOBILE
+        ===================================== */
+
+        @media (max-width: 800px) {
+
+            .page {
+                padding: 15px;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-side {
+                padding: 35px;
+            }
+
+            .brand-side h1 {
+                font-size: 34px;
+            }
+
+            .description {
+                font-size: 16px;
+            }
+
+            .features {
+                display: none;
+            }
+
+            .login-side {
+                padding: 35px 30px;
+            }
+
         }
 
     </style>
@@ -53,33 +303,233 @@
 
 <body>
 
-<div class="box">
+<div class="page">
 
-    <h2>Login</h2>
+    <div class="container">
 
-    <form method="POST" action="/login">
+        <!-- =================================
+             FLOWAI BRANDING
+        ================================== -->
 
-        <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            required
+        <div class="brand-side">
+
+            <div class="logo">
+
+                <div class="logo-icon">
+                    ☎
+                </div>
+
+                <div class="logo-text">
+                    FlowAI
+                </div>
+
+            </div>
+
+            <h1>
+                Your business,
+                <span>automated.</span>
+            </h1>
+
+            <p class="description">
+                FlowAI helps businesses communicate with customers,
+                manage appointments, capture leads and automate
+                repetitive work — all through AI.
+            </p>
+
+            <div class="features">
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+                        💬
+                    </div>
+
+                    AI customer conversations
+
+                </div>
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+                        📅
+                    </div>
+
+                    Automated appointment booking
+
+                </div>
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+                        👥
+                    </div>
+
+                    Customer management
+
+                </div>
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+                        ⚡
+                    </div>
+
+                    Business workflow automation
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             LOGIN
+        ================================== -->
+
+        <div class="login-side">
+
+            <h2>
+                Welcome back
+            </h2>
+
+            <p class="login-subtitle">
+                Sign in to your FlowAI business dashboard.
+            </p>
+
+
+            <form method="POST" action="/login">
+
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="Username"
+                    required
+                >
+
+
+                <div class="password-container">
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                    >
+
+                    <span
+                        class="toggle-password"
+                        onclick="togglePassword()"
+                        id="eye"
+                    >
+                        👁️
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    Sign in to FlowAI
+                </button>
+
+
+                <a
+                    href="/forgot-password"
+                    class="forgot"
+                >
+                    Forgot your password?
+                </a>
+
+            </form>
+
+
+            <div class="divider">
+                OR
+            </div>
+
+
+            <!-- GOOGLE LOGIN PLACEHOLDER -->
+
+            <button
+                type="button"
+                class="google-button"
+                onclick="alert('Google Login will be connected next.')"
+            >
+
+                <span class="google-icon">
+                    G
+                </span>
+
+                Continue with Google
+
+            </button>
+
+            <div class="coming-soon">
+                Google Login — coming soon
+            </div>
+
+
+            <div class="footer">
+
+    © 2026 FlowAI · AI Business Automation
+
+    <div style="margin-top:10px;">
+
+        <a
+            href="/privacy"
+            style="color:#777; text-decoration:none; margin-right:12px;"
         >
+            Privacy Policy
+        </a>
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
+        <a
+            href="/terms"
+            style="color:#777; text-decoration:none;"
         >
+            Terms of Service
+        </a>
 
-        <button type="submit">
-            Login
-        </button>
-
-    </form>
+    </div>
 
 </div>
 
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function togglePassword() {
+
+    const password =
+        document.getElementById("password");
+
+    const eye =
+        document.getElementById("eye");
+
+    if (password.type === "password") {
+
+        password.type = "text";
+        eye.textContent = "🙈";
+
+    } else {
+
+        password.type = "password";
+        eye.textContent = "👁️";
+
+    }
+
+}
+
+</script>
+
 </body>
+
 </html>

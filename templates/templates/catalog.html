@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {{ business.business_name }} — FlowAI
+    </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+
+<body class="bg-gray-50">
+
+
+<!-- =========================================
+     HEADER
+========================================= -->
+
+<header class="bg-white shadow-sm">
+
+    <div class="max-w-6xl mx-auto px-6 py-6">
+
+        <h1 class="text-3xl font-bold">
+
+            {{ business.business_name }}
+
+        </h1>
+
+        {% if business.business_type %}
+
+        <p class="text-gray-500 mt-1">
+
+            {{ business.business_type }}
+
+        </p>
+
+        {% endif %}
+
+        {% if business.location %}
+
+        <p class="text-gray-500 mt-1">
+
+            📍 {{ business.location }}
+
+        </p>
+
+        {% endif %}
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================================
+     MAIN
+========================================= -->
+
+<main class="max-w-6xl mx-auto px-6 py-10">
+
+
+    <div class="mb-8">
+
+        <h2 class="text-2xl font-bold">
+
+            Our Services
+
+        </h2>
+
+        <p class="text-gray-500 mt-2">
+
+            Choose a service below.
+
+        </p>
+
+    </div>
+
+
+
+    <!-- =========================================
+         SERVICES
+    ========================================== -->
+
+    {% if services %}
+
+    <div class="
+        grid
+        sm:grid-cols-2
+        lg:grid-cols-3
+        gap-6
+    ">
+
+
+        {% for service in services %}
+
+
+        <div class="
+            bg-white
+            rounded-3xl
+            shadow
+            overflow-hidden
+            hover:shadow-xl
+            transition
+        ">
+
+
+            <!-- IMAGE -->
+
+            {% if service.image %}
+
+            <img
+                src="{{ url_for(
+                    'static',
+                    filename='uploads/' + service.image
+                ) }}"
+                alt="{{ service.name }}"
+                class="w-full h-64 object-cover"
+                loading="lazy"
+            >
+
+            {% else %}
+
+            <div class="
+                w-full
+                h-64
+                bg-gray-200
+                flex
+                items-center
+                justify-center
+                text-6xl
+            ">
+
+                {% if service.category == "Hair" %}
+
+                    💇
+
+                {% elif service.category == "Barber" %}
+
+                    💈
+
+                {% elif service.category == "Beauty" %}
+
+                    💄
+
+                {% elif service.category == "Spa" %}
+
+                    🧖
+
+                {% elif service.category == "Massage" %}
+
+                    💆
+
+                {% elif service.category == "Medical" %}
+
+                    🏥
+
+                {% else %}
+
+                    🛍️
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+
+
+            <!-- INFORMATION -->
+
+            <div class="p-6">
+
+
+                <p class="
+                    text-sm
+                    text-gray-500
+                    mb-1
+                ">
+
+                    {{ service.category }}
+
+                </p>
+
+
+                <h3 class="
+                    text-xl
+                    font-bold
+                ">
+
+                    {{ service.name }}
+
+                </h3>
+
+
+                <div class="mt-4 space-y-2">
+
+
+                    <p>
+
+                        💰
+
+                        <span class="
+                            font-bold
+                            text-green-600
+                        ">
+
+                            KES {{ service.price }}
+
+                        </span>
+
+                    </p>
+
+
+                    {% if service.duration %}
+
+                    <p class="text-gray-600">
+
+                        ⏱ {{ service.duration }}
+
+                    </p>
+
+                    {% endif %}
+
+
+                    {% if service.deposit and service.deposit > 0 %}
+
+                    <p class="text-gray-600">
+
+                        Deposit:
+                        <strong>
+                            KES {{ service.deposit }}
+                        </strong>
+
+                    </p>
+
+                    {% endif %}
+
+
+                </div>
+
+
+
+                <!-- WHATSAPP -->
+
+                {% if business.business_phone %}
+
+                <a
+                    href="https://wa.me/{{ business.business_phone }}?text={{ ('Hi! I am interested in ' ~ service.name ~ ' at ' ~ business.business_name ~ '.') | urlencode }}"
+                    target="_blank"
+                    class="
+                        block
+                        text-center
+                        bg-green-500
+                        hover:bg-green-600
+                        text-white
+                        font-semibold
+                        py-3
+                        rounded-xl
+                        mt-6
+                        transition
+                    "
+                >
+
+                    💬 Order on WhatsApp
+
+                </a>
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+        {% endfor %}
+
+    </div>
+
+
+    {% else %}
+
+
+    <!-- =========================================
+         EMPTY STATE
+    ========================================== -->
+
+    <div class="
+        bg-white
+        rounded-3xl
+        shadow
+        p-12
+        text-center
+    ">
+
+        <div class="text-6xl mb-4">
+
+            🛍️
+
+        </div>
+
+        <h2 class="text-2xl font-bold">
+
+            No services available
+
+        </h2>
+
+        <p class="text-gray-500 mt-2">
+
+            Please check back later.
+
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+</main>
+
+
+
+<!-- =========================================
+     FOOTER
+========================================= -->
+
+<footer class="
+    text-center
+    text-gray-400
+    py-8
+">
+
+    Powered by FlowAI
+
+</footer>
+
+
+</body>
+
+</html>

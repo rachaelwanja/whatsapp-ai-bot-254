@@ -1,15 +1,334 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>WhatsApp AI</title>
-</head>
-<body>
+{% extends "layouts/base.html" %}
 
-<h1>WhatsApp AI</h1>
+{% block title %}AI Employee{% endblock %}
 
-<p>AI Receptionist coming soon...</p>
+{% set page_title = "AI Employee" %}
 
-<a href="/dashboard">Dashboard</a>
+{% block content %}
 
-</body>
-</html>
+<div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- PAGE HEADER -->
+
+    <div>
+
+        <h1 class="text-4xl font-bold text-slate-900">
+            AI Employee
+        </h1>
+
+        <p class="mt-2 text-lg text-slate-500">
+            Manage your AI receptionist and business automation.
+        </p>
+
+    </div>
+
+
+    <!-- AI EMPLOYEE PROFILE -->
+
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+            <!-- Employee -->
+
+            <div class="flex items-center gap-6">
+
+                <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-5xl shadow-lg">
+                    🤖
+                </div>
+
+                <div>
+
+                    <div class="flex items-center gap-3">
+
+                        <h2 class="text-4xl font-bold text-slate-900">
+                            Sophia
+                        </h2>
+
+                        <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+                            ● Online
+                        </span>
+
+                    </div>
+
+                    <p class="mt-2 text-lg text-slate-500">
+                        AI Receptionist
+                    </p>
+
+                    <p class="mt-2 text-sm text-slate-400">
+                        Your AI employee is ready to communicate with customers,
+                        answer questions and manage appointments.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Actions -->
+
+            <div class="flex gap-3">
+
+                <button
+                    type="button"
+                    class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition font-medium">
+
+                    Preview
+
+                </button>
+
+                <button
+                    type="button"
+                    class="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition font-medium">
+
+                    Edit AI
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- STATUS CARDS -->
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Conversations -->
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <p class="text-sm text-slate-500">
+                        Conversations
+                    </p>
+
+                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                        147
+                    </p>
+
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-2xl">
+                    💬
+                </div>
+
+            </div>
+
+            <p class="mt-3 text-sm text-green-600 font-medium">
+                +18% today
+            </p>
+
+        </div>
+
+
+        <!-- Bookings -->
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <p class="text-sm text-slate-500">
+                        Bookings
+                    </p>
+
+                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                        18
+                    </p>
+
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-2xl">
+                    📅
+                </div>
+
+            </div>
+
+            <p class="mt-3 text-sm text-slate-500">
+                Today's appointments
+            </p>
+
+        </div>
+
+
+        <!-- AI Status -->
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <p class="text-sm text-slate-500">
+                        AI Status
+                    </p>
+
+                    <p class="mt-2 text-3xl font-bold text-green-600">
+                        Online
+                    </p>
+
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-2xl">
+                    🤖
+                </div>
+
+            </div>
+
+            <p class="mt-3 text-sm text-slate-500">
+                Ready to assist customers
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- WHAT SOPHIA DOES -->
+
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+
+        <h2 class="text-2xl font-bold text-slate-900">
+            What Sophia can do
+        </h2>
+
+        <p class="mt-2 text-slate-500">
+            Your AI employee can handle routine customer interactions automatically.
+        </p>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
+
+            <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50">
+
+                <div class="text-2xl">
+                    💬
+                </div>
+
+                <div>
+
+                    <h3 class="font-semibold text-slate-900">
+                        Customer conversations
+                    </h3>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Answer customer questions and provide information about your business.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50">
+
+                <div class="text-2xl">
+                    📅
+                </div>
+
+                <div>
+
+                    <h3 class="font-semibold text-slate-900">
+                        Appointment booking
+                    </h3>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Help customers choose available services and book appointments.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50">
+
+                <div class="text-2xl">
+                    📚
+                </div>
+
+                <div>
+
+                    <h3 class="font-semibold text-slate-900">
+                        Business knowledge
+                    </h3>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Use your business information and knowledge base when responding to customers.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50">
+
+                <div class="text-2xl">
+                    ⚡
+                </div>
+
+                <div>
+
+                    <h3 class="font-semibold text-slate-900">
+                        Automated workflows
+                    </h3>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Automate repetitive customer communication and business tasks.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- AI CONNECTION -->
+
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl">
+
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+            <div>
+
+                <p class="text-sm uppercase tracking-widest text-blue-100">
+                    WhatsApp AI
+                </p>
+
+                <h2 class="mt-2 text-3xl font-bold">
+                    Sophia is ready for your customers
+                </h2>
+
+                <p class="mt-2 text-blue-100">
+                    Connect your WhatsApp number to let your AI employee
+                    communicate with customers automatically.
+                </p>
+
+            </div>
+
+            <div>
+
+                <span class="inline-flex items-center px-5 py-3 rounded-xl bg-white/15 border border-white/20 font-semibold">
+                    🤖 AI Employee Online
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

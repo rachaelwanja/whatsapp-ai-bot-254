@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {{ business.business_name }} — Catalog
+    </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+
+<body class="bg-gray-50 text-gray-900">
+
+<!-- =========================================
+     HEADER
+========================================= -->
+
+<header class="bg-white shadow-sm">
+
+    <div class="max-w-6xl mx-auto px-6 py-6">
+
+        <h1 class="text-3xl font-bold">
+
+            {{ business.business_name }}
+
+        </h1>
+
+        {% if business.business_type %}
+
+        <p class="text-gray-500 mt-1">
+
+            {{ business.business_type }}
+
+        </p>
+
+        {% endif %}
+
+        {% if business.location %}
+
+        <p class="text-gray-500 mt-2">
+
+            📍 {{ business.location }}
+
+        </p>
+
+        {% endif %}
+
+    </div>
+
+</header>
+
+
+<!-- =========================================
+     CATALOG
+========================================= -->
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <div class="mb-8">
+
+        <h2 class="text-2xl font-bold">
+
+            Our Services
+
+        </h2>
+
+        <p class="text-gray-500 mt-1">
+
+            Browse our available services.
+
+        </p>
+
+    </div>
+
+
+    {% if services %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+        {% for service in services %}
+
+        <div
+            class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition"
+        >
+
+
+            <!-- =================================
+                 SERVICE IMAGE
+            ================================== -->
+
+            {% if service.image %}
+
+            <img
+                src="{{ url_for('static', filename='uploads/' + service.image) }}"
+                alt="{{ service.name }}"
+                class="w-full h-56 object-cover"
+            >
+
+            {% else %}
+
+            <div
+                class="w-full h-56 bg-gray-100 flex items-center justify-center"
+            >
+
+                <div class="text-center text-gray-400">
+
+                    <div class="text-4xl mb-2">
+                        📷
+                    </div>
+
+                    <p>
+                        No image available
+                    </p>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- =================================
+                 SERVICE INFORMATION
+            ================================== -->
+
+            <div class="p-5">
+
+                <div class="flex justify-between items-start gap-3">
+
+                    <h3 class="text-xl font-bold">
+
+                        {{ service.name }}
+
+                    </h3>
+
+
+                    {% if service.category %}
+
+                    <span
+                        class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full whitespace-nowrap"
+                    >
+
+                        {{ service.category }}
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PRICE -->
+
+                <div class="mt-4">
+
+                    <span class="text-2xl font-bold">
+
+                        KSh {{ "{:,}".format(service.price or 0) }}
+
+                    </span>
+
+                </div>
+
+
+                <!-- DURATION -->
+
+                {% if service.duration %}
+
+                <p class="text-gray-500 mt-2">
+
+                    ⏱ {{ service.duration }}
+
+                </p>
+
+                {% endif %}
+
+
+                <!-- DEPOSIT -->
+
+                {% if service.deposit and service.deposit > 0 %}
+
+                <p class="text-gray-500 mt-1">
+
+                    Deposit:
+                    KSh {{ "{:,}".format(service.deposit) }}
+
+                </p>
+
+                {% endif %}
+
+
+                <!-- =================================
+                     WHATSAPP BUTTON
+                ================================== -->
+
+                {% if business.business_phone %}
+
+                <a
+                    href="https://wa.me/{{ business.business_phone }}?text={{ ('Hello ' ~ business.business_name ~ ', I would like to book ' ~ service.name ~ '.') | urlencode }}"
+                    target="_blank"
+                    class="block text-center bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-xl mt-5 transition"
+                >
+
+                    💬 Book on WhatsApp
+
+                </a>
+
+                {% else %}
+
+                <div
+                    class="bg-gray-100 text-gray-500 text-center py-3 rounded-xl mt-5"
+                >
+
+                    WhatsApp unavailable
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    {% else %}
+
+
+    <!-- =========================================
+         EMPTY CATALOG
+    ========================================== -->
+
+    <div
+        class="bg-white rounded-2xl shadow-sm p-10 text-center"
+    >
+
+        <div class="text-5xl mb-4">
+            🛍️
+        </div>
+
+        <h3 class="text-xl font-bold">
+
+            No services available yet
+
+        </h3>
+
+        <p class="text-gray-500 mt-2">
+
+            Please check back later.
+
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</main>
+
+
+<!-- =========================================
+     FOOTER
+========================================= -->
+
+<footer class="text-center text-gray-400 text-sm py-8">
+
+    Powered by
+    <span class="font-semibold">
+        FlowAI
+    </span>
+
+</footer>
+
+
+</body>
+
+</html>

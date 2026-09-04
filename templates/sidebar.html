@@ -1,7 +1,12 @@
 <div class="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-slate-950 text-white shadow-2xl">
 
-    <!-- Logo -->
-    <div class="px-8 py-8 border-b border-slate-800">
+    <!-- ============================= -->
+    <!-- LOGO / WORKSPACE -->
+    <!-- ============================= -->
+
+    <div class="px-6 py-6 border-b border-slate-800 flex-shrink-0">
+
+        <!-- Logo -->
 
         <div class="flex items-center space-x-4">
 
@@ -23,13 +28,16 @@
 
         </div>
 
-        <div class="mt-6 bg-slate-900 rounded-2xl p-4 border border-slate-800">
+
+        <!-- Workspace -->
+
+        <div class="mt-5 bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800">
 
             <p class="text-xs uppercase tracking-widest text-slate-500">
                 Workspace
             </p>
 
-            <p class="mt-1 font-semibold text-white">
+            <p class="mt-1 font-semibold text-white truncate">
                 {{ business.business_name if business else "My Business" }}
             </p>
 
@@ -37,127 +45,217 @@
 
     </div>
 
-    <!-- Navigation -->
-    <div class="flex-1 overflow-y-auto px-5 py-6">
+
+    <!-- ============================= -->
+    <!-- NAVIGATION -->
+    <!-- ============================= -->
+
+    <div class="flex-1 min-h-0 overflow-y-auto px-5 py-5">
+
+        <!-- WORKSPACE -->
 
         <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
             Workspace
         </p>
 
-        <nav class="space-y-2">
+        <nav class="space-y-1.5">
 
             <a href="/dashboard"
                class="flex items-center px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition duration-200 font-medium">
-                <span class="mr-3">🏠</span>
+
+                <span class="mr-3 text-lg">
+                    🏠
+                </span>
+
                 Dashboard
+
             </a>
+
 
             <a href="/business-settings"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">🏢</span>
+
+                <span class="mr-3 text-lg">
+                    🏢
+                </span>
+
                 Business
+
             </a>
+
 
             <a href="/whatsapp-ai"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">🤖</span>
+
+                <span class="mr-3 text-lg">
+                    🤖
+                </span>
+
                 AI Employee
+
             </a>
+
 
             <a href="/knowledge"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">📚</span>
+
+                <span class="mr-3 text-lg">
+                    📚
+                </span>
+
                 Knowledge
+
             </a>
 
         </nav>
 
-        <div class="border-t border-slate-800 my-8"></div>
+
+        <!-- DIVIDER -->
+
+        <div class="border-t border-slate-800 my-6"></div>
+
+
+        <!-- OPERATIONS -->
 
         <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
             Operations
         </p>
 
-        <nav class="space-y-2">
+        <nav class="space-y-1.5">
 
             <a href="/services"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">💇</span>
+
+                <span class="mr-3 text-lg">
+                    💇
+                </span>
+
                 Services
+
             </a>
+
 
             <a href="/appointments"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">📅</span>
+
+                <span class="mr-3 text-lg">
+                    📅
+                </span>
+
                 Appointments
+
             </a>
+
 
             <a href="/customers"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">👥</span>
+
+                <span class="mr-3 text-lg">
+                    👥
+                </span>
+
                 Customers
+
             </a>
 
         </nav>
 
-        <div class="border-t border-slate-800 my-8"></div>
+
+        <!-- DIVIDER -->
+
+        <div class="border-t border-slate-800 my-6"></div>
+
+
+        <!-- INSIGHTS -->
 
         <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">
             Insights
         </p>
 
-        <nav class="space-y-2">
+        <nav class="space-y-1.5">
 
             <a href="/payments"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">💳</span>
+
+                <span class="mr-3 text-lg">
+                    💳
+                </span>
+
                 Payments
+
             </a>
+
 
             <a href="/analytics"
                class="flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition duration-200">
-                <span class="mr-3">📊</span>
+
+                <span class="mr-3 text-lg">
+                    📊
+                </span>
+
                 Analytics
+
             </a>
 
         </nav>
 
     </div>
 
-    <!-- Plan Card -->
-    <div class="px-5">
 
-        <div class="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 p-5 shadow-xl">
+    <!-- ============================= -->
+    <!-- COMPACT PLAN CARD -->
+    <!-- ============================= -->
 
-            <p class="text-xs uppercase tracking-widest text-blue-100">
-                Current Plan
-            </p>
+    <div class="px-5 pb-3 flex-shrink-0">
 
-            <h3 class="text-2xl font-bold mt-2">
-                Starter
-            </h3>
+        <div class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 shadow-lg">
 
-            <p class="text-sm text-blue-100 mt-2">
-                Upgrade to unlock Voice AI, multiple AI employees, advanced analytics, and more.
-            </p>
+            <div class="flex items-center justify-between gap-3">
 
-            <button
-                class="mt-5 w-full rounded-xl bg-white text-slate-900 py-3 font-semibold hover:bg-slate-100 transition">
-                Upgrade
-            </button>
+                <div class="min-w-0">
+
+                    <p class="text-xs uppercase tracking-wider text-blue-100">
+                        Current Plan
+                    </p>
+
+                    <p class="font-bold text-white">
+                        Starter
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="flex-shrink-0 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition">
+
+                    Upgrade
+
+                </button>
+
+            </div>
 
         </div>
 
     </div>
 
-    <!-- Logout -->
-    <div class="p-5">
+
+    <!-- ============================= -->
+    <!-- LOGOUT -->
+    <!-- ============================= -->
+
+    <div class="px-5 pb-5 flex-shrink-0">
 
         <a href="/logout"
-           class="flex items-center justify-center rounded-xl border border-red-500 text-red-400 hover:bg-red-600 hover:text-white py-3 transition duration-200">
+           class="flex items-center justify-center rounded-xl border border-red-500/70 text-red-400 hover:bg-red-600 hover:text-white py-2.5 transition duration-200">
 
-            🚪
-            <span class="ml-2">Logout</span>
+            <span>
+                🚪
+            </span>
+
+            <span class="ml-2">
+                Logout
+            </span>
 
         </a>
 
