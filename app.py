@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from twilio.twiml.voice_response import VoiceResponse
 from twilio.twiml.messaging_response import MessagingResponse
+from sqlalchemy import inspect, text
 import os
 from dotenv import load_dotenv 
 load_dotenv()
@@ -253,13 +254,33 @@ def analytics():
 
            
 # =========================================
-# CREATE TABLES
+# CREATE TABLES / DATABASE MIGRATION
 # =========================================
 
 with app.app_context():
 
     db.create_all()
 
+    inspector = inspect(db.engine)
+
+    business_columns = {
+        column["name"]
+        for column in inspector.get_columns("business")
+    }
+
+    if "email" not in business_columns:
+
+        db.session.execute(
+            text(
+                "ALTER TABLE business "
+                "ADD COLUMN email VARCHAR(200)"
+            )
+        )
+
+        db.session.commit()
+
+        print("Added missing business.email column")
+        
 # =========================================
 # RUN APP
 # =========================================
